@@ -32,7 +32,8 @@ We strongly recommend **against** using 1 and 2 in the same database. This will 
 
 application.properties:
 ```properties
-spring.data.mongodb.uri=mongodb://localhost:27017/your_database_name
+spring.data.mongodb.tenants[0].name=testTenant
+spring.data.mongodb.tenants[0].uri=mongodb://root:Aa123456@localhost:27017/your_db?authSource=admin
 
 ```
 application.yml (recommended):
@@ -40,8 +41,7 @@ application.yml (recommended):
 spring:
   data:
     mongodb:
-      uri: mongodb://localhost:27017/your_database_name
-      database: your_database_name
-      username: your_username
-      password: your_password
+      tenants:
+          - name : testTenant
+            uri: mongodb://root:Aa123456@localhost:27017/your_db?authSource=admin
 ```     
