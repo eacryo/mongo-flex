@@ -1,0 +1,5 @@
+com.github.eacryo.mongoflex.config.MongoTemplateFactory
+com.github.eacryo.mongoflex.config.MultiTenantMongoProperties
+com.github.eacryo.mongoflex.util.CollectionNameUtil
+com.github.eacryo.mongoflex.aspect.MongoEntityAspect
+com.github.eacryo.mongoflex.config.FrameworkExclusionFilter
