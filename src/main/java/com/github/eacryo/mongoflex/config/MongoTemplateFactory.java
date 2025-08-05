@@ -23,6 +23,8 @@ public class MongoTemplateFactory {
     //不清楚用这个好在哪里，从mybatis-plus的代码中看到的
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoTemplateFactory.class);
 
+    private static final String MONGO_TEMPLATE_PREFIX = "mongoTemplate_";
+
     private Map<String, MongoTemplate> templates = new HashMap<>();
 
     @Autowired
@@ -64,7 +66,7 @@ public class MongoTemplateFactory {
         for (MultiTenantMongoProperties.TenantMongoConfig config : properties.getTenants()) {
             String tenantId = config.getName() +
                     (Objects.nonNull(config.getTablePrefix()) ? "_" + config.getTablePrefix() : "");
-            String beanName = SystemConstant.MONGO_TEMPLATE_PREFIX + tenantId;
+            String beanName = MONGO_TEMPLATE_PREFIX + tenantId;
             try {
                 // 注册Bean
                 genericApplicationContext.registerBean(beanName, MongoTemplate.class,
