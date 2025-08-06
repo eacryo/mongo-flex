@@ -6,14 +6,15 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReflectUtil {
+//没有标public，默认作用域只能在同一个包内访问
+class ReflectUtil {
     /**
      * 获取对象的所有字段（包括继承的字段）
      *
      * @param clazz 目标类
      * @return 字段列表
      */
-    public static List<Field> getAllFieldsIncludingInherited(Class<?> clazz) {
+    static List<Field> getAllFieldsIncludingInherited(Class<?> clazz) {
         List<Field> fields = new ArrayList<>();
 
         // 遍历整个继承层次
