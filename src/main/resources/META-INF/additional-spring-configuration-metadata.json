@@ -1,0 +1,9 @@
+{
+  "properties": [
+    {
+      "name": "mongo-flex.enable-multi-tenants",
+      "type": "java.lang.Boolean",
+      "defaultValue": false,
+      "description": "is enable multi tenants,MongoTemplateFactory not usable if disable."
+  }
+] }

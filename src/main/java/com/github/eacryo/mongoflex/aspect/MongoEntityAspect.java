@@ -37,8 +37,7 @@ public class MongoEntityAspect {
     //TODO:已知问题，手动设置id时handleInsertOrSave插入会被误判为update操作
 
     // 处理insert和save操作
-    @Around("execution(* org.springframework.data.mongodb.core.MongoTemplate.insert*(Object,String)) || " +
-            "execution(* org.springframework.data.mongodb.core.MongoTemplate.save*(..))")
+    @Around("execution(* org.springframework.data.mongodb.core.MongoTemplate.insert*(Object,String))")
     public Object handleInsertOrSave(ProceedingJoinPoint joinPoint) throws Throwable {
         LOGGER.info("命中insert,save操作");
         Object[] args = joinPoint.getArgs();
@@ -110,14 +109,14 @@ public class MongoEntityAspect {
      */
     private void processBaseEntity(Object entity, int paramIndex, String context) {
         LOGGER.debug("处理第{}个参数中的{}: {}", paramIndex, context, entity.getClass().getSimpleName());
-        Field idField = ReflectUtil.getIdField(entity.getClass());
-        idField.setAccessible(true);
-        Object id;
-        try {
-            id = idField.get(entity);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
+            Field idField = ReflectUtil.getIdField(entity.getClass());
+            idField.setAccessible(true);
+            Object id;
+            try {
+                id = idField.get(entity);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
         // 生成ID (如果是新实体)
         if (Objects.isNull(id)) {
             //TODO:

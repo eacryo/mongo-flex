@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.stereotype.Component;
 
-@SpringBootTest(classes = TestApplication.class)
-public class MyTests {
+
+public class MyTests extends BaseMultiTenantsTest{
 
     @Autowired
     private TestRepository testRepository;
@@ -27,5 +27,6 @@ public class MyTests {
         testBean.setName("test");
         testRepository.save(testBean);
     }
+
 
 }

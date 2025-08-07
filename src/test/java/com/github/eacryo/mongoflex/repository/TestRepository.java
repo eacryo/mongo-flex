@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.repository;
 
 import com.github.eacryo.mongoflex.bean.TestBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component

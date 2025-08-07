@@ -1,0 +1,11 @@
+mongo-flex:
+  enable-multi-tenants: false
+spring:
+  data:
+    mongodb:
+      uri: mongodb://sa:Aa123456@192.168.0.103:27017/test_db?authSource=admin
+
+logging:
+  level:
+    org.springframework.data.mongodb.core.MongoTemplate: DEBUG
+    com.github.eacryo.mongoflex.aspect.MongoEntityAspect: DEBUG

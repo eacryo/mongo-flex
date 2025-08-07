@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -18,6 +19,12 @@ import java.util.Objects;
 
 
 @Component
+@ConditionalOnProperty(
+    prefix = "mongo-flex",      // 属性前缀（可选）
+    name = "enable-multi-tenants",           // 属性名
+    havingValue = "true",       // 预期值（可选）
+    matchIfMissing = false      // 属性缺失时是否匹配（可选，默认false）
+)
 public class MongoTemplateFactory {
 
     //不清楚用这个好在哪里，从mybatis-plus的代码中看到的
