@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.util;
 
+import com.github.eacryo.mongoflex.annotation.CollectionId;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
@@ -25,5 +26,16 @@ public class ReflectUtil {
         }
 
         return fields;
+    }
+
+    public static Field getIdField(List<Field> fields) {
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(CollectionId.class)){
+                return field;
+            }
+        }
+        //TODO:优化报错信息；
+        //这里应该用RuntimeException吗？
+        throw new RuntimeException("未找到id对应字段");
     }
 }

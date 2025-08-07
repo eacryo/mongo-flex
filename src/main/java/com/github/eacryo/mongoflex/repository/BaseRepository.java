@@ -27,7 +27,7 @@ import java.util.List;
 //@Component
 //如果标了Component会实例化两次（父类本身和子类，第一次触发父类实例化的时候拿不到泛型信息就会报错）
 //这个类应当被设置为抽象类，因为它本身不会被使用，使用的是它的子类
-public class BaseRepository<T extends BaseEntity> implements IBaseRepository<T> {
+public class BaseRepository<T> implements IBaseRepository<T> {
 
     //TODO:可以考虑初始化时把DTO对象信息缓存起来，这样不用每次都通过反射获取对象信息了。
 
@@ -35,6 +35,8 @@ public class BaseRepository<T extends BaseEntity> implements IBaseRepository<T> 
     private Class<T> entityClass;
 
     private List<Field> entityFields;
+
+    private Field idField;
 
     //TODO:考虑移除对同库多租户的支持
     private String collectionName;
@@ -53,9 +55,8 @@ public class BaseRepository<T extends BaseEntity> implements IBaseRepository<T> 
      * @return 主键id
      */
     @Override
-    public String save(T entity) {
-        mongoTemplateFactory.select().save(entity, collectionName);
-        return entity.getId();
+    public T save(T entity) {
+        return mongoTemplateFactory.select().save(entity, collectionName);
     }
 
     @Override
@@ -158,11 +159,11 @@ public class BaseRepository<T extends BaseEntity> implements IBaseRepository<T> 
      */
     @Override
     public boolean updateById(T entity) {
-        if (entity == null || entity.getId() == null) {
+        if (entity == null || getIdFieldValue(entity) == null) {
             throw new IllegalArgumentException("更新的对象或ID不能为空");
         }
         Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(entity.getId()));
+        query.addCriteria(Criteria.where("_id").is(getIdFieldValue(entity)));
         Update update = new Update();
         for (Field field : entityFields) {
             field.setAccessible(true);
@@ -214,7 +215,7 @@ public class BaseRepository<T extends BaseEntity> implements IBaseRepository<T> 
 
     @SuppressWarnings("unchecked")
     @PostConstruct
-    public void InitBaseRepository() {
+    private void InitBaseRepository() {
         // 使用反射获取泛型信息
         Type genericSuperclass = getClass().getGenericSuperclass();
         //jdk21的语法，instanceof的同时赋值
@@ -241,7 +242,26 @@ public class BaseRepository<T extends BaseEntity> implements IBaseRepository<T> 
 
         this.entityFields = ReflectUtil.getAllFieldsIncludingInherited(entityClass);
 
+        this.idField = ReflectUtil.getIdField(this.entityFields);
+        idField.setAccessible(true);
+
         this.collectionName = collectionNameUtil.getByClass(entityClass);
+
+
+    }
+
+    /**
+     * 把checked Exception转化为runtime exception，面得每次都要try catch
+     * @param entity
+     * @return
+     */
+    private Object getIdFieldValue(T entity) {
+        this.idField.setAccessible(true);
+        try {
+            return idField.get(entity);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

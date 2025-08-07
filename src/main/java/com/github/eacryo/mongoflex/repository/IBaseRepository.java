@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.List;
 
 //@Component
-public interface IBaseRepository<T extends BaseEntity> {
-    String save(T entity);
+public interface IBaseRepository<T> {
+    T save(T entity);
 
     boolean insertAll(Collection<T> entities);
 
