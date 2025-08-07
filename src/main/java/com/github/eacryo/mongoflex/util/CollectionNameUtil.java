@@ -18,7 +18,7 @@ public class CollectionNameUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CollectionNameUtil.class);
 
-    public <T extends BaseEntity> String getByObj(T obj) {
+    public <T> String getByObj(T obj) {
         // 获取注解实例
         CollectionName annotation = obj.getClass().getAnnotation(CollectionName.class);
         if (Objects.isNull(annotation)) {
@@ -30,7 +30,7 @@ public class CollectionNameUtil {
     }
 
 
-    public <T extends BaseEntity> String getByClass(Class<T> clazz) {
+    public <T> String getByClass(Class<T> clazz) {
         // 获取注解实例
         CollectionName annotation = clazz.getAnnotation(CollectionName.class);
         if (Objects.isNull(annotation)) {
