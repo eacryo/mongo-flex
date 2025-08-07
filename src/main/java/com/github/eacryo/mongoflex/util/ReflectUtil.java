@@ -28,6 +28,10 @@ public class ReflectUtil {
         return fields;
     }
 
+    public static Field getIdField(Class<?> clazz) {
+        return getIdField(getAllFieldsIncludingInherited(clazz));
+    }
+
     public static Field getIdField(List<Field> fields) {
         for (Field field : fields) {
             if (field.isAnnotationPresent(CollectionId.class)){
