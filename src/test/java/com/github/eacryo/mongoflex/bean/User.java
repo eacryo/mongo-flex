@@ -8,7 +8,7 @@ import java.util.Date;
 
 @CollectionName("testBean")
 @Data
-public class TestBean {
+public class User {
 
     @CollectionId
     private String id;

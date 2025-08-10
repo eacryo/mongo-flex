@@ -10,7 +10,7 @@ import java.util.List;
 @Data
 @ConfigurationProperties(prefix = "mongo-flex")
 @Component
-public class MongoFlexConfig {
+public class MongoFlexProperties {
     
     private List<TenantConfig> tenants = new ArrayList<>();
 

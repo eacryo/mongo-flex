@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -31,7 +32,11 @@ public class MongoTemplateFactory {
     private GenericApplicationContext genericApplicationContext;
 
     @Autowired
-    private MongoFlexConfig properties;
+    private MongoFlexProperties mongoFlexProperties;
+
+    @Autowired
+    private MongoProperties mongoProperties;
+
 
     //无参构造
     public MongoTemplateFactory() {
@@ -61,9 +66,16 @@ public class MongoTemplateFactory {
     }
 
     @PostConstruct
-    public void initializeTemplates() {
+    //标注为private也能获取到
+    private void initializeTemplates() {
+        if (mongoFlexProperties.getEnableMultiTenants()) initWhenEnabled();
+        else initWhenDisabled();
+        LOGGER.info("DynamicMongoTemplate initialized with {} tenants", templates.size());
+    }
+
+    private void initWhenEnabled() {
         // 从配置中获取所有租户的 MongoTemplate
-        for (TenantConfig config : properties.getTenants()) {
+        for (TenantConfig config : mongoFlexProperties.getTenants()) {
             String tenantId = config.getName() +
                     (Objects.nonNull(config.getTablePrefix()) ? "_" + config.getTablePrefix() : "");
             String beanName = MONGO_TEMPLATE_PREFIX + tenantId;
@@ -79,6 +91,22 @@ public class MongoTemplateFactory {
                 LOGGER.error("Failed to get MongoTemplate for tenant: {}, error: {}", tenantId, e.getMessage());
             }
         }
-        LOGGER.info("DynamicMongoTemplate initialized with {} tenants", templates.size());
+    }
+
+    private void initWhenDisabled() {
+        //只注入一个MongoTemplate
+        String tenantId = MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE;
+        String beanName = MONGO_TEMPLATE_PREFIX + tenantId;
+            try {
+                // 注册Bean
+                genericApplicationContext.registerBean(beanName, MongoTemplate.class,
+                        () -> new MongoTemplate(new SimpleMongoClientDatabaseFactory(mongoProperties.getUri())));
+                // 从 Spring 容器中获取对应的 MongoTemplate Bean
+                MongoTemplate mongoTemplate = genericApplicationContext.getBean(beanName, MongoTemplate.class);
+                templates.put(tenantId, mongoTemplate);
+                LOGGER.info("Added MongoTemplate for tenant: {}", tenantId);
+            } catch (Exception e) {
+                LOGGER.error("Failed to get MongoTemplate for tenant: {}, error: {}", tenantId, e.getMessage());
+            }
     }
 }

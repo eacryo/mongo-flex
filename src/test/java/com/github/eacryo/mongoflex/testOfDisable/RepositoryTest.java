@@ -1,15 +1,13 @@
-package com.github.eacryo.mongoflex.testOfEnable;
+package com.github.eacryo.mongoflex.testOfDisable;
 
 import com.github.eacryo.mongoflex.bean.User;
 import com.github.eacryo.mongoflex.repository.UserRepsitory;
 import org.junit.jupiter.api.Test;
-import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 
-
-public class MyTests extends BaseMultiTenantsTest{
+public class RepositoryTest extends BaseDisableTest{
 
     @Autowired
     private UserRepsitory userRepsitory;
@@ -20,13 +18,11 @@ public class MyTests extends BaseMultiTenantsTest{
     }
 
     @Test
-    public void testSave(){
-        MDC.put("tenant","testTenant");
+    public void testSaveAndQuery(){
         User user = new User();
-        user.setName("test");
+        user.setName("Yuzuha");
         user.setJoinDate(new Date());
         userRepsitory.save(user);
+        userRepsitory.findList(user).forEach(System.out::println);
     }
-
-
 }
