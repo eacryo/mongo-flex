@@ -95,6 +95,12 @@
             <artifactId>ulid-creator</artifactId>
             <version>5.2.3</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>     <!-- 关键1：不打包到产物中 -->
+            <optional>true</optional>  <!-- 关键2：阻止依赖传递 -->
+        </dependency>
 
     </dependencies>
 
