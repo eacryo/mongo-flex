@@ -1,7 +1,7 @@
 package com.github.eacryo.mongoflex.testOfEnable;
 
-import com.github.eacryo.mongoflex.bean.User;
-import com.github.eacryo.mongoflex.repository.UserRepsitory;
+import com.github.eacryo.mongoflex.bean.Character;
+import com.github.eacryo.mongoflex.repository.CharacterRepository;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +12,7 @@ import java.util.Date;
 public class MyTests extends BaseMultiTenantsTest{
 
     @Autowired
-    private UserRepsitory userRepsitory;
+    private CharacterRepository characterRepository;
 
     @Test
     public void testLoad(){
@@ -22,10 +22,10 @@ public class MyTests extends BaseMultiTenantsTest{
     @Test
     public void testSave(){
         MDC.put("tenant","testTenant");
-        User user = new User();
-        user.setName("test");
-        user.setJoinDate(new Date());
-        userRepsitory.save(user);
+        Character character = new Character();
+        character.setName("test");
+        character.setBirthday(new Date());
+        characterRepository.save(character);
     }
 
 

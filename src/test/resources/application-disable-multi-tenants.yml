@@ -1,5 +1,4 @@
-mongo-flex:
-  enable-multi-tenants: false
+
 spring:
   data:
     mongodb:

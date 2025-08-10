@@ -68,7 +68,7 @@ public class MongoTemplateFactory {
     @PostConstruct
     //标注为private也能获取到
     private void initializeTemplates() {
-        if (mongoFlexProperties.getEnableMultiTenants()) initWhenEnabled();
+        if (mongoFlexProperties.isEnableMultiTenants()) initWhenEnabled();
         else initWhenDisabled();
         LOGGER.info("DynamicMongoTemplate initialized with {} tenants", templates.size());
     }

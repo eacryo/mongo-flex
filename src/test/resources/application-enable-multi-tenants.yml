@@ -7,11 +7,6 @@ mongo-flex:
 spring:
   data:
     mongodb:
-      tenants:
-      # tenantId由name+tablePrefix组成,如果tablePrefix为空,则不拼接
-          #
-          - name : testTenant
-            uri: mongodb://sa:Aa123456@192.168.0.103:27017/test_db?authSource=admin
       uri: mongodb://sa:Aa123456@192.168.0.103:27017/test_db?authSource=admin
 #          - name : testTenant
 #            tablePrefix: uk
