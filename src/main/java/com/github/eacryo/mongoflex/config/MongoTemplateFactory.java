@@ -54,6 +54,10 @@ public class MongoTemplateFactory {
         return select(MDC.get(MongoFlexConstant.TENANT));
     }
 
+    public MongoTemplate single() {
+        return select(MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE);
+    }
+
     //StringUtils.isEmpty()已经废弃，使用StringUtils中的hasLength(String)或者hasText(String) 方法来替换
     public MongoTemplate select(String tenant) {
         if (!StringUtils.hasText(tenant) || !templates.containsKey(tenant)) {
@@ -96,13 +100,9 @@ public class MongoTemplateFactory {
     private void initWhenDisabled() {
         //只注入一个MongoTemplate
         String tenantId = MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE;
-        String beanName = MONGO_TEMPLATE_PREFIX + tenantId;
             try {
-                // 注册Bean
-                genericApplicationContext.registerBean(beanName, MongoTemplate.class,
-                        () -> new MongoTemplate(new SimpleMongoClientDatabaseFactory(mongoProperties.getUri())));
-                // 从 Spring 容器中获取对应的 MongoTemplate Bean
-                MongoTemplate mongoTemplate = genericApplicationContext.getBean(beanName, MongoTemplate.class);
+                // 直接从 Spring 容器中获取对应的 MongoTemplate
+                MongoTemplate mongoTemplate = genericApplicationContext.getBean(MongoFlexConstant.DEFAULT_MONGO_TEMPLATE, MongoTemplate.class);
                 templates.put(tenantId, mongoTemplate);
                 LOGGER.info("Added MongoTemplate for tenant: {}", tenantId);
             } catch (Exception e) {
