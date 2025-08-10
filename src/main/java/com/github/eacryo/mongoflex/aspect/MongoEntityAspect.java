@@ -1,9 +1,7 @@
 package com.github.eacryo.mongoflex.aspect;
 
 
-import com.github.eacryo.mongoflex.config.MongoTemplateFactory;
-import com.github.eacryo.mongoflex.constant.SystemConstant;
-import com.github.eacryo.mongoflex.entity.BaseEntity;
+import com.github.eacryo.mongoflex.constant.MongoFlexConstant;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import com.github.f4b6a3.ulid.UlidCreator;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -14,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
@@ -128,7 +125,7 @@ public class MongoEntityAspect {
                 throw new RuntimeException(e);
             }
             //baseEntity.setCreateAt(new Date());
-            String uid = MDC.get(SystemConstant.UID);
+            String uid = MDC.get(MongoFlexConstant.UID);
             //TODO:使用注解填充字段
 //            if (Objects.nonNull(uid)) {
 //                baseEntity.setCreatedBy(uid);
@@ -158,7 +155,7 @@ public class MongoEntityAspect {
             if (args[i] instanceof Update) {
                 Update update = (Update) args[i];
                 update.set("lastModifiedAt", new Date());
-                String uid = MDC.get(SystemConstant.UID);
+                String uid = MDC.get(MongoFlexConstant.UID);
                 if (Objects.nonNull(uid)) {
                     update.set("lastModifiedBy", uid);
                 } else {

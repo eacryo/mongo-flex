@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.disablemultitenantstests;
+package com.github.eacryo.mongoflex.testOfDisable;
 
 
 import com.github.eacryo.mongoflex.TestApplication;

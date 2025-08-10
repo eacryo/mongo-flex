@@ -1,13 +1,12 @@
-package com.github.eacryo.mongoflex.Tests;
+package com.github.eacryo.mongoflex.testOfEnable;
 
-import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.TestBean;
 import com.github.eacryo.mongoflex.repository.TestRepository;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 
 public class MyTests extends BaseMultiTenantsTest{
@@ -25,6 +24,7 @@ public class MyTests extends BaseMultiTenantsTest{
         MDC.put("tenant","testTenant");
         TestBean testBean = new TestBean();
         testBean.setName("test");
+        testBean.setJoinDate(new Date());
         testRepository.save(testBean);
     }
 

@@ -2,9 +2,7 @@ package com.github.eacryo.mongoflex.util;
 
 
 import com.github.eacryo.mongoflex.annotation.CollectionName;
-import com.github.eacryo.mongoflex.config.MongoTemplateFactory;
-import com.github.eacryo.mongoflex.constant.SystemConstant;
-import com.github.eacryo.mongoflex.entity.BaseEntity;
+import com.github.eacryo.mongoflex.constant.MongoFlexConstant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -42,7 +40,7 @@ public class CollectionNameUtil {
     }
 
     public String select(String collectionName) {
-        String tenantId = MDC.get(SystemConstant.TENANT);
+        String tenantId = MDC.get(MongoFlexConstant.TENANT);
         String[] tenantIdParts = tenantId.split("_");
         if (tenantIdParts.length > 1) {
             return tenantIdParts[1] + "_" + collectionName;

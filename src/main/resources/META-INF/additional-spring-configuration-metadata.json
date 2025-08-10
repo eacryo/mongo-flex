@@ -5,5 +5,11 @@
       "type": "java.lang.Boolean",
       "defaultValue": false,
       "description": "is enable multi tenants,MongoTemplateFactory not usable if disable."
-  }
-] }
+    },
+    {
+      "name": "mongo-flex.tenants",
+      "type": "java.util.List<com.github.eacryo.mongoflex.config.TenantConfig>",
+      "description": "multi tenants configuration list."
+    }
+  ]
+}

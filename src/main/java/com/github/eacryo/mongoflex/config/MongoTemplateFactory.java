@@ -1,12 +1,11 @@
 package com.github.eacryo.mongoflex.config;
 
-import com.github.eacryo.mongoflex.constant.SystemConstant;
+import com.github.eacryo.mongoflex.constant.MongoFlexConstant;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
@@ -19,12 +18,6 @@ import java.util.Objects;
 
 
 @Component
-@ConditionalOnProperty(
-    prefix = "mongo-flex",      // 属性前缀（可选）
-    name = "enable-multi-tenants",           // 属性名
-    havingValue = "true",       // 预期值（可选）
-    matchIfMissing = false      // 属性缺失时是否匹配（可选，默认false）
-)
 public class MongoTemplateFactory {
 
     //不清楚用这个好在哪里，从mybatis-plus的代码中看到的
@@ -38,7 +31,7 @@ public class MongoTemplateFactory {
     private GenericApplicationContext genericApplicationContext;
 
     @Autowired
-    private MultiTenantMongoProperties properties;
+    private MongoFlexConfig properties;
 
     //无参构造
     public MongoTemplateFactory() {
@@ -53,7 +46,7 @@ public class MongoTemplateFactory {
         //多租户有两种方案,一种是使用不同的数据库.另一种是相同的数据库但不同的表
         //这里需要兼容两种方案
         //请求头拆分成两部分tenant和tenantTablePrefix,前者不可为空,后者可为空
-        return select(MDC.get(SystemConstant.TENANT));
+        return select(MDC.get(MongoFlexConstant.TENANT));
     }
 
     //StringUtils.isEmpty()已经废弃，使用StringUtils中的hasLength(String)或者hasText(String) 方法来替换
@@ -70,7 +63,7 @@ public class MongoTemplateFactory {
     @PostConstruct
     public void initializeTemplates() {
         // 从配置中获取所有租户的 MongoTemplate
-        for (MultiTenantMongoProperties.TenantMongoConfig config : properties.getTenants()) {
+        for (TenantConfig config : properties.getTenants()) {
             String tenantId = config.getName() +
                     (Objects.nonNull(config.getTablePrefix()) ? "_" + config.getTablePrefix() : "");
             String beanName = MONGO_TEMPLATE_PREFIX + tenantId;

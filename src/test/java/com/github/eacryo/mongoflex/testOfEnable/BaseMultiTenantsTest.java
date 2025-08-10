@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.Tests;
+package com.github.eacryo.mongoflex.testOfEnable;
 
 import com.github.eacryo.mongoflex.TestApplication;
 import org.springframework.boot.test.context.SpringBootTest;
