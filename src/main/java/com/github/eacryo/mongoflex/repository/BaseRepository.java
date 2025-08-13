@@ -2,7 +2,6 @@ package com.github.eacryo.mongoflex.repository;
 
 
 import com.github.eacryo.mongoflex.config.MongoTemplateFactory;
-import com.github.eacryo.mongoflex.entity.BaseEntity;
 import com.github.eacryo.mongoflex.entity.PageDTO;
 import com.github.eacryo.mongoflex.util.CollectionNameUtil;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
@@ -23,6 +22,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 //@Component
 //如果标了Component会实例化两次（父类本身和子类，第一次触发父类实例化的时候拿不到泛型信息就会报错）
@@ -35,6 +35,8 @@ public class BaseRepository<T> implements IBaseRepository<T> {
     private Class<T> entityClass;
 
     private List<Field> entityFields;
+
+    private Map<String,String> fieldMapping;
 
     private Field idField;
 
@@ -194,19 +196,19 @@ public class BaseRepository<T> implements IBaseRepository<T> {
         PageDTO<T> result = new PageDTO<>();
         BeanUtils.copyProperties(pageDTO, result);
         if (total == 0) {
-            result.setPage(0L);
+            result.setCurrentPage(0L);
             return result;
         }
         long totalPage = (total + pageDTO.getPageSize() - 1) / pageDTO.getPageSize();
         result.setPageSize(pageDTO.getPageSize());
-        result.setPage(pageDTO.getPage());
+        result.setCurrentPage(pageDTO.getCurrentPage());
         result.setTotal(total);
         result.setTotalPage(totalPage);
         if (!CollectionUtils.isEmpty(pageDTO.getOrderBy())) {
             query.with(Sort.by(pageDTO.isOrderByAsc() ? Sort.Direction.ASC : Sort.Direction.DESC,
                     pageDTO.getOrderBy().toArray(new String[0])));
         }
-        query.skip((pageDTO.getPage() - 1) * pageDTO.getPageSize());
+        query.skip((pageDTO.getCurrentPage() - 1) * pageDTO.getPageSize());
         query.limit(pageDTO.getPageSize().intValue());
         result.setRecords(mongoTemplateFactory.select().find(query, entityClass, collectionName));
         return result;

@@ -1,11 +1,13 @@
 package com.github.eacryo.mongoflex.util;
 
 import com.github.eacryo.mongoflex.annotation.CollectionId;
+import com.github.eacryo.mongoflex.annotation.CollectionName;
+import com.github.eacryo.mongoflex.annotation.FieldName;
+import com.github.eacryo.mongoflex.annotation.ToSnakeCase;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ReflectUtil {
     /**
@@ -38,8 +40,36 @@ public class ReflectUtil {
                 return field;
             }
         }
-        //TODO:优化报错信息；
-        //这里应该用RuntimeException吗？
-        throw new RuntimeException("未找到id对应字段");
+        throw new IllegalArgumentException("未找到id对应字段");
+    }
+
+    public static Map<String,String> getFieldMapping(Class<?> clazz){
+        Map<String,String> mapping = new HashMap<>();
+        ToSnakeCase toSnakeCase = clazz.getAnnotation(ToSnakeCase.class);
+        List<Field> fields = getAllFieldsIncludingInherited(clazz);
+        if (Objects.nonNull(toSnakeCase)) {
+            for(Field field : fields){
+                //TODO:小驼峰转下划线
+                mapping.put(field.getName(), lowerCamelCaseToSnakeCase(field.getName()));
+            }
+            return mapping;
+        }
+        for (Field field : fields) {
+            //TODO:
+            if (field.isAnnotationPresent(ToSnakeCase.class)) {
+                mapping.put(field.getName(), lowerCamelCaseToSnakeCase(field.getName()));
+                continue;
+            };
+            String tableField = Optional.ofNullable(field.getAnnotation(FieldName.class))
+                    .map(FieldName::value).orElse(null);
+            if (Objects.nonNull(tableField)) {
+                mapping.put(field.getName(), tableField);
+            }
+        }
+        return mapping;
+    }
+
+    private static String lowerCamelCaseToSnakeCase(String cameCase) {
+        return StringUtil.camelToUnderscore(cameCase);
     }
 }

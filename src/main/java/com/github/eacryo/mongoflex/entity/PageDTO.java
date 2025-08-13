@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 public class PageDTO<T> {
-    private Long page = 1L; // 当前页码，默认从1开始
+    private Long currentPage = 1L; // 当前页码，默认从1开始
     private Long pageSize = 10L; // 每页记录数，默认10条
     private Long total; // 总记录数
     private Long totalPage; // 总页数

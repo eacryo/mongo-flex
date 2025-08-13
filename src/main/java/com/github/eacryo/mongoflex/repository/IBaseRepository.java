@@ -1,7 +1,6 @@
 package com.github.eacryo.mongoflex.repository;
 
 
-import com.github.eacryo.mongoflex.entity.BaseEntity;
 import com.github.eacryo.mongoflex.entity.PageDTO;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;

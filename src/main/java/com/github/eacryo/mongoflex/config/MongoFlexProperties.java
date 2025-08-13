@@ -15,5 +15,5 @@ public class MongoFlexProperties {
     private List<TenantConfig> tenants = new ArrayList<>();
 
     private boolean enableMultiTenants;
-
+    private boolean toSnakeCase;
 }
