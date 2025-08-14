@@ -39,6 +39,6 @@ public class RepositoryTest extends BaseDisableTest{
         System.out.println(byId);
         Assertions.assertNotNull(byId);
         Assertions.assertEquals(character, byId);
-        Assertions.assertEquals(mongoTemplate,mongoTemplateFactory.single());
+        Assertions.assertEquals(mongoTemplate,mongoTemplateFactory.select());
     }
 }

@@ -16,17 +16,4 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("disable-multi-tenants")
 public class BaseDisableTest {
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
-
-    @BeforeEach
-    public void setDefaultTenant() {
-        MDC.clear();
-        MDC.put(MongoFlexConstant.TENANT, MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE);
-    }
-
-    @Test
-    public void testLoad(){
-        System.out.println(mongoTemplate.find(new Query(), Object.class, "testBean"));
-    }
 }

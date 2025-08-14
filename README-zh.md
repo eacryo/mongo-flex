@@ -46,9 +46,9 @@ MongoTemplateFactory通过MDC(ThreadLocal)来获取当前租户的信息，请�
 来置入租户信息。
 
 这一步不是必须。如果不做任何配置，那么mongo-flex会默认在MongoTemplateFactory中
-置入一个租户id为`default`的MongoTemplate。你可以通过在MongoTemplateFactory的实例
-上调用single()来获取它。
-更多的使用信息参见
+置入一个租户id为`default`的MongoTemplate。你可以直接通过在MongoTemplateFactory的实例
+上调用select()来获取它。
+更多的信息参见源码
 
 ### 3.继承 BaseRepository
 ```java

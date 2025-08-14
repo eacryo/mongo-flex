@@ -27,6 +27,8 @@ public interface IBaseRepository<T> {
 
     List<T> findList(T entity);
 
+    T findOne(T entity);
+
     List<T> findAll(String... orderBy);
 
     List<T> findAllDesc(String... orderBy);

@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 //@Component
 //如果标了Component会实例化两次（父类本身和子类，第一次触发父类实例化的时候拿不到泛型信息就会报错）
@@ -117,6 +118,11 @@ public class BaseRepository<T> implements IBaseRepository<T> {
             }
         }
         return mongoTemplateFactory.select().find(query,entityClass, collectionName);
+    }
+
+    @Override
+    public T findOne(T entity) {
+        return Optional.ofNullable(findList(entity)).map(List::getFirst).orElse(null);
     }
 
 

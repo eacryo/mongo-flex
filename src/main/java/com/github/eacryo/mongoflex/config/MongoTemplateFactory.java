@@ -2,6 +2,8 @@ package com.github.eacryo.mongoflex.config;
 
 import com.github.eacryo.mongoflex.constant.MongoFlexConstant;
 import jakarta.annotation.PostConstruct;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -23,6 +25,7 @@ public class MongoTemplateFactory {
 
     //不清楚用这个好在哪里，从mybatis-plus的代码中看到的
     private static final Logger LOGGER = LoggerFactory.getLogger(MongoTemplateFactory.class);
+
 
     private static final String MONGO_TEMPLATE_PREFIX = "mongoTemplate_";
 
@@ -48,17 +51,11 @@ public class MongoTemplateFactory {
     }
 
     public MongoTemplate select() {
-        //多租户有两种方案,一种是使用不同的数据库.另一种是相同的数据库但不同的表
-        //这里需要兼容两种方案
-        //请求头拆分成两部分tenant和tenantTablePrefix,前者不可为空,后者可为空
-        return select(MDC.get(MongoFlexConstant.TENANT));
-    }
-
-    public MongoTemplate single() {
+        if (mongoFlexProperties.isEnableMultiTenants()) return select(MDC.get(MongoFlexConstant.TENANT));
         return select(MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE);
     }
 
-    //StringUtils.isEmpty()已经废弃，使用StringUtils中的hasLength(String)或者hasText(String) 方法来替换
+
     public MongoTemplate select(String tenant) {
         if (!StringUtils.hasText(tenant) || !templates.containsKey(tenant)) {
             throw new NullPointerException("cannot found MongoTemplate for tenant: " + tenant);
