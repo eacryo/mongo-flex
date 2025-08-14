@@ -1,5 +1,7 @@
 # mongo-flex
 
+[中文](README-zh.md)
+
 ## what is it?
 Mongo-flex is a toolkit of MongoDB for simplifying development.
 
