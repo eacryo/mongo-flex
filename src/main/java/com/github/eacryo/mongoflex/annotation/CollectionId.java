@@ -12,6 +12,4 @@ import java.lang.annotation.Target;
 @Id
 public @interface CollectionId {
     String value() default "";
-
-    IdType type() default IdType.NONE;
 }

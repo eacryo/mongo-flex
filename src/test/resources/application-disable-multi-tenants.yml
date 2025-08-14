@@ -7,4 +7,3 @@ spring:
 logging:
   level:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-    com.github.eacryo.mongoflex.aspect.MongoEntityAspect: DEBUG

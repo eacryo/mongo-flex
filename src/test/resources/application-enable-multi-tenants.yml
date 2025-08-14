@@ -8,15 +8,7 @@ spring:
   data:
     mongodb:
       uri: mongodb://sa:Aa123456@192.168.0.103:27017/test_db?authSource=admin
-#          - name : testTenant
-#            tablePrefix: uk
-#            uri: mongodb://root:123456@localhost:27017/ceres_db?authSource=admin
-#          - name : tenantNameA
-#            uri: mongodb://root:123456@localhost:27017/your_db?authSource=admin
-#          - name: tenantNameB
-#            uri: mongodb://root:123456@anotherhost:27017/another_db?authSource=admin
 
 logging:
   level:
     org.springframework.data.mongodb.core.MongoTemplate: DEBUG
-    com.github.eacryo.mongoflex.aspect.MongoEntityAspect: DEBUG

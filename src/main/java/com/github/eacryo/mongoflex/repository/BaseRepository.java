@@ -29,8 +29,6 @@ import java.util.Map;
 //这个类应当被设置为抽象类，因为它本身不会被使用，使用的是它的子类
 public class BaseRepository<T> implements IBaseRepository<T> {
 
-    //TODO:可以考虑初始化时把DTO对象信息缓存起来，这样不用每次都通过反射获取对象信息了。
-
     //这里private也可以，不需要protected
     private Class<T> entityClass;
 
@@ -40,11 +38,8 @@ public class BaseRepository<T> implements IBaseRepository<T> {
 
     private Field idField;
 
-    //TODO:考虑移除对同库多租户的支持
     private String collectionName;
 
-
-    //TODO:这里会报错，但是使用起来没问题
     @Autowired
     private MongoTemplateFactory mongoTemplateFactory;
 
