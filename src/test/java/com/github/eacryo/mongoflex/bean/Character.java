@@ -1,12 +1,13 @@
 package com.github.eacryo.mongoflex.bean;
 
+import com.github.eacryo.mongoflex.Constant;
 import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CollectionName;
 import lombok.Data;
 
 import java.util.Date;
 
-@CollectionName("testBean")
+@CollectionName(Constant.COLLECTION_NAME)
 @Data
 public class Character {
 

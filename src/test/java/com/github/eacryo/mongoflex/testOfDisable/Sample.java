@@ -15,6 +15,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import java.util.Date;
 import java.util.UUID;
 
+import static com.github.eacryo.mongoflex.Constant.COLLECTION_NAME;
+
 public class Sample extends BaseDisableTest {
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -36,7 +38,7 @@ public class Sample extends BaseDisableTest {
         characterRepository.save(character);
         Query query = new Query();
         query.addCriteria(LambdaCriteria.where(Character::getId).is(character.getId()));
-        Character user = mongoTemplateFactory.select().findOne(query, Character.class, "testBean");
+        Character user = mongoTemplateFactory.select().findOne(query, Character.class, COLLECTION_NAME);
         Assertions.assertEquals(character, user);
     }
 
@@ -50,7 +52,7 @@ public class Sample extends BaseDisableTest {
         Query query = new Query();
         query.addCriteria(LambdaCriteria.where(Character::getId).is(character.getId()));
         Update update = UpdateBuilder.builder().set(Character::getName, "456").build();
-        mongoTemplateFactory.select().updateFirst(query, update, "testBean");
+        mongoTemplateFactory.select().updateFirst(query, update, COLLECTION_NAME);
     }
 
     @Test
@@ -66,7 +68,7 @@ public class Sample extends BaseDisableTest {
         character.setAddress("Li Yue");
         character.setCreateAt(new Date());
         Update update = UpdateBuilder.from(character);
-        mongoTemplateFactory.select().updateFirst(query, update, "testBean");
+        mongoTemplateFactory.select().updateFirst(query, update, COLLECTION_NAME);
     }
 
 }
