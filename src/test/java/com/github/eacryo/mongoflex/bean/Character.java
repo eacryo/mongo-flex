@@ -20,4 +20,5 @@ public class Character {
     private Date birthday;
     private String gender;
     private String status;
+    private Date createAt;
 }
