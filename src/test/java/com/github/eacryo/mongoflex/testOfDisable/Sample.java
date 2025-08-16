@@ -3,12 +3,14 @@ package com.github.eacryo.mongoflex.testOfDisable;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.config.LambdaCriteria;
 import com.github.eacryo.mongoflex.config.MongoTemplateFactory;
+import com.github.eacryo.mongoflex.config.UpdateBuilder;
 import com.github.eacryo.mongoflex.repository.CharacterRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 
 import java.util.UUID;
 
@@ -35,6 +37,19 @@ public class Sample extends BaseDisableTest{
         query.addCriteria(LambdaCriteria.where(Character::getId).is(character.getId()));
         Character user = mongoTemplateFactory.select().findOne(query, Character.class, "testBean");
         Assertions.assertEquals(character,user);
+    }
+
+    @Test
+    public void testUpdateBuilder(){
+        String id = UUID.randomUUID().toString();
+        Character character = new Character();
+        character.setName("123");
+        character.setId(id);
+        characterRepository.save(character);
+        Query query = new Query();
+        query.addCriteria(LambdaCriteria.where(Character::getId).is(character.getId()));
+        Update update = UpdateBuilder.builder().set(Character::getName, "456").build();
+        mongoTemplateFactory.select().updateFirst(query,update,"testBean");
     }
     
 }
