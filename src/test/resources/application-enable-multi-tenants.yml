@@ -4,10 +4,6 @@ mongo-flex:
   tenants:
     - name: testTenant
       uri: mongodb://sa:Aa123456@192.168.0.103:27017/test_db?authSource=admin
-spring:
-  data:
-    mongodb:
-      uri: mongodb://sa:Aa123456@192.168.0.103:27017/test_db?authSource=admin
 
 logging:
   level:
