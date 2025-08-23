@@ -3,6 +3,8 @@ package com.github.eacryo.mongoflex.bean;
 import com.github.eacryo.mongoflex.Constant;
 import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CollectionName;
+import com.github.eacryo.mongoflex.annotation.CreateDate;
+import com.github.eacryo.mongoflex.annotation.UpdateDate;
 import lombok.Data;
 import lombok.ToString;
 
@@ -23,5 +25,8 @@ public class Character {
     private Date birthday;
     private String gender;
     private String status;
+    @CreateDate
     private Date createAt;
+    @UpdateDate
+    private Date updateAt;
 }

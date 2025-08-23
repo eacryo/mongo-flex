@@ -1,6 +1,8 @@
 package com.github.eacryo.mongoflex.util;
 
 import com.github.eacryo.mongoflex.annotation.CollectionId;
+import com.github.eacryo.mongoflex.annotation.CreateDate;
+import com.github.eacryo.mongoflex.annotation.UpdateDate;
 import com.github.eacryo.mongoflex.config.SFunction;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
@@ -44,6 +46,24 @@ public class ReflectUtil {
         throw new IllegalArgumentException("未找到id对应字段");
     }
 
+    public static Field getCreateDateField(List<Field> fields) {
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(CreateDate.class)) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+    public static Field getUpdateDateField(List<Field> fields) {
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(UpdateDate.class)) {
+                return field;
+            }
+        }
+        return null;
+    }
+
     // 获取方法引用对应的字段名
     public static <T, R> String getFieldName(SFunction<T, R> func) {
         try {
@@ -61,12 +81,12 @@ public class ReflectUtil {
             } else {
                 fieldName = methodName;
             }
-            
+
             // 特殊处理：id字段映射到MongoDB的_id字段
             if ("id".equals(fieldName)) {
                 return "_id";
             }
-            
+
             return fieldName;
         } catch (Exception e) {
             throw new RuntimeException("解析字段名失败: " + e.getMessage(), e);

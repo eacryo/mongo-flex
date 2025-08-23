@@ -11,6 +11,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ResolvableType;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -38,6 +39,8 @@ public class BaseRepository<T,ID> implements IBaseRepository<T,ID> {
     private Map<String,String> fieldMapping;
 
     private Field idField;
+    private Field createDateField;
+    private Field updateDateField;
 
     private String collectionName;
 
@@ -246,8 +249,8 @@ public class BaseRepository<T,ID> implements IBaseRepository<T,ID> {
         this.entityFields = ReflectUtil.getAllFieldsIncludingInherited(entityClass);
 
         this.idField = ReflectUtil.getIdField(this.entityFields);
-        idField.setAccessible(true);
-
+        this.createDateField = ReflectUtil.getCreateDateField(this.entityFields);
+        this.updateDateField = ReflectUtil.getUpdateDateField(this.entityFields);
         this.collectionName = collectionNameUtil.getByClass(entityClass);
 
 
