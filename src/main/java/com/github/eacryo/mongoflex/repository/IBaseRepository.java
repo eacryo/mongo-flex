@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 //@Component
-public interface IBaseRepository<T> {
+public interface IBaseRepository<T,ID> {
     T save(T entity);
 
     boolean insertAll(Collection<T> entities);

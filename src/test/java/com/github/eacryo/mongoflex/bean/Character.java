@@ -4,11 +4,13 @@ import com.github.eacryo.mongoflex.Constant;
 import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CollectionName;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Date;
 
 @CollectionName(Constant.COLLECTION_NAME)
 @Data
+@ToString
 public class Character {
 
     @CollectionId

@@ -4,6 +4,6 @@ import com.github.eacryo.mongoflex.bean.Character;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CharacterRepository extends BaseRepository<Character>{
+public class CharacterRepository extends BaseRepository<Character,String>{
 
 }
