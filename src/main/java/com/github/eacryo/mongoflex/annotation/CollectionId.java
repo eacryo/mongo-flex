@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.annotation;
 
+import com.github.eacryo.mongoflex.constant.IdType;
 import org.springframework.data.annotation.Id;
 
 import java.lang.annotation.ElementType;
@@ -11,5 +12,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Id
 public @interface CollectionId {
-    String value() default "";
+    IdType value() default IdType.NONE;
 }
