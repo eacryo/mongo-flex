@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.aspect;
 
 import com.github.eacryo.mongoflex.annotation.CollectionId;
+import com.github.eacryo.mongoflex.config.IdGenerator;
 import com.github.eacryo.mongoflex.config.UserMetaObjectHandler;
 import com.github.eacryo.mongoflex.constant.IdType;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
@@ -26,6 +27,8 @@ public class MongoTemplateAspect {
 
     @Autowired(required = false)
     private UserMetaObjectHandler userMetaObjectHandler;
+    @Autowired(required = false)
+    private IdGenerator<?> idGenerator;
 
     //这里只拦截insert不拦截save，save语义不清晰无法判断到底是insert还是update
     @Around("execution(* org.springframework.data.mongodb.core.MongoTemplate.insert(..))")
@@ -109,6 +112,10 @@ public class MongoTemplateAspect {
         if (annotation.value().equals(IdType.UUID)) {
             idField.set(entity, UUID.randomUUID().toString());
         }
-        //TODO:考虑兼容用户自己的id生成器实现
+        if (annotation.value().equals(IdType.INPUT)){
+            if (idGenerator == null)
+                throw new IllegalArgumentException("未找到idGenerator的实现类");
+            idField.set(entity, idGenerator.create());
+        }
     }
 }
