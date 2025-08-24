@@ -10,7 +10,7 @@ import java.util.List;
 
 //@Component
 public interface IBaseRepository<T,ID> {
-    T save(T entity);
+    T insert(T entity);
 
     boolean insertAll(Collection<T> entities);
 

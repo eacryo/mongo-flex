@@ -56,8 +56,8 @@ public class BaseRepository<T,ID> implements IBaseRepository<T,ID> {
      * @return 主键id
      */
     @Override
-    public T save(T entity) {
-        return mongoTemplateFactory.select().save(entity, collectionName);
+    public T insert(T entity) {
+        return mongoTemplateFactory.select().insert(entity, collectionName);
     }
 
     @Override
