@@ -5,6 +5,7 @@ import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CollectionName;
 import com.github.eacryo.mongoflex.annotation.CreateDate;
 import com.github.eacryo.mongoflex.annotation.UpdateDate;
+import com.github.eacryo.mongoflex.constant.IdType;
 import lombok.Data;
 import lombok.ToString;
 
@@ -15,7 +16,7 @@ import java.util.Date;
 @ToString
 public class Character {
 
-    @CollectionId
+    @CollectionId(IdType.ULID)
     private String id;
     private String cid;
     private String name;
@@ -25,6 +26,7 @@ public class Character {
     private Date birthday;
     private String gender;
     private String status;
+    private String description;
     @CreateDate
     private Date createAt;
     @UpdateDate

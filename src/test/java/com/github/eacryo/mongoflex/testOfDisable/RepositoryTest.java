@@ -34,7 +34,7 @@ public class RepositoryTest extends BaseDisableTest{
         character.setId(ulid);
         character.setName("Ukinami Yuzuha");
         character.setBirthday(new Date());
-        characterRepository.save(character);
+        characterRepository.insert(character);
         Character byId = characterRepository.findById(ulid);
         System.out.println(byId);
         Assertions.assertNotNull(byId);

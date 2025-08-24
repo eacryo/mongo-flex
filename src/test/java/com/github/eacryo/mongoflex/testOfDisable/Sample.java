@@ -35,7 +35,7 @@ public class Sample extends BaseDisableTest {
         Character character = new Character();
         character.setName("test");
         character.setId(UUID.randomUUID().toString());
-        characterRepository.save(character);
+        characterRepository.insert(character);
         Query query = new Query();
         query.addCriteria(LambdaCriteria.where(Character::getId).is(character.getId()));
         Character user = mongoTemplateFactory.select().findOne(query, Character.class, COLLECTION_NAME);
@@ -48,7 +48,7 @@ public class Sample extends BaseDisableTest {
         Character character = new Character();
         character.setName("123");
         character.setId(id);
-        characterRepository.save(character);
+        characterRepository.insert(character);
         Query query = new Query();
         query.addCriteria(LambdaCriteria.where(Character::getId).is(character.getId()));
         Update update = UpdateBuilder.builder().set(Character::getName, "456").build();
@@ -61,7 +61,7 @@ public class Sample extends BaseDisableTest {
         Character character = new Character();
         character.setName("234");
         character.setId(id);
-        characterRepository.save(character);
+        characterRepository.insert(character);
         Query query = new Query();
         query.addCriteria(LambdaCriteria.where(Character::getId).is(character.getId()));
         character.setName("888");
@@ -69,6 +69,21 @@ public class Sample extends BaseDisableTest {
         character.setCreateAt(new Date());
         Update update = UpdateBuilder.from(character);
         mongoTemplateFactory.select().updateFirst(query, update, COLLECTION_NAME);
+    }
+
+    @Test
+    public void testAutoGenerateId() {
+        Character character = new Character();
+        character.setName("Hu Tao");
+        characterRepository.insert(character);
+    }
+
+    @Test
+    public void testManualSetId(){
+        Character character = new Character();
+        character.setId("specialId");
+        character.setName("Hu Tao");
+        characterRepository.insert(character);
     }
 
 }

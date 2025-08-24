@@ -1,36 +1,56 @@
 package com.github.eacryo.mongoflex.aspect;
 
+import com.github.eacryo.mongoflex.annotation.CollectionId;
+import com.github.eacryo.mongoflex.config.UserMetaObjectHandler;
+import com.github.eacryo.mongoflex.constant.IdType;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
+import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Aspect
 @Component
 @Slf4j
 public class MongoTemplateAspect {
 
-    @Around("execution(* org.springframework.data.mongodb.core.MongoTemplate.insert(Object, String)) ||" +
-            "execution(* org.springframework.data.mongodb.core.MongoTemplate.save(Object, String))")
-    public Object handleInsertOrSave(ProceedingJoinPoint joinPoint) throws Throwable {
+    @Autowired(required = false)
+    private UserMetaObjectHandler userMetaObjectHandler;
+
+    //这里只拦截insert不拦截save，save语义不清晰无法判断到底是insert还是update
+    @Around("execution(* org.springframework.data.mongodb.core.MongoTemplate.insert(..))")
+    public Object handleInsert(ProceedingJoinPoint joinPoint) throws Throwable {
         log.info("命中insert,save操作");
         Object[] args = joinPoint.getArgs();
-        Object entity = args[0];
-        setCreateDateField(entity);
+        if (args[0] instanceof Collection<?> collection) {
+            collection.forEach(this::fillForInsert);
+        } else {
+            fillForInsert(args[0]);
+        }
         return joinPoint.proceed();
+    }
+
+
+    public Object handleUpdate(ProceedingJoinPoint joinPoint) throws Throwable {
+        log.info("命中update操作");
+        return joinPoint.proceed();
+    }
+
+    private void fillForInsert(Object entity) {
+        setCreateDateField(entity);
+        setIdField(entity);
+        if (userMetaObjectHandler != null) {
+            userMetaObjectHandler.insertFill(entity);
+        }
     }
 
 
@@ -45,13 +65,34 @@ public class MongoTemplateAspect {
             if (Objects.equals(fieldType, Date.class)) {
                 o = new Date();
             }
-//            if (Objects.equals(fieldType, Instant.class)) {
-//                o = Instant.now();
-//            }
-//            if (Objects.equals(fieldType, LocalDateTime.class)) {
-//                o = LocalDateTime.now();
-//            }
+            if (Objects.equals(fieldType, Instant.class)) {
+                o = Instant.now();
+            }
+            if (Objects.equals(fieldType, LocalDateTime.class)) {
+                o = LocalDateTime.now();
+            }
             createDateField.set(entity, o);
         }
+    }
+
+    @SneakyThrows
+    private void setIdField(Object entity) {
+        List<Field> fields = ReflectUtil.getAllFieldsIncludingInherited(entity.getClass());
+        Field idField = ReflectUtil.getIdFieldNotThrow(fields);
+        if (idField == null) return;
+        //如果id字段有值，不做操作
+        idField.setAccessible(true);
+        if (Objects.nonNull(idField.get(entity))) return;
+        CollectionId annotation = idField.getAnnotation(CollectionId.class);
+        if (annotation.value().equals(IdType.NONE)) {
+            return;
+        }
+        if (annotation.value().equals(IdType.ULID)) {
+            idField.set(entity, UlidCreator.getUlid().toString());
+        }
+        if (annotation.value().equals(IdType.UUID)) {
+            idField.set(entity, UUID.randomUUID().toString());
+        }
+        //TODO:考虑兼容用户自己的id生成器实现
     }
 }

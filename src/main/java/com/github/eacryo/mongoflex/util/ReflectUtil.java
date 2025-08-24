@@ -13,6 +13,7 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class ReflectUtil {
+
     /**
      * 获取对象的所有字段（包括继承的字段）
      *
@@ -46,6 +47,15 @@ public class ReflectUtil {
         throw new IllegalArgumentException("未找到id对应字段");
     }
 
+    public static Field getIdFieldNotThrow(List<Field> fields) {
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(CollectionId.class)) {
+                return field;
+            }
+        }
+        return null;
+    }
+
     public static Field getCreateDateField(List<Field> fields) {
         for (Field field : fields) {
             if (field.isAnnotationPresent(CreateDate.class)) {
@@ -62,6 +72,11 @@ public class ReflectUtil {
             }
         }
         return null;
+    }
+
+    public static Field getFiled(Class<?> clazz, String fieldName) {
+        List<Field> fields = getAllFieldsIncludingInherited(clazz);
+        return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElse(null);
     }
 
     // 获取方法引用对应的字段名
