@@ -11,6 +11,7 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
@@ -40,8 +41,14 @@ public class MongoTemplateAspect {
     }
 
 
+    @Around("execution(* org.springframework.data.mongodb.core.MongoTemplate.updateFirst(..)) || " +
+            "execution(* org.springframework.data.mongodb.core.MongoTemplate.updateMulti(..))")
     public Object handleUpdate(ProceedingJoinPoint joinPoint) throws Throwable {
         log.info("命中update操作");
+        Object[] args = joinPoint.getArgs();
+        if (args[1] instanceof Update update && userMetaObjectHandler != null) {
+            userMetaObjectHandler.updateFill(update);
+        }
         return joinPoint.proceed();
     }
 
@@ -51,6 +58,10 @@ public class MongoTemplateAspect {
         if (userMetaObjectHandler != null) {
             userMetaObjectHandler.insertFill(entity);
         }
+    }
+
+    private void fillForUpdate(Update update) {
+        userMetaObjectHandler.updateFill(update);
     }
 
 
@@ -73,6 +84,11 @@ public class MongoTemplateAspect {
             }
             createDateField.set(entity, o);
         }
+    }
+
+    @SneakyThrows
+    private void setUpdateDateField() {
+
     }
 
     @SneakyThrows

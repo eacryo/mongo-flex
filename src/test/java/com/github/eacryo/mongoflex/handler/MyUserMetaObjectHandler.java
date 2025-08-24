@@ -4,6 +4,7 @@ import com.github.eacryo.mongoflex.config.UserMetaObjectHandler;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
@@ -22,9 +23,9 @@ public class MyUserMetaObjectHandler implements UserMetaObjectHandler {
     }
 
     @Override
-    public void updateFill(Object object) {
+    public void updateFill(Update update) {
         log.info("update fill start");
-        fill(object, "updateDate", Date.class, new Date());
+        update.set("updateDate", new Date());
         log.info("update fill end");
     }
 
