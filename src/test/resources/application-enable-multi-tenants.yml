@@ -4,6 +4,8 @@ mongo-flex:
   tenants:
     - name: mi
       uri: mongodb://sa:Aa123456@192.168.0.102:27017/test_db?authSource=admin
+    - name: remote
+      uri: ${REMOTE_MONGO_URI}
 
 logging:
   level:
