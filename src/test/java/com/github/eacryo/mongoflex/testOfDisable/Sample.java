@@ -1,9 +1,9 @@
 package com.github.eacryo.mongoflex.testOfDisable;
 
 import com.github.eacryo.mongoflex.bean.Character;
-import com.github.eacryo.mongoflex.config.LambdaCriteria;
+import com.github.eacryo.mongoflex.lambda.LambdaCriteria;
 import com.github.eacryo.mongoflex.config.MongoTemplateFactory;
-import com.github.eacryo.mongoflex.config.UpdateBuilder;
+import com.github.eacryo.mongoflex.lambda.UpdateBuilder;
 import com.github.eacryo.mongoflex.repository.CharacterRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;

@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.config;
+package com.github.eacryo.mongoflex.naming;
 
 import com.github.eacryo.mongoflex.annotation.CollectionField;
 import org.springframework.data.mapping.PersistentProperty;

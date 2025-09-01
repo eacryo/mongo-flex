@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.config;
+package com.github.eacryo.mongoflex.lambda;
 
 import java.io.Serializable;
 import java.util.function.Function;

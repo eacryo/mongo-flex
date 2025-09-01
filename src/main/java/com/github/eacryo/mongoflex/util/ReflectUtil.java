@@ -3,7 +3,7 @@ package com.github.eacryo.mongoflex.util;
 import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CreateDate;
 import com.github.eacryo.mongoflex.annotation.UpdateDate;
-import com.github.eacryo.mongoflex.config.SFunction;
+import com.github.eacryo.mongoflex.lambda.SFunction;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 

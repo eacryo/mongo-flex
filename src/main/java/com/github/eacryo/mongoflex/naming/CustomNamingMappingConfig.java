@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.config;
+package com.github.eacryo.mongoflex.naming;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

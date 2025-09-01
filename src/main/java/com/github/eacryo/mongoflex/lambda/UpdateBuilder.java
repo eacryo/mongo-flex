@@ -1,11 +1,9 @@
-package com.github.eacryo.mongoflex.config;
+package com.github.eacryo.mongoflex.lambda;
 
 import com.github.eacryo.mongoflex.util.ReflectUtil;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 
 public class UpdateBuilder {
