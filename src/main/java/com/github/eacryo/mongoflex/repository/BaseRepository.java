@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.repository.NoRepositoryBean;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -26,9 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-//@Component
-//如果标了Component会实例化两次（父类本身和子类，第一次触发父类实例化的时候拿不到泛型信息就会报错）
-//这个类应当被设置为抽象类，因为它本身不会被使用，使用的是它的子类
+@NoRepositoryBean
 public class BaseRepository<T,ID> implements IBaseRepository<T,ID> {
 
     //这里private也可以，不需要protected
