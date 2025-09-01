@@ -8,7 +8,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.util.Collection;
 import java.util.List;
 
-//@Component
 public interface IBaseRepository<T,ID> {
     T insert(T entity);
 

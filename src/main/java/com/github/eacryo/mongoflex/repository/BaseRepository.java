@@ -7,6 +7,7 @@ import com.github.eacryo.mongoflex.util.CollectionNameUtil;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import jakarta.annotation.PostConstruct;
 
+import jakarta.annotation.Resource;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ResolvableType;
@@ -43,10 +44,10 @@ public class BaseRepository<T,ID> implements IBaseRepository<T,ID> {
 
     private String collectionName;
 
-    @Autowired
+    @Resource
     private MongoTemplateFactory mongoTemplateFactory;
 
-    @Autowired
+    @Resource
     private CollectionNameUtil collectionNameUtil;
 
 

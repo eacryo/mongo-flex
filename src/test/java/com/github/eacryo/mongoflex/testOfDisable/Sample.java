@@ -5,6 +5,7 @@ import com.github.eacryo.mongoflex.config.LambdaCriteria;
 import com.github.eacryo.mongoflex.config.MongoTemplateFactory;
 import com.github.eacryo.mongoflex.config.UpdateBuilder;
 import com.github.eacryo.mongoflex.repository.CharacterRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import java.util.UUID;
 
 import static com.github.eacryo.mongoflex.Constant.COLLECTION_NAME;
 
+@Slf4j
 public class Sample extends BaseDisableTest {
     @Autowired
     private MongoTemplate mongoTemplate;
@@ -84,6 +86,18 @@ public class Sample extends BaseDisableTest {
         character.setId("specialId");
         character.setName("Hu Tao");
         characterRepository.insert(character);
+    }
+
+    @Test
+    public void testFieldMapping(){
+        Character character = new Character();
+        character.setName("Zhong Li");
+        character.setArea("Liyue");
+        characterRepository.insert(character);
+        Character byId = characterRepository.findById(character.getId());
+        log.info("character:{}", character);
+        log.info("byId:{}", byId);
+        Assertions.assertEquals(character,byId);
     }
 
 }
