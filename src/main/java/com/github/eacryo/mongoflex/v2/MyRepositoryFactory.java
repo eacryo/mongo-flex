@@ -6,11 +6,11 @@ import java.lang.reflect.Proxy;
 public class MyRepositoryFactory {
 
     @SuppressWarnings("unchecked")
-    public static <T> T getRepository(MongoDatabase database, Class<T> repositoryInterface) {
+    public static <T,E> T getRepository(MongoDatabase database, Class<T> repositoryInterface , Class<E> entityClass) {
         return (T) Proxy.newProxyInstance(
             repositoryInterface.getClassLoader(),
             new Class<?>[]{repositoryInterface},
-            new MyRepositoryProxyHandler<>(database, getEntityClass(repositoryInterface))
+            new MyRepositoryProxyHandler<>(database, entityClass)
         );
     }
     
@@ -18,10 +18,12 @@ public class MyRepositoryFactory {
     private static Class<?> getEntityClass(Class<?> repositoryInterface) {
         String interfaceName = repositoryInterface.getSimpleName();
         String entityName = interfaceName.replace("Repository", "");
-        try {
-            return Class.forName(repositoryInterface.getPackage().getName() + "." + entityName);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Could not find entity class for repository: " + repositoryInterface.getName(), e);
-        }
+        //TODO:
+        return Character.class;
+//        try {
+//            return Class.forName(repositoryInterface.getPackage().getName() + "." + entityName);
+//        } catch (ClassNotFoundException e) {
+//            throw new RuntimeException("Could not find entity class for repository: " + repositoryInterface.getName(), e);
+//        }
     }
 }

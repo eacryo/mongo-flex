@@ -18,5 +18,5 @@ public interface CharacterRepositoryV2 {
 //    Character findById(String id);
 
     @Mql("db.getCollection(\"character\").find({})")
-    List<Character> find();
+    List<Character> findAll();
 }
