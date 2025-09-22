@@ -16,4 +16,5 @@ public class MongoFlexProperties {
 
     private boolean enableMultiTenants;
     private boolean toSnakeCase;
+    private String uri;
 }

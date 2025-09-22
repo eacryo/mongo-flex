@@ -2,7 +2,8 @@
 spring:
   data:
     mongodb:
-      uri: mongodb://sa:Aa123456@192.168.0.102:27017/test_db?authSource=admin
+      uri: ${REMOTE_MONGO_URI}
+    #uri: mongodb://sa:Aa123456@192.168.0.102:27017/test_db?authSource=admin
 
 logging:
   level:

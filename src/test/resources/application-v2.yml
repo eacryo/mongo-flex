@@ -1,0 +1,2 @@
+mongo-flex:
+  uri: ${REMOTE_MONGO_URI}

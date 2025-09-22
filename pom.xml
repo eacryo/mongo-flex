@@ -101,6 +101,11 @@
             <scope>provided</scope>     <!-- 关键1：不打包到产物中 -->
             <optional>true</optional>  <!-- 关键2：阻止依赖传递 -->
         </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>5.5.1</version>
+        </dependency>
 
     </dependencies>
 
