@@ -3,15 +3,17 @@ package com.github.eacryo.mongoflex.v2;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
+
+import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -36,7 +38,10 @@ public class MyRepositoryProxyHandler<T> implements InvocationHandler {
         if (method.isAnnotationPresent(Mql.class)) {
             Mql myQuery = method.getAnnotation(Mql.class);
             String shellCommand = myQuery.value();
-
+            //TODO
+            Parameter[] parameters = method.getParameters();
+            shellCommand = replaceShellCommand(shellCommand, parameters, args);
+            //shellCommand = shellCommand.replace("#{name}", (String) args[0]);
             // 1. 解析 MongoDB Shell 语句
             // 这里的 args 数组将用于替换占位符，但你希望解析完整的shell语句，所以先不处理占位符
             QueryParser.QueryCommand parsedCommand = queryParser.parse(shellCommand);
@@ -80,10 +85,25 @@ public class MyRepositoryProxyHandler<T> implements InvocationHandler {
         try {
             T instance = clazz.getDeclaredConstructor().newInstance();
             SimpleMongoConverter simpleMongoConverter = new SimpleMongoConverter();
-            instance = simpleMongoConverter.convert(doc,clazz);
+            instance = simpleMongoConverter.convert(doc, clazz);
             return instance;
         } catch (Exception e) {
             throw new RuntimeException("Error mapping document to entity", e);
         }
+    }
+
+    private String replaceShellCommand(String shellCommand, Parameter[] parameters, Object[] args) {
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter param = parameters[i];
+            // 检查是否有 @Param 注解
+            Param paramAnnotation = param.getAnnotation(Param.class);
+            if (paramAnnotation != null) {
+                // 获取注解值作为参数名
+                String paramName = paramAnnotation.value();
+                // 将参数名和实际参数值存入 Map
+                shellCommand = shellCommand.replace("#{" + paramName + "}", args[i].toString());
+            }
+        }
+        return shellCommand;
     }
 }

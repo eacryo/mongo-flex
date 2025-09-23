@@ -15,7 +15,7 @@ import java.util.List;
 
 @SpringBootTest(classes = {TestApplication.class})
 @ActiveProfiles("v2")
-public class V2QueryTests {
+public class V2AnnotationQueryTests {
 
     @Autowired
     private MongoFlexProperties mongoFlexProperties;
@@ -26,7 +26,7 @@ public class V2QueryTests {
     }
 
     @Test
-    public void findAllByAnnotation() {
+    public void testFindAll() {
         MongoClient mongoClient = MongoClients.create(mongoFlexProperties.getUri());
         //TODO:先写死
         MongoDatabase database = mongoClient.getDatabase("mongo_flex");
@@ -36,5 +36,20 @@ public class V2QueryTests {
         // 调用代理方法，它会执行我们实现的逻辑
         List<Character> characterList = characterRepositoryV2.findAll();
         characterList.forEach(System.out::println);
+    }
+
+    @Test
+    public void testFindByCriteria() {
+        MongoClient mongoClient = MongoClients.create(mongoFlexProperties.getUri());
+        //TODO:先写死
+        MongoDatabase database = mongoClient.getDatabase("mongo_flex");
+
+        CharacterRepositoryV2 characterRepositoryV2 = MyRepositoryFactory.getRepository(database, CharacterRepositoryV2.class, Character.class);
+
+        // 调用代理方法，它会执行我们实现的逻辑
+        List<Character> characterList = characterRepositoryV2.findListByCriteria("Hu Tao");
+        characterList.forEach(System.out::println);
+        List<Character> anotherList = characterRepositoryV2.findListByCriteria("Ganyu");
+        anotherList.forEach(System.out::println);
     }
 }

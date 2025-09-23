@@ -19,4 +19,7 @@ public interface CharacterRepositoryV2 {
 
     @Mql("db.getCollection(\"character\").find({})")
     List<Character> findAll();
+
+    @Mql("db.getCollection(\"character\").find({\"name\":\"#{name}\"})")
+    List<Character> findListByCriteria(@Param("name") String name);
 }
