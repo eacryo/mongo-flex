@@ -5,8 +5,8 @@ import java.util.regex.Pattern;
 import org.bson.Document;
 
 public class QueryParser {
-
-    private final Pattern commandPattern = Pattern.compile("db\\.getCollection\\(\"(.*?)\"\\)\\.(find|findOne)\\((.*?)\\)");
+    //这里只解析单引号'不解析双引号"
+    private final Pattern commandPattern = Pattern.compile("db\\.getCollection\\('(.*?)'\\)\\.(find|findOne)\\((.*?)\\)");
 
     public QueryCommand parse(String shellCommand) {
         Matcher matcher = commandPattern.matcher(shellCommand);

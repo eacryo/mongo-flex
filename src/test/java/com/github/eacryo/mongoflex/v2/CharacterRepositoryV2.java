@@ -17,15 +17,15 @@ public interface CharacterRepositoryV2 {
 //    @Mql("{ _id: ?0 }")
 //    Character findById(String id);
 
-    @Mql("db.getCollection(\"character\").find({})")
+    @Mql("db.getCollection('character').find({})")
     List<Character> findAll();
 
-    @Mql("db.getCollection(\"character\").find({\"name\":\"#{name}\"})")
+    @Mql("db.getCollection('character').find({'name':'#{name}'})")
     List<Character> findListByCriteria(@Param("name") String name);
 
-    @Mql("db.getCollection(\"character\").find({\"_id\":\"#{id}\",\"name\":\"#{name}\"})")
+    @Mql("db.getCollection('character').find({'_id':'#{id}','name':'#{name}'})")
     List<Character> findListByNameAndId(@Param("name") String name, @Param("id") String id);
 
-    @Mql("db.getCollection(\"character\").find({\"name\":\"Hu Tao\"})")
+    @Mql("db.getCollection('character').find({'name':'Hu Tao'})")
     List<Character> findListWithoutParam();
 }
