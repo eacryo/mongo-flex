@@ -22,4 +22,10 @@ public interface CharacterRepositoryV2 {
 
     @Mql("db.getCollection(\"character\").find({\"name\":\"#{name}\"})")
     List<Character> findListByCriteria(@Param("name") String name);
+
+    @Mql("db.getCollection(\"character\").find({\"_id\":\"#{id}\",\"name\":\"#{name}\"})")
+    List<Character> findListByNameAndId(@Param("name") String name, @Param("id") String id);
+
+    @Mql("db.getCollection(\"character\").find({\"name\":\"Hu Tao\"})")
+    List<Character> findListWithoutParam();
 }

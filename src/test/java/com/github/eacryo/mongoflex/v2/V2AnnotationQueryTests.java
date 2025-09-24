@@ -51,5 +51,17 @@ public class V2AnnotationQueryTests {
         characterList.forEach(System.out::println);
         List<Character> anotherList = characterRepositoryV2.findListByCriteria("Ganyu");
         anotherList.forEach(System.out::println);
+        //给一个确定的参数
+        characterRepositoryV2.findListWithoutParam().forEach(System.out::println);
+    }
+
+    @Test
+    public void testFindListByNameAndId() {
+        MongoClient mongoClient = MongoClients.create(mongoFlexProperties.getUri());
+        //TODO:先写死
+        MongoDatabase database = mongoClient.getDatabase("mongo_flex");
+
+        CharacterRepositoryV2 characterRepositoryV2 = MyRepositoryFactory.getRepository(database, CharacterRepositoryV2.class, Character.class);
+        characterRepositoryV2.findListByNameAndId("Hu Tao", "specialId").forEach(System.out::println);
     }
 }
