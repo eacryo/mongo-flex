@@ -6,7 +6,7 @@ import org.bson.Document;
 
 public class QueryParser {
     //这里只解析单引号'不解析双引号"
-    private final Pattern commandPattern = Pattern.compile("db\\.getCollection\\('(.*?)'\\)\\.(find|findOne)\\((.*?)\\)");
+    private final Pattern commandPattern = Pattern.compile("^db\\.getCollection\\('(.*?)'\\)\\.(find|findOne)\\((.*?)\\)$");
 
     public QueryCommand parse(String shellCommand) {
         Matcher matcher = commandPattern.matcher(shellCommand);
@@ -25,7 +25,8 @@ public class QueryParser {
 
             return new QueryCommand(collectionName, command, queryDoc);
         }
-        throw new IllegalArgumentException("Invalid MongoDB shell command format: " + shellCommand);
+        throw new IllegalArgumentException("Invalid MongoDB shell command format: " + shellCommand +
+                ", expected format: db.getCollection('collectionName').find({'filed':'value'})");
     }
 
     // 内部类用于封装解析结果
