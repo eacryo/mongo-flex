@@ -28,7 +28,7 @@ public class V2AnnotationQueryTests {
 
     @Test
     public void loadContext() {
-        List<Object> allObj = characterRepositoryV2AutoWired.findAllObj();
+        List<Character> allObj = characterRepositoryV2AutoWired.findAll();
         allObj.forEach(System.out::println);
     }
 

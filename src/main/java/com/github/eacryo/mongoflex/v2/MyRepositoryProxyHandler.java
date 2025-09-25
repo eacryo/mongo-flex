@@ -19,22 +19,21 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyRepositoryProxyHandler<T> implements InvocationHandler {
+public class MyRepositoryProxyHandler implements InvocationHandler {
 
     private final MongoDatabase database;
-    private final Class<T> entityClass;
     private final QueryParser queryParser = new QueryParser();
 
     // 这里的 collection 不再是固定的，因为查询语句可以指定不同的集合
     // private final MongoCollection<Document> collection;
 
-    public MyRepositoryProxyHandler(MongoDatabase database, Class<T> entityClass) {
+    public MyRepositoryProxyHandler(MongoDatabase database) {
         this.database = database;
-        this.entityClass = entityClass;
     }
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        Type genericReturnType = method.getGenericReturnType();
         if (method.isAnnotationPresent(Mql.class)) {
             Mql myQuery = method.getAnnotation(Mql.class);
             String shellCommand = myQuery.value();
@@ -51,9 +50,13 @@ public class MyRepositoryProxyHandler<T> implements InvocationHandler {
 
             // 3. 根据解析出的命令执行相应的操作
             if ("find".equals(parsedCommand.command)) {
-                List<T> results = new ArrayList<>();
+                ParameterizedType pType = (ParameterizedType) genericReturnType;
+                Type rawType = pType.getRawType();
+                Type actualType = pType.getActualTypeArguments()[0]; // 获取泛型参数T
+                Class<?> listElementClass = (Class<?>) actualType;
+                List<Object> results = new ArrayList<>();
                 collection.find(parsedCommand.queryDoc).forEach(doc -> {
-                    T entity = mapDocumentToEntity(doc, entityClass);
+                    Object entity = mapDocumentToEntity(doc, listElementClass);
                     results.add(entity);
                 });
 
@@ -67,9 +70,9 @@ public class MyRepositoryProxyHandler<T> implements InvocationHandler {
 
             } else if ("findOne".equals(parsedCommand.command)) {
                 Document doc = collection.find(parsedCommand.queryDoc).first();
-                if (doc != null) {
-                    return mapDocumentToEntity(doc, entityClass);
-                }
+//                if (doc != null) {
+//                    return mapDocumentToEntity(doc, entityClass);
+//                }
                 return null;
             } else {
                 throw new UnsupportedOperationException("Unsupported MongoDB command: " + parsedCommand.command);
@@ -80,7 +83,7 @@ public class MyRepositoryProxyHandler<T> implements InvocationHandler {
     }
 
     // 辅助方法：将Document映射回Java对象
-    private T mapDocumentToEntity(Document doc, Class<T> clazz) {
+    private <T> T mapDocumentToEntity(Document doc, Class<T> clazz) {
         // ... (保持不变，或使用更完善的映射逻辑)
         try {
             T instance = clazz.getDeclaredConstructor().newInstance();

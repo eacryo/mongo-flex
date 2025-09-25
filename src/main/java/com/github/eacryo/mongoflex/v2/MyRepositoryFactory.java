@@ -10,7 +10,7 @@ public class MyRepositoryFactory {
         return (T) Proxy.newProxyInstance(
             repositoryInterface.getClassLoader(),
             new Class<?>[]{repositoryInterface},
-            new MyRepositoryProxyHandler<>(database, entityClass)
+            new MyRepositoryProxyHandler(database)
         );
     }
     

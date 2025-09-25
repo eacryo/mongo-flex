@@ -21,14 +21,14 @@ public class RepositoryFactoryBean<T, E> implements FactoryBean<T> {
 
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked","resource"})
     public T getObject() {
         // 使用动态代理为接口生成实现
         return (T) Proxy.newProxyInstance(
                 repositoryInterface.getClassLoader(),
                 new Class<?>[]{repositoryInterface},
                 //TODO：这里数据库和类型都应该传入，不要写死
-                new MyRepositoryProxyHandler(mongoClient.select().getDatabase("mongo_flex"), Object.class)
+                new MyRepositoryProxyHandler(mongoClient.select().getDatabase("mongo_flex"))
         );
     }
 
