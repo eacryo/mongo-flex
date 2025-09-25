@@ -14,7 +14,7 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.TypeFilter;
 import java.io.IOException;
 
-public class MyOrmRegistrar implements ImportBeanDefinitionRegistrar {
+public class RepositoryRegistrar implements ImportBeanDefinitionRegistrar {
 
     private static final TypeFilter REPOSITORY_FILTER = new AnnotationTypeFilter(MRepository.class);
 
@@ -38,7 +38,7 @@ public class MyOrmRegistrar implements ImportBeanDefinitionRegistrar {
                     Class<?> repositoryInterface = Class.forName(reader.getClassMetadata().getClassName());
 
                     // 创建一个 FactoryBean 的 BeanDefinition
-                    RootBeanDefinition beanDefinition = new RootBeanDefinition(MyOrmFactoryBean.class);
+                    RootBeanDefinition beanDefinition = new RootBeanDefinition(RepositoryFactoryBean.class);
                     beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(repositoryInterface);
 
                     // 注册 Bean 到 Spring 容器中

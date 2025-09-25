@@ -1,14 +1,13 @@
 package com.github.eacryo.mongoflex.v2;
 
 
-import org.bson.Document;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
 import java.lang.reflect.Proxy;
 
-public class MyOrmFactoryBean<T, E> implements FactoryBean<T> {
+public class RepositoryFactoryBean<T, E> implements FactoryBean<T> {
 
     // 注入 MongoDB 客户端
     @Autowired
@@ -16,7 +15,7 @@ public class MyOrmFactoryBean<T, E> implements FactoryBean<T> {
 
     private final Class<T> repositoryInterface;
 
-    public MyOrmFactoryBean(Class<T> repositoryInterface) {
+    public RepositoryFactoryBean(Class<T> repositoryInterface) {
         this.repositoryInterface = repositoryInterface;
     }
 
