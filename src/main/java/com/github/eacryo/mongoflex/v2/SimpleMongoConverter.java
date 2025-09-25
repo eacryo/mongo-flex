@@ -19,6 +19,9 @@ public class SimpleMongoConverter {
         if (document == null || targetClass == null) {
             return null;
         }
+        if (targetClass.equals(Object.class)) {
+            return (T) document;
+        }
 
         try {
             // 1. 创建目标类的实例

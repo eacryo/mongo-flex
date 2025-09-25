@@ -4,6 +4,7 @@ import com.github.eacryo.mongoflex.bean.Character;
 
 import java.util.List;
 
+@MRepository
 public interface CharacterRepositoryV2 {
         // 查询所有名为 'name' 的用户
 //    @Mql("{ name: ?0 }")
@@ -19,6 +20,9 @@ public interface CharacterRepositoryV2 {
 
     @Mql("db.getCollection('character').find({})")
     List<Character> findAll();
+
+    @Mql("db.getCollection('character').find({})")
+    List<Object> findAllObj();
 
     @Mql("db.getCollection('character').find({'name':'#{name}'})")
     List<Character> findListByCriteria(@Param("name") String name);

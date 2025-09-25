@@ -23,9 +23,13 @@ public class V2AnnotationQueryTests {
     @Autowired
     private DynamicMongoClient dynamicMongoClient;
 
+    @Autowired
+    private CharacterRepositoryV2 characterRepositoryV2AutoWired;
+
     @Test
     public void loadContext() {
-
+        List<Object> allObj = characterRepositoryV2AutoWired.findAllObj();
+        allObj.forEach(System.out::println);
     }
 
     @Test
@@ -45,9 +49,7 @@ public class V2AnnotationQueryTests {
 
     @Test
     public void testFindByCriteria() {
-        MongoClient mongoClient = MongoClients.create(mongoFlexProperties.getUri());
-        //TODO:先写死
-        MongoDatabase database = mongoClient.getDatabase("mongo_flex");
+        MongoDatabase database = dynamicMongoClient.select().getDatabase("mongo_flex");
 
         CharacterRepositoryV2 characterRepositoryV2 = MyRepositoryFactory.getRepository(database, CharacterRepositoryV2.class, Character.class);
 
@@ -62,9 +64,7 @@ public class V2AnnotationQueryTests {
 
     @Test
     public void testFindListByNameAndId() {
-        MongoClient mongoClient = MongoClients.create(mongoFlexProperties.getUri());
-        //TODO:先写死
-        MongoDatabase database = mongoClient.getDatabase("mongo_flex");
+        MongoDatabase database = dynamicMongoClient.select().getDatabase("mongo_flex");
 
         CharacterRepositoryV2 characterRepositoryV2 = MyRepositoryFactory.getRepository(database, CharacterRepositoryV2.class, Character.class);
         characterRepositoryV2.findListByNameAndId("Hu Tao", "specialId").forEach(System.out::println);
