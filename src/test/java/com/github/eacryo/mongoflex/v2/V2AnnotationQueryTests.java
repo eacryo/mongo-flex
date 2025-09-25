@@ -20,6 +20,9 @@ public class V2AnnotationQueryTests {
     @Autowired
     private MongoFlexProperties mongoFlexProperties;
 
+    @Autowired
+    private DynamicMongoClient dynamicMongoClient;
+
     @Test
     public void loadContext() {
 
@@ -27,9 +30,11 @@ public class V2AnnotationQueryTests {
 
     @Test
     public void testFindAll() {
-        MongoClient mongoClient = MongoClients.create(mongoFlexProperties.getUri());
+        //MongoClient mongoClient = MongoClients.create(mongoFlexProperties.getUri());
         //TODO:先写死
-        MongoDatabase database = mongoClient.getDatabase("mongo_flex");
+        //这里会提示 'MongoClient' used without 'try'-with-resources statement ，但这个提示是错误的
+        //想要关闭这个提示，可以在方法上标注 @SuppressWarnings("resource")
+        MongoDatabase database = dynamicMongoClient.select().getDatabase("mongo_flex");
 
         CharacterRepositoryV2 characterRepositoryV2 = MyRepositoryFactory.getRepository(database, CharacterRepositoryV2.class, Character.class);
 
