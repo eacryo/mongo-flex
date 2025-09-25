@@ -2,3 +2,4 @@ com.github.eacryo.mongoflex.config.MongoTemplateFactory
 com.github.eacryo.mongoflex.config.MongoFlexProperties
 com.github.eacryo.mongoflex.util.CollectionNameUtil
 com.github.eacryo.mongoflex.config.FrameworkExclusionFilter
+com.github.eacryo.mongoflex.v2.MyOrmAutoConfiguration
