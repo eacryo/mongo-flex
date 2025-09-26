@@ -5,7 +5,7 @@ import com.github.eacryo.mongoflex.bean.Character;
 import java.util.List;
 
 @MRepository
-public interface CharacterRepositoryV2 {
+public interface CharacterRepositoryV2 extends IBaseRepositoryV2<Character,String>{
         // 查询所有名为 'name' 的用户
 //    @Mql("{ name: ?0 }")
 //    List<Character> findByName(String name);

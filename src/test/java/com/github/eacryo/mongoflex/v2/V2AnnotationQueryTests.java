@@ -27,12 +27,6 @@ public class V2AnnotationQueryTests {
     private CharacterRepositoryV2 characterRepositoryV2;
 
     @Test
-    public void loadContext() {
-        List<Character> allObj = characterRepositoryV2.findAll();
-        allObj.forEach(System.out::println);
-    }
-
-    @Test
     public void testFindAll() {
         List<Character> characterList = characterRepositoryV2.findAll();
         characterList.forEach(System.out::println);
@@ -51,5 +45,16 @@ public class V2AnnotationQueryTests {
     @Test
     public void testFindListByNameAndId() {
         characterRepositoryV2.findListByNameAndId("Hu Tao", "specialId").forEach(System.out::println);
+    }
+
+    @Test
+    public void testFindByParentMethod() {
+        Character character = new Character();
+        System.out.println(characterRepositoryV2.findByEntity(character));
+    }
+
+    @Test
+    public void testFindByParentMethodOfId() {
+        System.out.println(characterRepositoryV2.findById("specialId"));
     }
 }

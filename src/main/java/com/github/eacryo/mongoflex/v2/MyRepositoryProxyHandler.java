@@ -2,11 +2,11 @@ package com.github.eacryo.mongoflex.v2;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
 
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -19,18 +19,24 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MyRepositoryProxyHandler implements InvocationHandler {
+@Slf4j
+public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
+    private final Class<?> targetInterface = IBaseRepositoryV2.class;
     private final MongoDatabase database;
     private final QueryParser queryParser = new QueryParser();
     private final JacksonDocumentConverter jacksonDocumentConverter;
+    private final BaseRepositoryV2<T, ID> baseRepository;
 
     // 这里的 collection 不再是固定的，因为查询语句可以指定不同的集合
     // private final MongoCollection<Document> collection;
 
-    public MyRepositoryProxyHandler(MongoDatabase database,JacksonDocumentConverter jacksonDocumentConverter) {
+    public MyRepositoryProxyHandler(MongoDatabase database,
+                                    JacksonDocumentConverter jacksonDocumentConverter,
+                                    BaseRepositoryV2<T, ID> baseRepository) {
         this.database = database;
         this.jacksonDocumentConverter = jacksonDocumentConverter;
+        this.baseRepository = baseRepository;
     }
 
     @Override
@@ -80,6 +86,11 @@ public class MyRepositoryProxyHandler implements InvocationHandler {
                 throw new UnsupportedOperationException("Unsupported MongoDB command: " + parsedCommand.command);
             }
         }
+        if (isMethodFromTargetInterface(method,targetInterface)) {
+            log.info("Method {} inherit from parent interface", method.getName());
+            Object invoked = method.invoke(baseRepository, args);
+            return invoked;
+        }
 
         throw new UnsupportedOperationException("Method " + method.getName() + " is not annotated with @MyQuery");
     }
@@ -111,5 +122,15 @@ public class MyRepositoryProxyHandler implements InvocationHandler {
             }
         }
         return shellCommand;
+    }
+
+    private boolean isMethodFromTargetInterface(Method method, Class<?> targetInterface) {
+        for (Method interfaceMethod : targetInterface.getMethods()) {
+            if (interfaceMethod.getName().equals(method.getName()) &&
+                    Arrays.equals(interfaceMethod.getParameterTypes(), method.getParameterTypes())) {
+                return true;
+            }
+        }
+        return false;
     }
 }

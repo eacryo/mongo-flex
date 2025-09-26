@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.config;
 
+import com.mongodb.ConnectionString;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -17,4 +18,9 @@ public class MongoFlexProperties {
     private boolean enableMultiTenants;
     private boolean toSnakeCase;
     private String uri;
+
+    public String getDatabaseFromUri(){
+        ConnectionString connectionString = new ConnectionString(uri);
+        return connectionString.getDatabase();
+    }
 }
