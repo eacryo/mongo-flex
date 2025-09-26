@@ -5,6 +5,7 @@ import com.github.eacryo.mongoflex.annotation.CollectionId;
 import org.bson.Document;
 import java.lang.reflect.Field;
 
+@Deprecated
 public class SimpleMongoConverter {
 
     /**

@@ -23,12 +23,14 @@ public class MyRepositoryProxyHandler implements InvocationHandler {
 
     private final MongoDatabase database;
     private final QueryParser queryParser = new QueryParser();
+    private final JacksonDocumentConverter jacksonDocumentConverter;
 
     // 这里的 collection 不再是固定的，因为查询语句可以指定不同的集合
     // private final MongoCollection<Document> collection;
 
-    public MyRepositoryProxyHandler(MongoDatabase database) {
+    public MyRepositoryProxyHandler(MongoDatabase database,JacksonDocumentConverter jacksonDocumentConverter) {
         this.database = database;
+        this.jacksonDocumentConverter = jacksonDocumentConverter;
     }
 
     @Override
@@ -87,8 +89,9 @@ public class MyRepositoryProxyHandler implements InvocationHandler {
         // ... (保持不变，或使用更完善的映射逻辑)
         try {
             T instance = clazz.getDeclaredConstructor().newInstance();
-            SimpleMongoConverter simpleMongoConverter = new SimpleMongoConverter();
-            instance = simpleMongoConverter.convert(doc, clazz);
+            instance = jacksonDocumentConverter.convert(doc, clazz);
+            //SimpleMongoConverter simpleMongoConverter = new SimpleMongoConverter();
+            //instance = simpleMongoConverter.convert(doc, clazz);
             return instance;
         } catch (Exception e) {
             throw new RuntimeException("Error mapping document to entity", e);

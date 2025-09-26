@@ -12,6 +12,8 @@ public class RepositoryFactoryBean<T, E> implements FactoryBean<T> {
     // 注入 MongoDB 客户端
     @Autowired
     private DynamicMongoClient mongoClient;
+    @Autowired
+    private JacksonDocumentConverter jacksonDocumentConverter;
 
     private final Class<T> repositoryInterface;
 
@@ -28,7 +30,7 @@ public class RepositoryFactoryBean<T, E> implements FactoryBean<T> {
                 repositoryInterface.getClassLoader(),
                 new Class<?>[]{repositoryInterface},
                 //TODO：这里数据库和类型都应该传入，不要写死
-                new MyRepositoryProxyHandler(mongoClient.select().getDatabase("mongo_flex"))
+                new MyRepositoryProxyHandler(mongoClient.select().getDatabase("mongo_flex"),jacksonDocumentConverter)
         );
     }
 
