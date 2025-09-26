@@ -3,9 +3,12 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
 import com.github.eacryo.mongoflex.config.TenantConfig;
 import com.github.eacryo.mongoflex.constant.MongoFlexConstant;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -22,8 +25,8 @@ import java.util.Objects;
  * 在启动时根据多租户信息注入多个 MongoClient 实例，并注册到 Spring 容器中。
  */
 @Component
+@Slf4j
 public class DynamicMongoClient {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DynamicMongoClient.class);
     private static final String MONGO_CLIENT_PREFIX = "mongoClient_";
 
     private Map<String, MongoClient> clients = new HashMap<>();
@@ -55,8 +58,8 @@ public class DynamicMongoClient {
         if (!StringUtils.hasText(tenant) || !clients.containsKey(tenant)) {
             throw new NullPointerException("cannot found MongoClient for tenant: " + tenant);
         }
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("using MongoClient for tenant {}", tenant);
+        if (log.isDebugEnabled()) {
+            log.debug("using MongoClient for tenant {}", tenant);
         }
         return clients.get(tenant);
     }
@@ -66,7 +69,7 @@ public class DynamicMongoClient {
     private void initializeTemplates() {
         if (mongoFlexProperties.isEnableMultiTenants()) initWhenEnabled();
         else initWhenDisabled();
-        LOGGER.info("MongoClientFactory initialized with {} tenants", clients.size());
+        log.info("MongoClientFactory initialized with {} tenants", clients.size());
     }
 
 
@@ -77,15 +80,17 @@ public class DynamicMongoClient {
                     (Objects.nonNull(config.getTablePrefix()) ? "_" + config.getTablePrefix() : "");
             String beanName = MONGO_CLIENT_PREFIX + tenantId;
             try {
+                MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
+                        .applyConnectionString(new ConnectionString(config.getUri())).build();
                 // 注册Bean
                 genericApplicationContext.registerBean(beanName, MongoClient.class,
-                        () -> MongoClients.create(config.getUri()));
+                        () -> MongoClients.create(mongoClientSettings));
                 // 从 Spring 容器中获取对应的 MongoTemplate Bean
                 MongoClient mongoClient = genericApplicationContext.getBean(beanName, MongoClient.class);
                 clients.put(tenantId, mongoClient);
-                LOGGER.info("Added MongoClient for tenant: {}", tenantId);
+                log.info("Added MongoClient for tenant: {}", tenantId);
             } catch (Exception e) {
-                LOGGER.error("Failed to get MongoClient for tenant: {}, error: {}", tenantId, e.getMessage());
+                log.error("Failed to get MongoClient for tenant: {}, error: {}", tenantId, e.getMessage());
             }
         }
     }
@@ -95,16 +100,17 @@ public class DynamicMongoClient {
         String tenantId = MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE;
         String beanName = MONGO_CLIENT_PREFIX + tenantId;
         try {
-            //这里应当自己注入MongoClient
-                // 注册Bean
-                genericApplicationContext.registerBean(beanName, MongoClient.class,
-                        () -> MongoClients.create(mongoFlexProperties.getUri()));
-                // 从 Spring 容器中获取对应的 MongoTemplate Bean
-                MongoClient mongoClient = genericApplicationContext.getBean(beanName, MongoClient.class);
-                clients.put(tenantId, mongoClient);
-            LOGGER.info("Added MongoClient for tenant: {}", tenantId);
+            MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
+                    .applyConnectionString(new ConnectionString(mongoFlexProperties.getUri())).build();
+            // 注册Bean
+            genericApplicationContext.registerBean(beanName, MongoClient.class,
+                    () -> MongoClients.create(mongoClientSettings));
+            // 从 Spring 容器中获取对应的 MongoTemplate Bean
+            MongoClient mongoClient = genericApplicationContext.getBean(beanName, MongoClient.class);
+            clients.put(tenantId, mongoClient);
+            log.info("Added MongoClient for tenant: {}", tenantId);
         } catch (Exception e) {
-            LOGGER.error("Failed to get MongoClient for tenant: {}, error: {}", tenantId, e.getMessage());
+            log.error("Failed to get MongoClient for tenant: {}, error: {}", tenantId, e.getMessage());
         }
     }
 
