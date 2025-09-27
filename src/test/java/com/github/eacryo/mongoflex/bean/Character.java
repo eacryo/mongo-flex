@@ -15,7 +15,6 @@ import java.util.Date;
 public class Character {
 
     @CollectionId(IdType.ULID)
-    @JsonAlias("_id")
     private String id;
     private String cid;
     private String name;
