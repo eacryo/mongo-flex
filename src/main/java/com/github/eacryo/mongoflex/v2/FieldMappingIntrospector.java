@@ -10,7 +10,7 @@ public class FieldMappingIntrospector extends JacksonAnnotationIntrospector {
     // 覆盖这个方法，用于在反序列化时（从 JSON 读取）获取字段名
     @Override
     public PropertyName findNameForDeserialization(Annotated a) {
-        // 查找字段上是否有 @CustomJsonName 注解
+        // 查找字段上是否有 @CollectionField 注解
         CollectionField ann = a.getAnnotation(CollectionField.class);
         if (ann != null) {
             // 如果找到，使用注解的值作为 JSON 字段名

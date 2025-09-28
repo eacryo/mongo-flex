@@ -4,6 +4,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.InsertOneResult;
+import org.bson.BsonValue;
 import org.bson.Document;
 
 public class BaseRepositoryV2<T,ID> implements IBaseRepositoryV2<T,ID> {
@@ -26,6 +27,7 @@ public class BaseRepositoryV2<T,ID> implements IBaseRepositoryV2<T,ID> {
         MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
         Document document = jacksonDocumentConverter.convert(entity);
         InsertOneResult insertOneResult = collection.insertOne(document);
+        BsonValue insertedId = insertOneResult.getInsertedId();
         return null;
     }
 

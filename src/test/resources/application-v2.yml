@@ -3,3 +3,4 @@ mongo-flex:
 logging:
   level:
     com.github.eacryo: DEBUG
+    org.mongodb.driver: DEBUG

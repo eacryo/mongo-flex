@@ -3,6 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
+import com.github.f4b6a3.ulid.UlidCreator;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -56,5 +57,14 @@ public class V2AnnotationQueryTests {
     @Test
     public void testFindByParentMethodOfId() {
         System.out.println(characterRepositoryV2.findById("specialId"));
+    }
+
+    @Test
+    public void testInsert(){
+        Character character = new Character();
+        character.setId(UlidCreator.getUlid().toString());
+        character.setName("Furina");
+        character.setAddress("Fontaine");
+        characterRepositoryV2.insert(character);
     }
 }
