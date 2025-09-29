@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.v2;
 
+import com.fasterxml.uuid.Generators;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
+import java.util.UUID;
 
 @SpringBootTest(classes = {TestApplication.class})
 @ActiveProfiles("v2")
@@ -66,5 +68,11 @@ public class V2AnnotationQueryTests {
         character.setName("Furina");
         character.setAddress("Fontaine");
         characterRepositoryV2.insert(character);
+    }
+
+    @Test
+    public void testFastXmlUuid(){
+        UUID uuidV7 = Generators.timeBasedEpochGenerator().generate();
+        System.out.println(uuidV7);
     }
 }
