@@ -75,4 +75,9 @@ public class V2AnnotationQueryTests {
         UUID uuidV7 = Generators.timeBasedEpochGenerator().generate();
         System.out.println(uuidV7);
     }
+
+    @Test
+    public void testCount(){
+        System.out.println(characterRepositoryV2.count());
+    }
 }

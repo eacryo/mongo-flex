@@ -6,7 +6,8 @@ import org.bson.Document;
 
 public class QueryParser {
     //这里只解析单引号'不解析双引号"
-    private final Pattern commandPattern = Pattern.compile("^db\\.getCollection\\('(.*?)'\\)\\.(find|findOne)\\((.*?)\\)$");
+    private final Pattern commandPattern = Pattern.compile("^db\\.getCollection\\('(.*?)'\\)\\." +
+            "(find|findOne|insertOne|updateOne|updateMany|deleteOne|deleteMany|count|aggregate)\\((.*?)\\)$");
 
     public QueryCommand parse(String shellCommand) {
         Matcher matcher = commandPattern.matcher(shellCommand);
@@ -32,12 +33,12 @@ public class QueryParser {
     // 内部类用于封装解析结果
     public static class QueryCommand {
         public final String collectionName;
-        public final String command;
+        public final String operation;
         public final Document queryDoc;
 
-        public QueryCommand(String collectionName, String command, Document queryDoc) {
+        public QueryCommand(String collectionName, String operation, Document queryDoc) {
             this.collectionName = collectionName;
-            this.command = command;
+            this.operation = operation;
             this.queryDoc = queryDoc;
         }
     }

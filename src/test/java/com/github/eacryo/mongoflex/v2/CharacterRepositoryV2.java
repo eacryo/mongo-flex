@@ -32,4 +32,7 @@ public interface CharacterRepositoryV2 extends IBaseRepositoryV2<Character,Strin
 
     @Mql("db.getCollection('character').find({'name':'Hu Tao'})")
     List<Character> findListWithoutParam();
+
+    @Mql("db.getCollection('character').count({})")
+    long count();
 }

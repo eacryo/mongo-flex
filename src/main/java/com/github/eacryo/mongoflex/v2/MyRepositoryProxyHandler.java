@@ -7,12 +7,6 @@ import org.bson.Document;
 
 import java.lang.reflect.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -55,9 +49,10 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
             // 2. 获取对应的 MongoCollection
             MongoCollection<Document> collection = database.getCollection(parsedCommand.collectionName);
-
+            //TODO：下面这考虑挪到QueryParser里面
+            //TODO：这个地方得用策略模式
             // 3. 根据解析出的命令执行相应的操作
-            if ("find".equals(parsedCommand.command)) {
+            if ("find".equals(parsedCommand.operation)) {
                 ParameterizedType pType = (ParameterizedType) genericReturnType;
                 Type rawType = pType.getRawType();
                 Type actualType = pType.getActualTypeArguments()[0]; // 获取泛型参数T
@@ -76,17 +71,30 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
                 }
                 return null;
 
-            } else if ("findOne".equals(parsedCommand.command)) {
+            } else if ("findOne".equals(parsedCommand.operation)) {
                 Document doc = collection.find(parsedCommand.queryDoc).first();
 //                if (doc != null) {
 //                    return mapDocumentToEntity(doc, entityClass);
 //                }
                 return null;
+
+            } else if ("count".equals(parsedCommand.operation)) {
+                // 新增 count 逻辑
+                Long count = collection.countDocuments(parsedCommand.queryDoc);
+                // 返回类型可以是 long 或 Long
+                if (method.getReturnType().equals(Long.class) || method.getReturnType().equals(long.class)) {
+                    return count;
+                }
+                if (method.getReturnType().equals(Integer.class) || method.getReturnType().equals(int.class)) {
+                    return count.intValue();
+                }
+                // 其他类型可根据需要扩展
+                throw new IllegalArgumentException("Count return type must be long or Long or int or Integer");
             } else {
-                throw new UnsupportedOperationException("Unsupported MongoDB command: " + parsedCommand.command);
+                throw new UnsupportedOperationException("Unsupported MongoDB command: " + parsedCommand.operation);
             }
         }
-        if (isMethodFromTargetInterface(method,targetInterface)) {
+        if (isMethodFromTargetInterface(method, targetInterface)) {
             log.info("Method {} inherit from parent interface", method.getName());
             Object invoked = method.invoke(baseRepository, args);
             return invoked;
