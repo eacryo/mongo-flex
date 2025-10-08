@@ -78,6 +78,14 @@ public class V2AnnotationQueryTests {
 
     @Test
     public void testCount(){
+        System.out.println(characterRepositoryV2.countByMql());
+    }
+
+    @Test
+    public void testCount_2(){
         System.out.println(characterRepositoryV2.count());
+        Character character = new Character();
+        character.setName("Hu Tao");
+        System.out.println(characterRepositoryV2.count(character));
     }
 }

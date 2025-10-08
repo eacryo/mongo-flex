@@ -6,4 +6,8 @@ public interface IBaseRepositoryV2<T,ID> {
     T findById(ID id);
 
     T findByEntity(T entity);
+
+    long count();
+
+    long count(T entity);
 }

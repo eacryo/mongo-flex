@@ -7,12 +7,19 @@ import com.mongodb.client.result.InsertOneResult;
 import org.bson.BsonValue;
 import org.bson.Document;
 
-public class BaseRepositoryV2<T,ID> implements IBaseRepositoryV2<T,ID> {
+/**
+ * This class should not be exposed to external use
+ *
+ * @param <T>
+ * @param <ID>
+ */
+public class BaseRepositoryV2<T, ID> implements IBaseRepositoryV2<T, ID> {
 
     private final MongoDatabase mongoDatabase;
     private final String collectionName;
     private final Class<T> entityClass;
     private final JacksonDocumentConverter jacksonDocumentConverter;
+    private final MongoCollection<Document> collection;
 
     public BaseRepositoryV2(MongoDatabase mongoDatabase, String collectionName, Class<T> entityClass,
                             JacksonDocumentConverter jacksonDocumentConverter) {
@@ -20,11 +27,11 @@ public class BaseRepositoryV2<T,ID> implements IBaseRepositoryV2<T,ID> {
         this.collectionName = collectionName;
         this.entityClass = entityClass;
         this.jacksonDocumentConverter = jacksonDocumentConverter;
+        this.collection = mongoDatabase.getCollection(collectionName);
     }
 
     @Override
     public T insert(T entity) {
-        MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
         Document document = jacksonDocumentConverter.convert(entity);
         InsertOneResult insertOneResult = collection.insertOne(document);
         BsonValue insertedId = insertOneResult.getInsertedId();
@@ -33,15 +40,23 @@ public class BaseRepositoryV2<T,ID> implements IBaseRepositoryV2<T,ID> {
 
     @Override
     public T findById(ID id) {
-        MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-        Document document = collection.find(Filters.eq("_id",id)).first();
-        return jacksonDocumentConverter.convert(document,entityClass);
+        Document document = collection.find(Filters.eq("_id", id)).first();
+        return jacksonDocumentConverter.convert(document, entityClass);
     }
 
     @Override
     public T findByEntity(T entity) {
-        MongoCollection<Document> collection = mongoDatabase.getCollection(collectionName);
-        Document document = collection.find(Filters.eq("name","Ganyu")).first();
-        return jacksonDocumentConverter.convert(document,entityClass);
+        Document document = collection.find(jacksonDocumentConverter.convert(entity)).first();
+        return jacksonDocumentConverter.convert(document, entityClass);
+    }
+
+    @Override
+    public long count() {
+        return collection.countDocuments();
+    }
+
+    @Override
+    public long count(T entity) {
+        return collection.countDocuments(jacksonDocumentConverter.convert(entity));
     }
 }
