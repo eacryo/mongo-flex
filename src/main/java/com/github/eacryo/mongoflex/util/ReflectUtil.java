@@ -3,7 +3,6 @@ package com.github.eacryo.mongoflex.util;
 import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CreateDate;
 import com.github.eacryo.mongoflex.annotation.UpdateDate;
-import com.github.eacryo.mongoflex.lambda.SFunction;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -79,33 +78,5 @@ public class ReflectUtil {
         return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElse(null);
     }
 
-    // 获取方法引用对应的字段名
-    public static <T, R> String getFieldName(SFunction<T, R> func) {
-        try {
-            Method method = func.getClass().getDeclaredMethod("writeReplace");
-            method.setAccessible(true);
-            SerializedLambda lambda = (SerializedLambda) method.invoke(func);
-            String methodName = lambda.getImplMethodName();
-
-            // 解析getter方法名
-            String fieldName;
-            if (methodName.startsWith("get")) {
-                fieldName = StringUtils.uncapitalize(methodName.substring(3));
-            } else if (methodName.startsWith("is")) {
-                fieldName = StringUtils.uncapitalize(methodName.substring(2));
-            } else {
-                fieldName = methodName;
-            }
-
-            // 特殊处理：id字段映射到MongoDB的_id字段
-            if ("id".equals(fieldName)) {
-                return "_id";
-            }
-
-            return fieldName;
-        } catch (Exception e) {
-            throw new RuntimeException("解析字段名失败: " + e.getMessage(), e);
-        }
-    }
 
 }
