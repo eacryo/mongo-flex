@@ -12,12 +12,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Slf4j
 public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
     private final Class<?> targetInterface = IBaseRepositoryV2.class;
-    private final MongoDatabase database;
+    private final Supplier<MongoDatabase> databaseSupplier;
     private final QueryParser queryParser = new QueryParser();
     private final JacksonDocumentConverter jacksonDocumentConverter;
     private final BaseRepositoryV2<T, ID> baseRepository;
@@ -25,10 +26,10 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
     // 这里的 collection 不再是固定的，因为查询语句可以指定不同的集合
     // private final MongoCollection<Document> collection;
 
-    public MyRepositoryProxyHandler(MongoDatabase database,
+    public MyRepositoryProxyHandler(Supplier<MongoDatabase> databaseSupplier,
                                     JacksonDocumentConverter jacksonDocumentConverter,
                                     BaseRepositoryV2<T, ID> baseRepository) {
-        this.database = database;
+        this.databaseSupplier = databaseSupplier;
         this.jacksonDocumentConverter = jacksonDocumentConverter;
         this.baseRepository = baseRepository;
     }
@@ -48,7 +49,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             QueryParser.QueryCommand parsedCommand = queryParser.parse(shellCommand);
 
             // 2. 获取对应的 MongoCollection
-            MongoCollection<Document> collection = database.getCollection(parsedCommand.collectionName);
+            MongoCollection<Document> collection = databaseSupplier.get().getCollection(parsedCommand.collectionName);
             //TODO：下面这考虑挪到QueryParser里面
             //TODO：这个地方得用策略模式
             // 3. 根据解析出的命令执行相应的操作
