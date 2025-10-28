@@ -47,7 +47,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
         return (T) Proxy.newProxyInstance(
                 repositoryInterface.getClassLoader(),
                 new Class<?>[]{repositoryInterface},
-                new MyRepositoryProxyHandler(
+                new MyRepositoryProxyHandler<>(
                         dbSupplier,
                         jacksonDocumentConverter,
                         baseRepository)
