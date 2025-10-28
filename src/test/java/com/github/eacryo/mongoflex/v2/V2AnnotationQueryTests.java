@@ -88,4 +88,9 @@ public class V2AnnotationQueryTests {
         character.setName("Hu Tao");
         System.out.println(characterRepositoryV2.count(character));
     }
+
+    @Test
+    public void testFindById(){
+        System.out.println(characterRepositoryV2.findById("specialId"));
+    }
 }

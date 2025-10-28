@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.v2;
 
 
+import com.github.eacryo.mongoflex.annotation.CollectionName;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,10 +33,9 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
     @Override
     @SuppressWarnings({"unchecked", "resource"})
     public T getObject() {
-        //TODO: 这里应该根据注解或者配置来决定数据库和集合
         BaseRepositoryV2<E, ID> baseRepository = new BaseRepositoryV2<>(
                 mongoClient.select().getDatabase(mongoFlexProperties.getDatabaseFromUri()),
-                "character",
+                this.getCollectionName(entityClass),
                 entityClass, jacksonDocumentConverter
         );
         // 使用动态代理为接口生成实现
@@ -53,5 +53,14 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
     @Override
     public Class<?> getObjectType() {
         return repositoryInterface;
+    }
+
+    private String getCollectionName(Class<E> entityClass) {
+        if (entityClass.isAnnotationPresent(CollectionName.class)){
+            CollectionName annotation = entityClass.getAnnotation(CollectionName.class);
+            return annotation.value();
+        } else {
+            throw new RuntimeException("EntityClass " + entityClass.getName() + " is not annotated with @CollectionName");
+        }
     }
 }
