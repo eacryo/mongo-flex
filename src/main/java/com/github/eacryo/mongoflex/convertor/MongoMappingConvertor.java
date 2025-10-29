@@ -1,20 +1,20 @@
 package com.github.eacryo.mongoflex.convertor;
 
+
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
 
-import org.bson.Document;
-
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.bson.Document;
-
-import java.lang.reflect.Field;
-import java.util.*;
-import java.util.stream.Collectors;
-
+/**
+ * MongoMappingConverter: 基于反射的 POJO <-> BSON Document 转换器。
+ * 实现了嵌套对象处理、Date <-> ISODate 转换以及 id <-> _id 映射。
+ */
 @Component
 public class MongoMappingConvertor {
 
@@ -23,21 +23,30 @@ public class MongoMappingConvertor {
 
     // --- 写入 (POJO -> BSON Document) ---
 
+    /**
+     * 将 Java POJO 对象转换为 MongoDB Document。
+     * @param entity 要转换的 Java 对象。
+     * @return 转换后的 Document。
+     */
     public <T> Document write(T entity) {
         if (entity == null) {
             return null;
         }
+        // 使用 Document 构造函数，利用其对 java.util.Date 的原生支持
         return new Document(convertToMap(entity));
     }
 
+    // 递归将 POJO 转换为 Map (Document)
     private Map<String, Object> convertToMap(Object entity) {
         if (entity == null) {
             return null;
         }
 
         Class<?> clazz = entity.getClass();
-        // 确保不是系统类型，否则返回原始对象
+
+        // 如果是系统类型（如 Date, String, Number），直接返回，不进行反射遍历
         if (isPrimitiveOrSystemType(clazz)) {
+            // 注意：这里是一个类型转换警告，但在逻辑上是安全的，因为调用方会确保类型匹配。
             return (Map<String, Object>) entity;
         }
 
@@ -71,6 +80,7 @@ public class MongoMappingConvertor {
         return map;
     }
 
+    // 递归处理字段值，将嵌套 POJO 转换为 Map，List 转换为 List<Map>
     private Object processFieldValue(Object value) {
         if (value == null) {
             return null;
@@ -78,13 +88,13 @@ public class MongoMappingConvertor {
 
         Class<?> valueClass = value.getClass();
 
-        // 1. 基本类型和 BSON 兼容类型（包括 Date, ObjectId）
+        // 1. BSON 兼容类型：直接返回 (Date, ObjectId, Number, String, Boolean)
         if (value instanceof Date ||
-                value instanceof Number ||
-                value instanceof String ||
-                value instanceof Boolean ||
-                value instanceof ObjectId ||
-                valueClass.isEnum()) {
+            value instanceof Number ||
+            value instanceof String ||
+            value instanceof Boolean ||
+            value instanceof ObjectId ||
+            valueClass.isEnum()) {
             return value;
         }
 
@@ -92,8 +102,8 @@ public class MongoMappingConvertor {
         if (value instanceof List) {
             List<?> originalList = (List<?>) value;
             return originalList.stream()
-                    .map(this::processFieldValue)
-                    .collect(Collectors.toList());
+                .map(this::processFieldValue) // 递归处理列表中的每个元素
+                .collect(Collectors.toList());
         }
 
         // 3. 嵌套 POJO：递归调用 convertToMap
@@ -106,12 +116,19 @@ public class MongoMappingConvertor {
 
     // --- 读取 (BSON Document -> POJO) ---
 
+    /**
+     * 将 MongoDB Document 转换为指定的 Java POJO 对象。
+     * @param doc 待转换的 Document。
+     * @param targetClass 目标 POJO 类的 Class 对象。
+     * @return 转换后的 POJO 实例。
+     */
     public <T> T read(Document doc, Class<T> targetClass) {
         if (doc == null) {
             return null;
         }
 
         try {
+            // 实例化目标 POJO (要求有无参构造函数)
             T entity = targetClass.getDeclaredConstructor().newInstance();
 
             for (Field field : getAllFields(targetClass)) {
@@ -128,11 +145,12 @@ public class MongoMappingConvertor {
 
                 Object bsonValue = doc.get(docKey);
 
-                // 2. 递归将 BSON 值转换为目标 Java 类型
-                Object javaValue = convertBsonValueToJavaType(bsonValue, field.getType(), field.getGenericType());
+                if (bsonValue != null) {
+                    // 2. 递归将 BSON 值转换为目标 Java 类型
+                    Object javaValue = convertBsonValueToJavaType(bsonValue, field.getType(), field.getGenericType());
 
-                field.set(entity, javaValue);
-
+                    field.set(entity, javaValue);
+                }
             }
             return entity;
         } catch (Exception e) {
@@ -140,18 +158,20 @@ public class MongoMappingConvertor {
         }
     }
 
-    private Object convertBsonValueToJavaType(Object bsonValue, Class<?> targetClass, java.lang.reflect.Type genericType) {
+    // 递归将 BSON 值转换为目标 Java 类型
+    private Object convertBsonValueToJavaType(Object bsonValue, Class<?> targetClass, Type genericType) {
         if (bsonValue == null) {
             return null;
         }
 
-        // 1. 基本兼容类型：直接返回（包括 ISODate -> java.util.Date）
+        // 1. 基本兼容类型：直接返回（例如 ISODate -> java.util.Date，ObjectId -> ObjectId）
         if (targetClass.isInstance(bsonValue) || targetClass.isPrimitive()) {
             return bsonValue;
         }
 
         // 2. 嵌套 Document：递归调用 read
         if (bsonValue instanceof Document && !isPrimitiveOrSystemType(targetClass)) {
+            // TargetClass 必须有无参构造函数
             return read((Document) bsonValue, targetClass);
         }
 
@@ -163,11 +183,11 @@ public class MongoMappingConvertor {
             Class<?> elementType = getListElementType(genericType);
 
             return bsonList.stream()
-                    .map(item -> convertBsonValueToJavaType(item, elementType, elementType))
-                    .collect(Collectors.toList());
+                .map(item -> convertBsonValueToJavaType(item, elementType, elementType))
+                .collect(Collectors.toList());
         }
 
-        // 4. 枚举
+        // 4. 枚举：从字符串转换
         if (targetClass.isEnum() && bsonValue instanceof String) {
             return Enum.valueOf((Class<Enum>) targetClass, (String) bsonValue);
         }
@@ -178,7 +198,9 @@ public class MongoMappingConvertor {
 
     // --- 辅助方法 ---
 
-    // 获取类及其所有父类的字段
+    /**
+     * 获取类及其所有父类的所有字段。
+     */
     private List<Field> getAllFields(Class<?> type) {
         List<Field> fields = new ArrayList<>();
         for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
@@ -187,21 +209,25 @@ public class MongoMappingConvertor {
         return fields;
     }
 
-    // 判断是否是基础的或系统类型，避免对系统类进行递归处理
+    /**
+     * 判断是否是基础的或系统类型，用于决定是否需要递归处理（避免对 JDK 类进行反射）。
+     */
     private boolean isPrimitiveOrSystemType(Class<?> clazz) {
         return clazz.isPrimitive() ||
-                clazz.isEnum() ||
-                clazz.getName().startsWith("java.lang.") ||
-                clazz.getName().startsWith("java.util.") ||
-                clazz.getName().startsWith("java.time.") ||
-                clazz.getName().startsWith("org.bson.");
+               clazz.isEnum() ||
+               clazz.getName().startsWith("java.lang.") ||
+               clazz.getName().startsWith("java.util.") ||
+               clazz.getName().startsWith("java.time.") ||
+               clazz.getName().startsWith("org.bson.");
     }
 
-    // 简单的泛型类型获取
-    private Class<?> getListElementType(java.lang.reflect.Type genericType) {
-        if (genericType instanceof java.lang.reflect.ParameterizedType) {
-            java.lang.reflect.ParameterizedType pt = (java.lang.reflect.ParameterizedType) genericType;
-            java.lang.reflect.Type[] args = pt.getActualTypeArguments();
+    /**
+     * 简单的泛型类型获取（针对 List<T> 场景）。
+     */
+    private Class<?> getListElementType(Type genericType) {
+        if (genericType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) genericType;
+            Type[] args = pt.getActualTypeArguments();
             if (args.length > 0 && args[0] instanceof Class) {
                 return (Class<?>) args[0];
             }

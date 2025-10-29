@@ -3,6 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,10 @@ public class MongoMappingConvertorTests {
         character.setId("testId");
         character.setName("testName");
         character.setBirthday(new Date());
-        Bson document = mappingConvertor.write(character);
+        Document document = mappingConvertor.write(character);
         System.out.println(document);
+        Character fromDoc = mappingConvertor.read(document, Character.class);
+        System.out.println(fromDoc);
     }
 
 }
