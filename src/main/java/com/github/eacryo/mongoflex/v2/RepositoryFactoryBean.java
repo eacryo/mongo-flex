@@ -3,6 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 
 import com.github.eacryo.mongoflex.annotation.CollectionName;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
+import com.github.eacryo.mongoflex.strategy.ExecutorProxy;
 import com.mongodb.client.MongoDatabase;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,8 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
     private JacksonDocumentConverter jacksonDocumentConverter;
     @Autowired
     private MongoFlexProperties mongoFlexProperties;
-
+    @Autowired
+    private ExecutorProxy executorProxy;
     Supplier<MongoDatabase> dbSupplier = () ->
         mongoClient.select().getDatabase(mongoFlexProperties.getDatabaseFromUri());
 
@@ -50,7 +52,8 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
                 new MyRepositoryProxyHandler<>(
                         dbSupplier,
                         jacksonDocumentConverter,
-                        baseRepository)
+                        baseRepository,
+                        executorProxy)
         );
     }
 

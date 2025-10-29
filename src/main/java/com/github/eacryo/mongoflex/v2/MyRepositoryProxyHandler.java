@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.v2;
 
+import com.github.eacryo.mongoflex.strategy.ExecutorProxy;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import lombok.extern.slf4j.Slf4j;
@@ -22,16 +23,20 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
     private final QueryParser queryParser = new QueryParser();
     private final JacksonDocumentConverter jacksonDocumentConverter;
     private final BaseRepositoryV2<T, ID> baseRepository;
+    //只能通过下面的构造器来注入
+    private final ExecutorProxy executorProxy;
 
     // 这里的 collection 不再是固定的，因为查询语句可以指定不同的集合
     // private final MongoCollection<Document> collection;
 
     public MyRepositoryProxyHandler(Supplier<MongoDatabase> databaseSupplier,
                                     JacksonDocumentConverter jacksonDocumentConverter,
-                                    BaseRepositoryV2<T, ID> baseRepository) {
+                                    BaseRepositoryV2<T, ID> baseRepository,
+                                    ExecutorProxy executorProxy) {
         this.databaseSupplier = databaseSupplier;
         this.jacksonDocumentConverter = jacksonDocumentConverter;
         this.baseRepository = baseRepository;
+        this.executorProxy = executorProxy;
     }
 
     @Override
@@ -51,54 +56,16 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             // 2. 获取对应的 MongoCollection
             MongoCollection<Document> collection = databaseSupplier.get().getCollection(parsedCommand.collectionName);
             //TODO：下面这考虑挪到QueryParser里面
-            //TODO：这个地方得用策略模式
+
             // 3. 根据解析出的命令执行相应的操作
-            if ("find".equals(parsedCommand.operation)) {
-                ParameterizedType pType = (ParameterizedType) genericReturnType;
-                Type rawType = pType.getRawType();
-                Type actualType = pType.getActualTypeArguments()[0]; // 获取泛型参数T
-                Class<?> listElementClass = (Class<?>) actualType;
-                List<Object> results = new ArrayList<>();
-                collection.find(parsedCommand.queryDoc).forEach(doc -> {
-                    Object entity = mapDocumentToEntity(doc, listElementClass);
-                    results.add(entity);
-                });
-
-                // 处理返回类型
-                if (method.getReturnType().equals(List.class)) {
-                    return results;
-                } else if (!results.isEmpty()) {
-                    return results.get(0);
-                }
-                return null;
-
-            } else if ("findOne".equals(parsedCommand.operation)) {
-                Document doc = collection.find(parsedCommand.queryDoc).first();
-                if (doc != null) {
-                    return mapDocumentToEntity(doc, method.getReturnType());
-                }
-                return doc;
-
-            } else if ("count".equals(parsedCommand.operation)) {
-                // 新增 count 逻辑
-                Long count = collection.countDocuments(parsedCommand.queryDoc);
-                // 返回类型可以是 long 或 Long
-                if (method.getReturnType().equals(Long.class) || method.getReturnType().equals(long.class)) {
-                    return count;
-                }
-                if (method.getReturnType().equals(Integer.class) || method.getReturnType().equals(int.class)) {
-                    return count.intValue();
-                }
-                // 其他类型可根据需要扩展
-                throw new IllegalArgumentException("Count return type must be long or Long or int or Integer");
+            //处理来自IBaseRepositoryV2中的方法
+            if (isMethodFromTargetInterface(method, targetInterface)) {
+                log.info("Method {} inherit from parent interface", method.getName());
+                Object invoked = method.invoke(baseRepository, args);
+                return invoked;
             } else {
-                throw new UnsupportedOperationException("Unsupported MongoDB command: " + parsedCommand.operation);
+                return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.queryDoc, method, args);
             }
-        }
-        if (isMethodFromTargetInterface(method, targetInterface)) {
-            log.info("Method {} inherit from parent interface", method.getName());
-            Object invoked = method.invoke(baseRepository, args);
-            return invoked;
         }
 
         throw new UnsupportedOperationException("Method " + method.getName() + " is not annotated with @MyQuery");

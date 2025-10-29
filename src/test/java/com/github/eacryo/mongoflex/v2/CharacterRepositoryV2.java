@@ -6,11 +6,10 @@ import com.github.eacryo.mongoflex.bean.Character;
 import java.util.List;
 
 @MRepository
-public interface CharacterRepositoryV2 extends IBaseRepositoryV2<Character,String>{
+public interface CharacterRepositoryV2 extends IBaseRepositoryV2<Character, String> {
 
 
-
-    @Mql("db.getCollection('"+ Constant.COLLECTION_NAME +"').find({})")
+    @Mql("db.getCollection('" + Constant.COLLECTION_NAME + "').find({})")
     List<Character> findAll();
 
     @Mql("db.getCollection('character').find({})")
@@ -27,4 +26,7 @@ public interface CharacterRepositoryV2 extends IBaseRepositoryV2<Character,Strin
 
     @Mql("db.getCollection('character').count({})")
     long countByMql();
+
+    @Mql("db.getCollection('character').findOne({'name':'Hu Tao'})")
+    Character findOneByMql();
 }

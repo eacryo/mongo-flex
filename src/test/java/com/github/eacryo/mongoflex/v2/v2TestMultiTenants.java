@@ -31,6 +31,12 @@ public class v2TestMultiTenants {
         characterList.forEach(System.out::println);
     }
 
+    @Test
+    public void testFindOneByMql() {
+        Character character = characterRepositoryV2.findOneByMql();
+        System.out.println(character);
+    }
+
     @BeforeEach
     public void setup() {
         MDC.put(MongoFlexConstant.TENANT, "remote");
