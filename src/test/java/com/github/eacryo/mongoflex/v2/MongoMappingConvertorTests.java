@@ -23,6 +23,7 @@ public class MongoMappingConvertorTests {
         Character character = new Character();
         character.setId("testId");
         character.setName("testName");
+        character.setArea("Liyue");
         character.setBirthday(new Date());
         Document document = mappingConvertor.write(character);
         System.out.println(document);

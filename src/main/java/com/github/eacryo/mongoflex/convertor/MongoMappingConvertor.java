@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.convertor;
 
 
+import com.github.eacryo.mongoflex.annotation.CollectionField;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
@@ -60,8 +61,12 @@ public class MongoMappingConvertor {
                 if (value == null) {
                     continue;
                 }
-
-                String fieldName = field.getName();
+                String fieldName;
+                if(field.isAnnotationPresent(CollectionField.class)){
+                    fieldName = field.getAnnotation(CollectionField.class).value();
+                } else {
+                    fieldName = field.getName();
+                }
 
                 // 1. 映射处理：Java id -> MongoDB _id
                 if (JAVA_ID_FIELD.equals(fieldName)) {
@@ -133,7 +138,12 @@ public class MongoMappingConvertor {
 
             for (Field field : getAllFields(targetClass)) {
                 field.setAccessible(true);
-                String fieldName = field.getName();
+                String fieldName;
+                if(field.isAnnotationPresent(CollectionField.class)){
+                    fieldName = field.getAnnotation(CollectionField.class).value();
+                } else {
+                    fieldName = field.getName();
+                }
                 String docKey = fieldName;
 
                 // 1. 映射处理：MongoDB _id -> Java id
