@@ -6,7 +6,7 @@ import com.github.eacryo.mongoflex.bean.Character;
 import java.util.List;
 
 @MRepository
-public interface CharacterRepositoryV2 extends IBaseRepositoryV2<Character, String> {
+public interface CharacterRepository extends MongoRepository<Character, String> {
 
 
     @Mql("db.getCollection('" + Constant.COLLECTION_NAME + "').find({})")

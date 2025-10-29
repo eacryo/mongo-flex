@@ -11,18 +11,16 @@ import java.util.*;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Supplier;
 
 @Slf4j
 public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
-    private final Class<?> targetInterface = IBaseRepositoryV2.class;
+    private final Class<?> targetInterface = MongoRepository.class;
     private final Supplier<MongoDatabase> databaseSupplier;
     private final QueryParser queryParser = new QueryParser();
     private final JacksonDocumentConverter jacksonDocumentConverter;
-    private final BaseRepositoryV2<T, ID> baseRepository;
+    private final SimpleMongoRepository<T, ID> baseRepository;
     //只能通过下面的构造器来注入
     private final ExecutorProxy executorProxy;
 
@@ -31,7 +29,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
     public MyRepositoryProxyHandler(Supplier<MongoDatabase> databaseSupplier,
                                     JacksonDocumentConverter jacksonDocumentConverter,
-                                    BaseRepositoryV2<T, ID> baseRepository,
+                                    SimpleMongoRepository<T, ID> baseRepository,
                                     ExecutorProxy executorProxy) {
         this.databaseSupplier = databaseSupplier;
         this.jacksonDocumentConverter = jacksonDocumentConverter;

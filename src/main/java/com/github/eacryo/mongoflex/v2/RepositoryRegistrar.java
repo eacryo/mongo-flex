@@ -1,6 +1,5 @@
 package com.github.eacryo.mongoflex.v2;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
@@ -45,7 +44,7 @@ public class RepositoryRegistrar implements ImportBeanDefinitionRegistrar {
                 if (type instanceof ParameterizedType) {
                     ParameterizedType pt = (ParameterizedType) type;
                     Type rawType = pt.getRawType();
-                    if (pt.getRawType().getTypeName().equals(IBaseRepositoryV2.class.getName())){
+                    if (pt.getRawType().getTypeName().equals(MongoRepository.class.getName())){
                         Type entityType = pt.getActualTypeArguments()[0];
                         Type idType = pt.getActualTypeArguments()[1];
                         entityClass = (Class<?>) entityType;

@@ -5,9 +5,6 @@ import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
 import com.github.f4b6a3.ulid.UlidCreator;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,7 +24,7 @@ public class V2AnnotationQueryTests {
     private DynamicMongoClient dynamicMongoClient;
 
     @Autowired
-    private CharacterRepositoryV2 characterRepositoryV2;
+    private CharacterRepository characterRepositoryV2;
 
     @Test
     public void testFindAll() {

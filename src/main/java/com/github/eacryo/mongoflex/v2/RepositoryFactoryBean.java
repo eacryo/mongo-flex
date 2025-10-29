@@ -40,7 +40,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
     @Override
     @SuppressWarnings({"unchecked", "resource"})
     public T getObject() {
-        BaseRepositoryV2<E, ID> baseRepository = new BaseRepositoryV2<>(
+        SimpleMongoRepository<E, ID> baseRepository = new SimpleMongoRepository<>(
                 dbSupplier,
                 this.getCollectionName(entityClass),
                 entityClass, jacksonDocumentConverter

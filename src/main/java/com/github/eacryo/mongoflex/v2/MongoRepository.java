@@ -1,6 +1,6 @@
 package com.github.eacryo.mongoflex.v2;
 
-public interface IBaseRepositoryV2<T,ID> {
+public interface MongoRepository<T,ID> {
     T insert(T entity);
 
     T findById(ID id);

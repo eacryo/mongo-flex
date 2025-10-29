@@ -1,6 +1,5 @@
 package com.github.eacryo.mongoflex.v2;
 
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.InsertOneResult;
@@ -11,11 +10,12 @@ import java.util.function.Supplier;
 
 /**
  * This class should not be exposed to external use
+ * The implementation of this class refers to spring-data-mongodb's SimpleMongoRepository
  *
  * @param <T>
  * @param <ID>
  */
-public class BaseRepositoryV2<T, ID> implements IBaseRepositoryV2<T, ID> {
+public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     //private final MongoDatabase mongoDatabase;
     private final Supplier<MongoDatabase> databaseSupplier;
@@ -24,8 +24,8 @@ public class BaseRepositoryV2<T, ID> implements IBaseRepositoryV2<T, ID> {
     private final JacksonDocumentConverter jacksonDocumentConverter;
     //private final MongoCollection<Document> collection;
 
-    public BaseRepositoryV2(Supplier<MongoDatabase> databaseSupplier, String collectionName, Class<T> entityClass,
-                            JacksonDocumentConverter jacksonDocumentConverter) {
+    public SimpleMongoRepository(Supplier<MongoDatabase> databaseSupplier, String collectionName, Class<T> entityClass,
+                                 JacksonDocumentConverter jacksonDocumentConverter) {
         //this.mongoDatabase = mongoDatabase;
         this.databaseSupplier = databaseSupplier;
         this.collectionName = collectionName;

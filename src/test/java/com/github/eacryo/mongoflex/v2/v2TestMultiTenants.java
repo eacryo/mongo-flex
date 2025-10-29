@@ -23,7 +23,7 @@ public class v2TestMultiTenants {
     private DynamicMongoClient dynamicMongoClient;
 
     @Autowired
-    private CharacterRepositoryV2 characterRepositoryV2;
+    private CharacterRepository characterRepositoryV2;
 
     @Test
     public void testFindAll() {
