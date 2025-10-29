@@ -59,16 +59,18 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
             // 3. 根据解析出的命令执行相应的操作
             //处理来自IBaseRepositoryV2中的方法
-            if (isMethodFromTargetInterface(method, targetInterface)) {
-                log.info("Method {} inherit from parent interface", method.getName());
-                Object invoked = method.invoke(baseRepository, args);
-                return invoked;
-            } else {
-                return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.queryDoc, method, args);
-            }
+            return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.queryDoc, method, args);
+        } else if (isMethodFromTargetInterface(method, targetInterface)) {
+            log.info("Method {} inherit from parent interface", method.getName());
+            Object invoked = method.invoke(baseRepository, args);
+            return invoked;
+        } else {
+            //不是通过@Mql注解的方法，也不是继承自IBaseRepositoryV2的方法，抛出异常
+            throw new UnsupportedOperationException("Method " + method.getName() +
+                    " is neither annotated with @Mql nor inherited from IBaseRepositoryV2.");
+
         }
 
-        throw new UnsupportedOperationException("Method " + method.getName() + " is not annotated with @MyQuery");
     }
 
     // 辅助方法：将Document映射回Java对象
