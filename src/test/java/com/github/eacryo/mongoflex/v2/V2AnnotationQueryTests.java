@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,11 +62,15 @@ public class V2AnnotationQueryTests {
     }
 
     @Test
-    public void testInsert(){
+    //TODO：这个测试没过，等改完 JacksonDocumentConverter 再回来改
+    public void testInsert() throws ParseException {
         Character character = new Character();
         character.setId(UlidCreator.getUlid().toString());
         character.setName("Furina");
         character.setAddress("Fontaine");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        //character.setBirthday(sdf.parse("2024-06-01 10:00:00"));
+        character.setBirthday(new Date());
         characterRepositoryV2.insert(character);
     }
 

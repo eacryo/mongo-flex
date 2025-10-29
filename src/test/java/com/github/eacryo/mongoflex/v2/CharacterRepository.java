@@ -27,6 +27,7 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
     @Mql("db.getCollection('character').count({})")
     long countByMql();
 
-    @Mql("db.getCollection('character').findOne({'name':'Hu Tao'})")
+    //TODO:这里如果使用find，虽然有报错但报错难以理解，需要优化
+    @Mql("db.getCollection('character').findOne({'_id':'01K43T5EFTT1QVSS8FPT6XK773','name':'Ganyu'})")
     Character findOneByMql();
 }
