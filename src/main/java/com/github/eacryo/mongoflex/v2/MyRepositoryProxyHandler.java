@@ -74,10 +74,10 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
             } else if ("findOne".equals(parsedCommand.operation)) {
                 Document doc = collection.find(parsedCommand.queryDoc).first();
-//                if (doc != null) {
-//                    return mapDocumentToEntity(doc, entityClass);
-//                }
-                return null;
+                if (doc != null) {
+                    return mapDocumentToEntity(doc, method.getReturnType());
+                }
+                return doc;
 
             } else if ("count".equals(parsedCommand.operation)) {
                 // 新增 count 逻辑
