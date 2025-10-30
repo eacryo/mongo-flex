@@ -1,6 +1,6 @@
 package com.github.eacryo.mongoflex.bean;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
+
 import com.github.eacryo.mongoflex.Constant;
 import com.github.eacryo.mongoflex.annotation.*;
 import com.github.eacryo.mongoflex.constant.IdType;

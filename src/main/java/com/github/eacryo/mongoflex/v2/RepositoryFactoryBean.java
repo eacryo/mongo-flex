@@ -3,6 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 
 import com.github.eacryo.mongoflex.annotation.CollectionName;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
+import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.github.eacryo.mongoflex.strategy.ExecutorProxy;
 import com.mongodb.client.MongoDatabase;
 import org.springframework.beans.factory.FactoryBean;
@@ -18,7 +19,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
     @Autowired
     private DynamicMongoClient mongoClient;
     @Autowired
-    private JacksonDocumentConverter jacksonDocumentConverter;
+    private MongoMappingConvertor mongoMappingConvertor;
     @Autowired
     private MongoFlexProperties mongoFlexProperties;
     @Autowired
@@ -43,7 +44,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
         SimpleMongoRepository<E, ID> baseRepository = new SimpleMongoRepository<>(
                 dbSupplier,
                 this.getCollectionName(entityClass),
-                entityClass, jacksonDocumentConverter
+                entityClass, mongoMappingConvertor
         );
         // 使用动态代理为接口生成实现
         return (T) Proxy.newProxyInstance(
@@ -51,7 +52,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
                 new Class<?>[]{repositoryInterface},
                 new MyRepositoryProxyHandler<>(
                         dbSupplier,
-                        jacksonDocumentConverter,
+                        mongoMappingConvertor,
                         baseRepository,
                         executorProxy)
         );

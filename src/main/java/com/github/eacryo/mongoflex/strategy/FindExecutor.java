@@ -1,6 +1,6 @@
 package com.github.eacryo.mongoflex.strategy;
 
-import com.github.eacryo.mongoflex.v2.JacksonDocumentConverter;
+import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +18,7 @@ public class FindExecutor implements CommandExecutor {
     @Autowired
     private ExecutorProxy executorProxy;
     @Autowired
-    private JacksonDocumentConverter jacksonDocumentConverter;
+    private MongoMappingConvertor mongoMappingConvertor;
 
     @Override
     public Object execute(String command, MongoCollection<Document> collection, Document queryContent, Method method, Object[] args) throws Exception {
@@ -29,7 +29,7 @@ public class FindExecutor implements CommandExecutor {
         Class<?> listElementClass = (Class<?>) actualType;
         List<Object> results = new ArrayList<>();
         collection.find(queryContent).forEach(doc -> {
-            Object entity = jacksonDocumentConverter.convert(doc, listElementClass);
+            Object entity = mongoMappingConvertor.read(doc, listElementClass);
             results.add(entity);
         });
 

@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.v2;
 
+import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.InsertOneResult;
@@ -21,16 +22,16 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     private final Supplier<MongoDatabase> databaseSupplier;
     private final String collectionName;
     private final Class<T> entityClass;
-    private final JacksonDocumentConverter jacksonDocumentConverter;
+    private final MongoMappingConvertor mongoMappingConvertor;
     //private final MongoCollection<Document> collection;
 
     public SimpleMongoRepository(Supplier<MongoDatabase> databaseSupplier, String collectionName, Class<T> entityClass,
-                                 JacksonDocumentConverter jacksonDocumentConverter) {
+                                 MongoMappingConvertor mongoMappingConvertor) {
         //this.mongoDatabase = mongoDatabase;
         this.databaseSupplier = databaseSupplier;
         this.collectionName = collectionName;
         this.entityClass = entityClass;
-        this.jacksonDocumentConverter = jacksonDocumentConverter;
+        this.mongoMappingConvertor = mongoMappingConvertor;
         //this.collection = mongoDatabase.getCollection(collectionName);
         //this.collection = databaseSupplier.get().getCollection(collectionName);
 
@@ -38,7 +39,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public T insert(T entity) {
-        Document document = jacksonDocumentConverter.convert(entity);
+        Document document = mongoMappingConvertor.write(entity);
         InsertOneResult insertOneResult = databaseSupplier.get().getCollection(collectionName).insertOne(document);
         BsonValue insertedId = insertOneResult.getInsertedId();
         return null;
@@ -47,13 +48,13 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     @Override
     public T findById(ID id) {
         Document document = databaseSupplier.get().getCollection(collectionName).find(Filters.eq("_id", id)).first();
-        return jacksonDocumentConverter.convert(document, entityClass);
+        return mongoMappingConvertor.read(document, entityClass);
     }
 
     @Override
     public T findByEntity(T entity) {
-        Document document = databaseSupplier.get().getCollection(collectionName).find(jacksonDocumentConverter.convert(entity)).first();
-        return jacksonDocumentConverter.convert(document, entityClass);
+        Document document = databaseSupplier.get().getCollection(collectionName).find(mongoMappingConvertor.write(entity)).first();
+        return mongoMappingConvertor.read(document, entityClass);
     }
 
     @Override
@@ -63,6 +64,6 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public long count(T entity) {
-        return databaseSupplier.get().getCollection(collectionName).countDocuments(jacksonDocumentConverter.convert(entity));
+        return databaseSupplier.get().getCollection(collectionName).countDocuments(mongoMappingConvertor.write(entity));
     }
 }

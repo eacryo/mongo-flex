@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.v2;
 
+import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.github.eacryo.mongoflex.strategy.ExecutorProxy;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -19,7 +20,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
     private final Class<?> targetInterface = MongoRepository.class;
     private final Supplier<MongoDatabase> databaseSupplier;
     private final QueryParser queryParser = new QueryParser();
-    private final JacksonDocumentConverter jacksonDocumentConverter;
+    private final MongoMappingConvertor mongoMappingConvertor;
     private final SimpleMongoRepository<T, ID> baseRepository;
     //只能通过下面的构造器来注入
     private final ExecutorProxy executorProxy;
@@ -28,11 +29,11 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
     // private final MongoCollection<Document> collection;
 
     public MyRepositoryProxyHandler(Supplier<MongoDatabase> databaseSupplier,
-                                    JacksonDocumentConverter jacksonDocumentConverter,
+                                    MongoMappingConvertor mongoMappingConvertor,
                                     SimpleMongoRepository<T, ID> baseRepository,
                                     ExecutorProxy executorProxy) {
         this.databaseSupplier = databaseSupplier;
-        this.jacksonDocumentConverter = jacksonDocumentConverter;
+        this.mongoMappingConvertor = mongoMappingConvertor;
         this.baseRepository = baseRepository;
         this.executorProxy = executorProxy;
     }
@@ -76,9 +77,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         // ... (保持不变，或使用更完善的映射逻辑)
         try {
             T instance = clazz.getDeclaredConstructor().newInstance();
-            instance = jacksonDocumentConverter.convert(doc, clazz);
-            //SimpleMongoConverter simpleMongoConverter = new SimpleMongoConverter();
-            //instance = simpleMongoConverter.convert(doc, clazz);
+            instance = mongoMappingConvertor.read(doc, clazz);
             return instance;
         } catch (Exception e) {
             throw new RuntimeException("Error mapping document to entity", e);
