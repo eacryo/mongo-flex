@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -21,6 +22,12 @@ public class MongoMappingConvertor {
 
     private static final String MONGO_ID_FIELD = "_id";
     private static final String JAVA_ID_FIELD = "id";
+
+    private static final ConcurrentHashMap<Class<?>,ClassFieldMetaData> META_DATA_CACHE = new ConcurrentHashMap<>();
+
+    private ClassFieldMetaData getMetaData(Class<?> clazz){
+        return META_DATA_CACHE.computeIfAbsent(clazz,ClassFieldMetaData::new);
+    }
 
     // --- 写入 (POJO -> BSON Document) ---
 
@@ -53,33 +60,18 @@ public class MongoMappingConvertor {
 
         Map<String, Object> map = new HashMap<>();
 
-        for (Field field : getAllFields(clazz)) {
-            field.setAccessible(true);
-            try {
-                Object value = field.get(entity);
-
-                if (value == null) {
+        for (FieldMapping mapping : getMetaData(clazz).getFieldMappingList()) {
+            try{
+                Object value = mapping.field.get(entity);
+                if (value == null){
                     continue;
                 }
-                String fieldName;
-                if(field.isAnnotationPresent(CollectionField.class)){
-                    fieldName = field.getAnnotation(CollectionField.class).value();
-                } else {
-                    fieldName = field.getName();
-                }
-
-                // 1. 映射处理：Java id -> MongoDB _id
-                if (JAVA_ID_FIELD.equals(fieldName)) {
-                    fieldName = MONGO_ID_FIELD;
-                }
-
-                // 2. 递归处理值（Date, 嵌套对象等）
+                String fieldName = mapping.mongoFieldName;
                 Object convertedValue = processFieldValue(value);
 
-                map.put(fieldName, convertedValue);
-
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException("Error accessing field '" + field.getName() + "' via reflection.", e);
+                map.put(fieldName,convertedValue);
+            } catch (IllegalAccessException e){
+                throw new RuntimeException("Error accessing field: " + mapping.field.getName() + " in class: " + clazz.getName(), e);
             }
         }
         return map;
@@ -136,30 +128,18 @@ public class MongoMappingConvertor {
             // 实例化目标 POJO (要求有无参构造函数)
             T entity = targetClass.getDeclaredConstructor().newInstance();
 
-            for (Field field : getAllFields(targetClass)) {
-                field.setAccessible(true);
-                String fieldName;
-                if(field.isAnnotationPresent(CollectionField.class)){
-                    fieldName = field.getAnnotation(CollectionField.class).value();
-                } else {
-                    fieldName = field.getName();
-                }
-                String docKey = fieldName;
-
-                // 1. 映射处理：MongoDB _id -> Java id
-                if (JAVA_ID_FIELD.equals(fieldName) && doc.containsKey(MONGO_ID_FIELD)) {
+            for (FieldMapping mapping : getMetaData(targetClass).getFieldMappingList()) {
+                String mongoFieldName = mapping.getMongoFieldName();
+                String docKey = mongoFieldName;
+                if (MONGO_ID_FIELD.equals(mongoFieldName) && doc.containsKey(MONGO_ID_FIELD)) {
                     docKey = MONGO_ID_FIELD;
-                } else if (!doc.containsKey(fieldName)) {
-                    continue; // 文档中没有这个键，跳过
+                } else if (!doc.containsKey(mongoFieldName)){
+                    continue;
                 }
-
                 Object bsonValue = doc.get(docKey);
-
-                if (bsonValue != null) {
-                    // 2. 递归将 BSON 值转换为目标 Java 类型
-                    Object javaValue = convertBsonValueToJavaType(bsonValue, field.getType(), field.getGenericType());
-
-                    field.set(entity, javaValue);
+                if (bsonValue!=null){
+                    Object javaValue = convertBsonValueToJavaType(bsonValue,mapping.getFieldType(),mapping.getGenericType());
+                    mapping.field.set(entity, javaValue);
                 }
             }
             return entity;
