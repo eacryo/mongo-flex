@@ -4,8 +4,11 @@ import org.springframework.boot.autoconfigure.AutoConfigurationExcludeFilter;
 import org.springframework.boot.autoconfigure.AutoConfigurationImportFilter;
 import org.springframework.boot.autoconfigure.AutoConfigurationMetadata;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
+import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 
 import java.util.Arrays;
+import java.util.Set;
 
 //解决启动时默认访问localhost的mongodb导致报错
 @ConditionalOnProperty(
@@ -16,22 +19,19 @@ import java.util.Arrays;
 )
 public class FrameworkExclusionFilter implements AutoConfigurationImportFilter {
 
-    private static final String[] EXCLUDED_CONFIGURATIONS = {
-        "org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration",
-        "org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration"
-    };
+    private static final Set<String> EXCLUDED_CONFIGURATIONS = Set.of(
+            MongoAutoConfiguration.class.getName(),
+            MongoDataAutoConfiguration.class.getName()
+    );
 
     @Override
     public boolean[] match(String[] autoConfigurationClasses,
                           AutoConfigurationMetadata autoConfigurationMetadata) {
         boolean[] matches = new boolean[autoConfigurationClasses.length];
         for (int i = 0; i < autoConfigurationClasses.length; i++) {
-            matches[i] = shouldInclude(autoConfigurationClasses[i]);
+            matches[i] = !EXCLUDED_CONFIGURATIONS.contains(autoConfigurationClasses[i]);
         }
         return matches;
     }
 
-    private boolean shouldInclude(String className) {
-        return !Arrays.asList(EXCLUDED_CONFIGURATIONS).contains(className);
-    }
 }
