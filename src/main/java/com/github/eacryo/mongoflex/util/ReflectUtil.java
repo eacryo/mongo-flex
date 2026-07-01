@@ -10,8 +10,22 @@ import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReflectUtil {
+
+    private static final ConcurrentHashMap<Class<?>,Optional<Field>> ID_FIELD_CACHE = new ConcurrentHashMap<>();
+
+    public static Field getCachedIdField(Class<?> clazz){
+        return ID_FIELD_CACHE.computeIfAbsent(clazz, c -> {
+            List<Field> fields = getAllFieldsIncludingInherited(c);
+            Field idField = getIdFieldNotThrow(fields);
+            if (idField != null){
+               idField.setAccessible(true);
+            }
+            return Optional.ofNullable(idField);
+        }).orElse(null);
+    }
 
     /**
      * 获取对象的所有字段（包括继承的字段）
