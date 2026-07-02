@@ -110,7 +110,8 @@ public class DynamicMongoClient {
             clients.put(tenantId, mongoClient);
             log.info("Added MongoClient for tenant: {}", tenantId);
         } catch (Exception e) {
-            log.error("Failed to get MongoClient for tenant: {}, error: {}", tenantId, e.getMessage());
+            // 不再吞掉异常，直接抛出以让应用尽早失败并显示完整堆栈
+            throw new RuntimeException("Failed to create MongoClient for tenant: " + tenantId, e);
         }
     }
 
