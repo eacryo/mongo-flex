@@ -29,6 +29,21 @@ public class MongoMappingConvertor {
         return META_DATA_CACHE.computeIfAbsent(clazz,ClassFieldMetaData::new);
     }
 
+
+    /**
+     * 将Java字段名解析为MongoDB中对应的字段名
+     * 例如将id -> _id, 或者使用 @CollectionField中注解指定的名称
+     * @return
+     */
+    public String resolveMongoFieldName(Class<?> clazz, String javaFieldName){
+        for(FieldMapping mapping : getMetaData(clazz).getFieldMappingList()){
+            if (mapping.getField().getName().equals(javaFieldName)){
+                return mapping.getMongoFieldName();
+            }
+        }
+        return javaFieldName; // 如果没有找到对应的映射，返回原始字段名
+    }
+
     // --- 写入 (POJO -> BSON Document) ---
 
     /**
@@ -159,13 +174,18 @@ public class MongoMappingConvertor {
             return bsonValue;
         }
 
-        // 2. 嵌套 Document：递归调用 read
+        // 2. 当Java类型为String类型，而Bson类型为ObjectId时，转换为十六进制字符串
+        if (targetClass == String.class && bsonValue instanceof ObjectId) {
+            return ((ObjectId) bsonValue).toHexString();
+        }
+
+        // 3. 嵌套 Document：递归调用 read
         if (bsonValue instanceof Document && !isPrimitiveOrSystemType(targetClass)) {
             // TargetClass 必须有无参构造函数
             return read((Document) bsonValue, targetClass);
         }
 
-        // 3. List/Collection：处理嵌套列表元素
+        // 4. List/Collection：处理嵌套列表元素
         if (bsonValue instanceof List && targetClass.isAssignableFrom(List.class)) {
             List<Object> bsonList = (List<Object>) bsonValue;
 
@@ -177,7 +197,7 @@ public class MongoMappingConvertor {
                 .collect(Collectors.toList());
         }
 
-        // 4. 枚举：从字符串转换
+        // 5. 枚举：从字符串转换
         if (targetClass.isEnum() && bsonValue instanceof String) {
             return Enum.valueOf((Class<Enum>) targetClass, (String) bsonValue);
         }

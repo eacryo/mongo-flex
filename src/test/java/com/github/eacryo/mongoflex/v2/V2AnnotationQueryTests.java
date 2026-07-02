@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -53,7 +52,7 @@ public class V2AnnotationQueryTests {
     @Test
     public void testFindByParentMethod() {
         Character character = new Character();
-        System.out.println(characterRepositoryV2.findByEntity(character));
+        System.out.println(characterRepositoryV2.findOneByEntity(character));
     }
 
     @Test

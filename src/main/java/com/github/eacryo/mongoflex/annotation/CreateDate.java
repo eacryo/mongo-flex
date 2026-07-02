@@ -8,4 +8,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CreateDate {
+    //当字段类型为string时的日期格式化
+    String pattern() default "yyyy-MM-dd HH:mm:ss";
 }

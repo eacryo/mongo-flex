@@ -15,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ReflectUtil {
 
     private static final ConcurrentHashMap<Class<?>,Optional<Field>> ID_FIELD_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<SFunction<?,?>,String> LAMBDA_FIELD_NAME_CACHE = new ConcurrentHashMap<>();
 
     public static Field getCachedIdField(Class<?> clazz){
         return ID_FIELD_CACHE.computeIfAbsent(clazz, c -> {
@@ -90,6 +91,30 @@ public class ReflectUtil {
     public static Field getFiled(Class<?> clazz, String fieldName) {
         List<Field> fields = getAllFieldsIncludingInherited(clazz);
         return fields.stream().filter(f -> f.getName().equals(fieldName)).findFirst().orElse(null);
+    }
+
+
+    public static <T,R> String getFieldNameFromLambda(SFunction<T,R> func){
+        return LAMBDA_FIELD_NAME_CACHE.computeIfAbsent(func, f -> {
+            try{
+                Method writeReplace = f.getClass().getDeclaredMethod("writeReplace");
+                writeReplace.setAccessible(true);
+                SerializedLambda serializedLambda = (SerializedLambda) writeReplace.invoke(f);
+                String methodName =  serializedLambda.getImplMethodName();
+                //去除get/is并小写首字母
+                String fieldName;
+                if (methodName.startsWith("get") && methodName.length() > 3) {
+                    fieldName = methodName.substring(3);
+                } else if (methodName.startsWith("is") && methodName.length() > 2) {
+                    fieldName = methodName.substring(2);
+                } else {
+                    fieldName = methodName;
+                }
+                return Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
+            } catch (Exception e){
+                throw new RuntimeException("Failed to resolve field name from lambda", e);
+            }
+        });
     }
 
 
