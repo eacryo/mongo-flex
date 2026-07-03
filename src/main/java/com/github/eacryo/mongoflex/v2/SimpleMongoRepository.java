@@ -82,7 +82,8 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public T findOneByEntity(T entity) {
-        Document document = databaseSupplier.get().getCollection(collectionName).find(mongoMappingConvertor.write(entity)).first();
+        Document query = convertQueryId(mongoMappingConvertor.write(entity));
+        Document document = databaseSupplier.get().getCollection(collectionName).find(query).first();
         return mongoMappingConvertor.read(document, entityClass);
     }
 

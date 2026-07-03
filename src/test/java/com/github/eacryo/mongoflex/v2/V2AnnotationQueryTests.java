@@ -61,6 +61,14 @@ public class V2AnnotationQueryTests {
     }
 
     @Test
+    public void testFindOneByEntry() {
+        // 构造查询实体，参考 repository 中的 findOneByMql 所使用的 _id 和 name 字段
+        Character query = new Character();
+        query.setName("Ganyu");
+        System.out.println(characterRepositoryV2.findOneByEntity(query));
+    }
+
+    @Test
     public void testInsert() throws ParseException {
         Character character = new Character();
         character.setId(UlidCreator.getUlid().toString());
