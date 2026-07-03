@@ -6,6 +6,8 @@ import com.github.eacryo.mongoflex.annotation.UpdateDate;
 import com.github.eacryo.mongoflex.config.IdGenerator;
 import com.github.eacryo.mongoflex.constant.IdType;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
+import com.github.eacryo.mongoflex.lambda.MongoBsonRenderer;
 import com.github.eacryo.mongoflex.util.DateValueGenerator;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import com.github.eacryo.mongoflex.util.SFunction;
@@ -17,10 +19,13 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -94,6 +99,31 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return mongoMappingConvertor.read(document, entityClass);
     }
 
+    // LambdaQueryWrapper / pairs delegations
+    @Override
+    public T findOne(LambdaQueryWrapper<T> wrapper) {
+        Bson filter = MongoBsonRenderer.render(wrapper);
+        Document document = databaseSupplier.get().getCollection(collectionName).find(filter).first();
+        return mongoMappingConvertor.read(document, entityClass);
+    }
+
+    @Override
+    public List<T> findList(LambdaQueryWrapper<T> wrapper) {
+        Bson filter = MongoBsonRenderer.render(wrapper);
+        List<Document> docs = databaseSupplier.get().getCollection(collectionName).find(filter).into(new ArrayList<>());
+        List<T> result = new ArrayList<>();
+        for (Document d : docs) {
+            result.add(mongoMappingConvertor.read(d, entityClass));
+        }
+        return result;
+    }
+
+    @Override
+    public long count(LambdaQueryWrapper<T> wrapper) {
+        Bson filter = MongoBsonRenderer.render(wrapper);
+        return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
+    }
+
     @Override
     public long count() {
         return databaseSupplier.get().getCollection(collectionName).countDocuments();
@@ -112,6 +142,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         Document filter = buildFilterFromLambda(field, value);
         return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
     }
+
 
     @Override
     public long updateById(T entity) {
@@ -141,6 +172,18 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     @Override
+    public long update(LambdaQueryWrapper<T> wrapper, T entity) {
+        Bson filter = MongoBsonRenderer.render(wrapper);
+        fillDate(entity,false);
+        Document doc = mongoMappingConvertor.write(entity);
+        doc.remove("_id");
+        Document updateDoc = new Document("$set", doc);
+        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
+                .updateMany(filter, updateDoc);
+        return updateResult.getModifiedCount();
+    }
+
+    @Override
     public long deleteById(ID id) {
         Object queryId = convertIdIfNecessary(id);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).
@@ -158,6 +201,14 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     @Override
     public <R> long delete(SFunction<T, R> field, R value) {
         Document filter = buildFilterFromLambda(field, value);
+        DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
+        return result.getDeletedCount();
+    }
+
+
+    @Override
+    public long delete(LambdaQueryWrapper<T> wrapper) {
+        Bson filter = MongoBsonRenderer.render(wrapper);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
         return result.getDeletedCount();
     }
@@ -252,4 +303,25 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         }
         return new Document(mongoFieldName, queryValue);
     }
-}
+
+   private Document buildFilterFromMap(Map<String, Object> criteria) {
+        Document filter = new Document();
+        if (criteria == null || criteria.isEmpty()) return filter;
+        for (Map.Entry<String, Object> e : criteria.entrySet()) {
+            String key = e.getKey();
+            Object val = e.getValue();
+            boolean neg = false;
+            if (key.startsWith("!")) {
+                neg = true;
+                key = key.substring(1);
+            }
+            String mongoFieldName = mongoMappingConvertor.resolveMongoFieldName(entityClass, key);
+            if (neg) {
+                filter.put(mongoFieldName, new Document("$ne", val));
+            } else {
+                filter.put(mongoFieldName, val);
+            }
+        }
+        return convertQueryId(filter);
+    }
+ }
