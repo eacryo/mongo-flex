@@ -55,6 +55,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
                 repositoryInterface.getClassLoader(),
                 new Class<?>[]{repositoryInterface},
                 new MyRepositoryProxyHandler<>(
+                        repositoryInterface,
                         dbSupplier,
                         mongoMappingConvertor,
                         baseRepository,

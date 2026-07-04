@@ -18,6 +18,7 @@ import java.util.function.Supplier;
 public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
     private final Class<?> targetInterface = MongoRepository.class;
+    private final Class<?> repositoryInterface;
     private final Supplier<MongoDatabase> databaseSupplier;
     private final QueryParser queryParser = new QueryParser();
     private final MongoMappingConvertor mongoMappingConvertor;
@@ -28,10 +29,12 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
     // 这里的 collection 不再是固定的，因为查询语句可以指定不同的集合
     // private final MongoCollection<Document> collection;
 
-    public MyRepositoryProxyHandler(Supplier<MongoDatabase> databaseSupplier,
+    public MyRepositoryProxyHandler(Class<?> repositoryInterface,
+                                    Supplier<MongoDatabase> databaseSupplier,
                                     MongoMappingConvertor mongoMappingConvertor,
                                     SimpleMongoRepository<T, ID> baseRepository,
                                     ExecutorProxy executorProxy) {
+        this.repositoryInterface = repositoryInterface;
         this.databaseSupplier = databaseSupplier;
         this.mongoMappingConvertor = mongoMappingConvertor;
         this.baseRepository = baseRepository;
@@ -63,6 +66,11 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             log.info("Method {} inherit from parent interface", method.getName());
             Object invoked = method.invoke(baseRepository, args);
             return invoked;
+        } else if (isMethodFromTargetInterface(method, Object.class)) {
+            if ("toString".equals(method.getName())) {
+                return "Repository proxy for " + repositoryInterface.getName();
+            }
+            return method.invoke(baseRepository, args);
         } else {
             //不是通过@Mql注解的方法，也不是继承自IBaseRepositoryV2的方法，抛出异常
             throw new UnsupportedOperationException("Method " + method.getName() +
