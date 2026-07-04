@@ -36,12 +36,23 @@ public class MongoMappingConvertor {
      * @return
      */
     public String resolveMongoFieldName(Class<?> clazz, String javaFieldName){
-        for(FieldMapping mapping : getMetaData(clazz).getFieldMappingList()){
-            if (mapping.getField().getName().equals(javaFieldName)){
-                return mapping.getMongoFieldName();
-            }
+        FieldMapping mapping = getMetaData(clazz).getFieldMappingByJavaName().get(javaFieldName);
+        if (mapping != null) {
+            return mapping.getMongoFieldName();
         }
         return javaFieldName; // 如果没有找到对应的映射，返回原始字段名
+    }
+
+    public Field getCollectionIdField(Class<?> clazz) {
+        return getMetaData(clazz).getCollectionIdField();
+    }
+
+    public Field getCreateDateField(Class<?> clazz) {
+        return getMetaData(clazz).getCreateDateField();
+    }
+
+    public Field getUpdateDateField(Class<?> clazz) {
+        return getMetaData(clazz).getUpdateDateField();
     }
 
     // --- 写入 (POJO -> BSON Document) ---
@@ -75,7 +86,7 @@ public class MongoMappingConvertor {
 
         Map<String, Object> map = new HashMap<>();
 
-        for (FieldMapping mapping : getMetaData(clazz).getFieldMappingList()) {
+        for (FieldMapping mapping : getMetaData(clazz).getFieldMappingByJavaName().values()) {
             try{
                 Object value = mapping.field.get(entity);
                 if (value == null){
@@ -143,7 +154,7 @@ public class MongoMappingConvertor {
             // 实例化目标 POJO (要求有无参构造函数)
             T entity = targetClass.getDeclaredConstructor().newInstance();
 
-            for (FieldMapping mapping : getMetaData(targetClass).getFieldMappingList()) {
+            for (FieldMapping mapping : getMetaData(targetClass).getFieldMappingByJavaName().values()) {
                 String mongoFieldName = mapping.getMongoFieldName();
                 String docKey = mongoFieldName;
                 if (MONGO_ID_FIELD.equals(mongoFieldName) && doc.containsKey(MONGO_ID_FIELD)) {

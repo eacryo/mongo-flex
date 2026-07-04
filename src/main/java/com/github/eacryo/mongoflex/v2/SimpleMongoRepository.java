@@ -59,11 +59,12 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     @Override
     public T insert(T entity) {
         fillId(entity);
+        fillDate(entity, true);
         Document document = mongoMappingConvertor.write(entity);
         InsertOneResult insertOneResult = databaseSupplier.get().getCollection(collectionName).insertOne(document);
         BsonValue insertedId = insertOneResult.getInsertedId();
         if (insertedId != null) {
-            Field idField = ReflectUtil.getCachedIdField(entityClass);
+            Field idField = mongoMappingConvertor.getCollectionIdField(entityClass);
             if (idField != null) {
                 idField.setAccessible(true);
                 try {
@@ -102,14 +103,16 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     // LambdaQueryWrapper / pairs delegations
     @Override
     public T findOne(LambdaQueryWrapper<T> wrapper) {
-        Bson filter = MongoBsonRenderer.render(wrapper);
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         Document document = databaseSupplier.get().getCollection(collectionName).find(filter).first();
         return mongoMappingConvertor.read(document, entityClass);
     }
 
     @Override
     public List<T> findList(LambdaQueryWrapper<T> wrapper) {
-        Bson filter = MongoBsonRenderer.render(wrapper);
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         List<Document> docs = databaseSupplier.get().getCollection(collectionName).find(filter).into(new ArrayList<>());
         List<T> result = new ArrayList<>();
         for (Document d : docs) {
@@ -120,7 +123,8 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public long count(LambdaQueryWrapper<T> wrapper) {
-        Bson filter = MongoBsonRenderer.render(wrapper);
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
     }
 
@@ -173,7 +177,8 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public long update(LambdaQueryWrapper<T> wrapper, T entity) {
-        Bson filter = MongoBsonRenderer.render(wrapper);
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         fillDate(entity,false);
         Document doc = mongoMappingConvertor.write(entity);
         doc.remove("_id");
@@ -208,13 +213,14 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public long delete(LambdaQueryWrapper<T> wrapper) {
-        Bson filter = MongoBsonRenderer.render(wrapper);
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
         return result.getDeletedCount();
     }
 
     private void fillId(T entity){
-        Field idField = ReflectUtil.getCachedIdField(entityClass);
+        Field idField = mongoMappingConvertor.getCollectionIdField(entityClass);
         if (idField == null){
             //no @CollectionId annotation found, nothing to do
             return;
@@ -253,10 +259,9 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
 
     private void fillDate(T entity, boolean isInsert){
-        List<Field> fields = ReflectUtil.getAllFieldsIncludingInherited(entityClass);
         try{
             if (isInsert){
-                Field createDateField = ReflectUtil.getCreateDateField(fields);
+                Field createDateField = mongoMappingConvertor.getCreateDateField(entityClass);
                 if (createDateField != null){
                     createDateField.setAccessible(true);
                     if (createDateField.get(entity) == null){
@@ -266,7 +271,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
                     }
                 }
             }
-            Field updateDateField = ReflectUtil.getUpdateDateField(fields);
+            Field updateDateField = mongoMappingConvertor.getUpdateDateField(entityClass);
             if (updateDateField != null){
                 updateDateField.setAccessible(true);
                 String pattern = updateDateField.getAnnotation(UpdateDate.class).pattern();
@@ -293,6 +298,12 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return query;
     }
 
+
+    private void ensureEntityClass(LambdaQueryWrapper<T> wrapper) {
+        if (wrapper.getEntityClass() == null) {
+            wrapper.setEntityClass(entityClass);
+        }
+    }
 
     private <R> Document buildFilterFromLambda(SFunction<T, R> field, R value) {
         String javaFieldName = ReflectUtil.getFieldNameFromLambda(field);

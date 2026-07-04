@@ -1,5 +1,6 @@
 package com.github.eacryo.mongoflex.lambda;
 
+import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 
@@ -10,104 +11,73 @@ import java.util.List;
 public class MongoBsonRenderer {
 
     public static Bson render(
-            LambdaQueryWrapper<?> wrapper) {
+            LambdaQueryWrapper<?> wrapper,
+            MongoMappingConvertor convertor) {
 
         List<Bson> filters = new ArrayList<>();
+        Class<?> entityClass = wrapper.getEntityClass();
 
         for (Condition c : wrapper.getConditions()) {
+
+            String field = entityClass != null
+                    ? convertor.resolveMongoFieldName(entityClass, c.field())
+                    : c.field();
 
             switch (c.operator()) {
 
                 case EQ -> filters.add(
-                        Filters.eq(
-                                c.field(),
-                                c.value()
-                        )
+                        Filters.eq(field, c.value())
                 );
 
                 case NE -> filters.add(
-                        Filters.ne(
-                                c.field(),
-                                c.value()
-                        )
+                        Filters.ne(field, c.value())
                 );
 
                 case GT -> filters.add(
-                        Filters.gt(
-                                c.field(),
-                                c.value()
-                        )
+                        Filters.gt(field, c.value())
                 );
 
                 case LT -> filters.add(
-                        Filters.lt(
-                                c.field(),
-                                c.value()
-                        )
+                        Filters.lt(field, c.value())
                 );
 
                 case GTE -> filters.add(
-                        Filters.gte(
-                                c.field(),
-                                c.value()
-                        )
+                        Filters.gte(field, c.value())
                 );
 
                 case LTE -> filters.add(
-                        Filters.lte(
-                                c.field(),
-                                c.value()
-                        )
+                        Filters.lte(field, c.value())
                 );
 
                 case REGEX -> filters.add(
-                        Filters.regex(
-                                c.field(),
-                                c.value().toString()
-                        )
+                        Filters.regex(field, c.value().toString())
                 );
 
                 case IN -> filters.add(
-                        Filters.in(
-                                c.field(),
-                                (Iterable<?>) c.value()
-                        )
+                        Filters.in(field, (Iterable<?>) c.value())
                 );
 
                 case NIN -> filters.add(
-                        Filters.nin(
-                                c.field(),
-                                (Iterable<?>) c.value()
-                        )
+                        Filters.nin(field, (Iterable<?>) c.value())
                 );
 
                 case EXISTS -> filters.add(
-                        Filters.exists(
-                                c.field(),
-                                (Boolean) c.value()
-                        )
+                        Filters.exists(field, (Boolean) c.value())
                 );
 
                 case ALL -> filters.add(
-                        Filters.all(
-                                c.field(),
-                                (Iterable<?>) c.value()
-                        )
+                        Filters.all(field, (Iterable<?>) c.value())
                 );
 
                 case SIZE -> filters.add(
-                        Filters.size(
-                                c.field(),
-                                (Integer) c.value()
-                        )
+                        Filters.size(field, (Integer) c.value())
                 );
 
-                case ELEM_MATCH -> filters.add(
-                        Filters.elemMatch(
-                                c.field(),
-                                (Bson) c.value()
-                        )
-                );
+                case ELEM_MATCH -> {
+                    LambdaQueryWrapper<?> subWrapper = (LambdaQueryWrapper<?>) c.value();
+                    Bson subFilter = render(subWrapper, convertor);
+                    filters.add(Filters.elemMatch(field, subFilter));
+                }
 
             }
 

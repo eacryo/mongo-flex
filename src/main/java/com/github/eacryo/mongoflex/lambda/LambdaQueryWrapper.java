@@ -3,8 +3,8 @@ package com.github.eacryo.mongoflex.lambda;
 import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 
-import org.bson.conversions.Bson;
-
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -12,12 +12,28 @@ import java.util.List;
 /**
  * A Lambda-based query wrapper similar to MyBatis-Plus's LambdaQueryWrapper.
  * Example usage:
- * LambdaQueryWrapper<User> w = new LambdaQueryWrapper<>();
+ * LambdaQueryWrapper<User> w = new LambdaQueryWrapper<>(User.class);
  * w.eq(User::getUserName, "Tom");
  */
 public class LambdaQueryWrapper<T> {
 
     private final List<Condition> conditions = new ArrayList<>();
+    private Class<T> entityClass;
+
+    public LambdaQueryWrapper() {
+    }
+
+    public LambdaQueryWrapper(Class<T> entityClass) {
+        this.entityClass = entityClass;
+    }
+
+    public Class<T> getEntityClass() {
+        return entityClass;
+    }
+
+    public void setEntityClass(Class<T> entityClass) {
+        this.entityClass = entityClass;
+    }
 
     public <R> LambdaQueryWrapper<T> eq(SFunction<T, R> field, R value) {
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
@@ -93,9 +109,31 @@ public class LambdaQueryWrapper<T> {
 
     public LambdaQueryWrapper<T> elemMatch(SFunction<T, ?> field, LambdaQueryWrapper<?> subWrapper) {
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        Bson subFilter = MongoBsonRenderer.render(subWrapper);
-        conditions.add(new Condition(javaField, Operator.ELEM_MATCH, subFilter));
+        if (entityClass != null && subWrapper.getEntityClass() == null) {
+            Class<?> subEntityClass = resolveElementTypeFromField(entityClass, javaField);
+            if (subEntityClass != null) {
+                subWrapper.setEntityClass((Class) subEntityClass);
+            }
+        }
+        conditions.add(new Condition(javaField, Operator.ELEM_MATCH, subWrapper));
         return this;
+    }
+
+    private Class<?> resolveElementTypeFromField(Class<?> clazz, String fieldName) {
+        try {
+            java.lang.reflect.Field field = ReflectUtil.getFiled(clazz, fieldName);
+            if (field != null) {
+                Type genericType = field.getGenericType();
+                if (genericType instanceof ParameterizedType pt) {
+                    Type[] args = pt.getActualTypeArguments();
+                    if (args.length > 0 && args[0] instanceof Class) {
+                        return (Class<?>) args[0];
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     public List<Condition> getConditions() {
