@@ -86,6 +86,10 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return mongoMappingConvertor.read(document, entityClass);
     }
 
+    /**
+     * 按实体中的非空字段作为条件查询，返回第一条匹配记录。
+     * null 字段会被忽略，如果 entity 所有字段均为 null 则等同于无条件查询，返回集合中的第一条文档。
+     */
     @Override
     public T findOneByEntity(T entity) {
         Document query = convertQueryId(mongoMappingConvertor.write(entity));
@@ -133,6 +137,10 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return databaseSupplier.get().getCollection(collectionName).countDocuments();
     }
 
+    /**
+     * 按实体中的非空字段作为条件统计匹配的文档数量。
+     * null 字段会被忽略，entity 所有字段均为 null 时返回集合总文档数。
+     */
     @Override
     public long count(T entity) {
         Document query = convertQueryId(mongoMappingConvertor.write(entity));
@@ -196,6 +204,12 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return result.getDeletedCount();
     }
 
+    /**
+     * 按实体中的非空字段作为条件删除匹配的所有文档。
+     * <p>
+     * <b>警告：null 字段会被忽略，如果 entity 所有字段均为 null 则等同于无条件执行
+     * deleteMany({})，将清空整个集合。请确保 entity 至少有一个非 null 字段。</b>
+     */
     @Override
     public long deleteByEntity(T entity) {
         Document query = convertQueryId(mongoMappingConvertor.write(entity));
