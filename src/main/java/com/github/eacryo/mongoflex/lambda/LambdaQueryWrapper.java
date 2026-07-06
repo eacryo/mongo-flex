@@ -3,8 +3,6 @@ package com.github.eacryo.mongoflex.lambda;
 import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -109,31 +107,8 @@ public class LambdaQueryWrapper<T> {
 
     public LambdaQueryWrapper<T> elemMatch(SFunction<T, ?> field, LambdaQueryWrapper<?> subWrapper) {
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        if (entityClass != null && subWrapper.getEntityClass() == null) {
-            Class<?> subEntityClass = resolveElementTypeFromField(entityClass, javaField);
-            if (subEntityClass != null) {
-                subWrapper.setEntityClass((Class) subEntityClass);
-            }
-        }
         conditions.add(new Condition(javaField, Operator.ELEM_MATCH, subWrapper));
         return this;
-    }
-
-    private Class<?> resolveElementTypeFromField(Class<?> clazz, String fieldName) {
-        try {
-            java.lang.reflect.Field field = ReflectUtil.getFiled(clazz, fieldName);
-            if (field != null) {
-                Type genericType = field.getGenericType();
-                if (genericType instanceof ParameterizedType pt) {
-                    Type[] args = pt.getActualTypeArguments();
-                    if (args.length > 0 && args[0] instanceof Class) {
-                        return (Class<?>) args[0];
-                    }
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        return null;
     }
 
     public List<Condition> getConditions() {

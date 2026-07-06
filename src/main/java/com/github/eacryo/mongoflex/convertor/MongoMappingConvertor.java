@@ -1,7 +1,6 @@
 package com.github.eacryo.mongoflex.convertor;
 
 
-import com.github.eacryo.mongoflex.annotation.CollectionField;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Component;
@@ -41,6 +40,29 @@ public class MongoMappingConvertor {
             return mapping.getMongoFieldName();
         }
         return javaFieldName; // 如果没有找到对应的映射，返回原始字段名
+    }
+
+    /**
+     * 获取指定Java字段名对应的字段元数据（含 Field、字段类型、泛型类型等）
+     */
+    public FieldMapping getFieldMapping(Class<?> clazz, String javaFieldName) {
+        return getMetaData(clazz).getFieldMappingByJavaName().get(javaFieldName);
+    }
+
+    /**
+     * 获取字段的泛型元素类型（如 List&lt;Item&gt; → Item.class）
+     */
+    public Class<?> getFieldGenericElementType(Class<?> clazz, String javaFieldName) {
+        FieldMapping mapping = getFieldMapping(clazz, javaFieldName);
+        if (mapping == null) return null;
+        Type genericType = mapping.getGenericType();
+        if (genericType instanceof ParameterizedType pt) {
+            Type[] args = pt.getActualTypeArguments();
+            if (args.length > 0 && args[0] instanceof Class<?> c) {
+                return c;
+            }
+        }
+        return null;
     }
 
     public Field getCollectionIdField(Class<?> clazz) {
@@ -218,17 +240,6 @@ public class MongoMappingConvertor {
     }
 
     // --- 辅助方法 ---
-
-    /**
-     * 获取类及其所有父类的所有字段。
-     */
-    private List<Field> getAllFields(Class<?> type) {
-        List<Field> fields = new ArrayList<>();
-        for (Class<?> c = type; c != null && c != Object.class; c = c.getSuperclass()) {
-            fields.addAll(Arrays.asList(c.getDeclaredFields()));
-        }
-        return fields;
-    }
 
     /**
      * 判断是否是基础的或系统类型，用于决定是否需要递归处理（避免对 JDK 类进行反射）。

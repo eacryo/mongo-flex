@@ -75,6 +75,12 @@ public class MongoBsonRenderer {
 
                 case ELEM_MATCH -> {
                     LambdaQueryWrapper<?> subWrapper = (LambdaQueryWrapper<?>) c.value();
+                    if (entityClass != null && subWrapper.getEntityClass() == null) {
+                        Class<?> subClass = convertor.getFieldGenericElementType(entityClass, c.field());
+                        if (subClass != null) {
+                            ((LambdaQueryWrapper) subWrapper).setEntityClass(subClass);
+                        }
+                    }
                     Bson subFilter = render(subWrapper, convertor);
                     filters.add(Filters.elemMatch(field, subFilter));
                 }
