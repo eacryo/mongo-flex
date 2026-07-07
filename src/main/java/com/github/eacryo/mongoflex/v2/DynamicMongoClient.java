@@ -9,8 +9,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.GenericApplicationContext;
@@ -50,7 +48,6 @@ public class DynamicMongoClient {
         if (mongoFlexProperties.isEnableMultiTenants()) {
             return select(MDC.get(MongoFlexConstant.TENANT));
         }
-        ;
         return select(MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE);
     }
 
@@ -74,7 +71,7 @@ public class DynamicMongoClient {
 
 
     private void initWhenEnabled() {
-        // 从配置中获取所有租户的 MongoClient 信息
+        Map<String, Exception> errors = new HashMap<>();
         for (TenantConfig config : mongoFlexProperties.getTenants()) {
             String tenantId = config.getName() +
                     (Objects.nonNull(config.getTablePrefix()) ? "_" + config.getTablePrefix() : "");
@@ -82,21 +79,24 @@ public class DynamicMongoClient {
             try {
                 MongoClientSettings mongoClientSettings = MongoClientSettings.builder()
                         .applyConnectionString(new ConnectionString(config.getUri())).build();
-                // 注册Bean
                 genericApplicationContext.registerBean(beanName, MongoClient.class,
                         () -> MongoClients.create(mongoClientSettings));
-                // 从 Spring 容器中获取对应的 MongoTemplate Bean
                 MongoClient mongoClient = genericApplicationContext.getBean(beanName, MongoClient.class);
                 clients.put(tenantId, mongoClient);
                 log.info("Added MongoClient for tenant: {}", tenantId);
             } catch (Exception e) {
-                log.error("Failed to get MongoClient for tenant: {}, error: {}", tenantId, e.getMessage());
+                errors.put(tenantId, e);
+                log.error("Failed to create MongoClient for tenant: {}, error: {}", tenantId, e.getMessage());
             }
+        }
+        if (!errors.isEmpty()) {
+            throw new RuntimeException("Failed to create MongoClient for tenants: " + errors.keySet(),
+                    errors.values().iterator().next());
         }
     }
 
     private void initWhenDisabled() {
-        //只注入一个MongoTemplate
+        //只注入一个MongoClient
         String tenantId = MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE;
         String beanName = MONGO_CLIENT_PREFIX + tenantId;
         try {
