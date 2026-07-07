@@ -25,7 +25,7 @@ import org.bson.types.ObjectId;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -38,7 +38,6 @@ import java.util.function.Supplier;
  */
 public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
-    //private final MongoDatabase mongoDatabase;
     private final Supplier<MongoDatabase> databaseSupplier;
     private final String collectionName;
     private final Class<T> entityClass;
@@ -56,8 +55,11 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     }
 
+    // ---- create ----
+
     @Override
     public T insert(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
         fillId(entity);
         fillDate(entity, true);
         Document document = mongoMappingConvertor.write(entity);
@@ -79,19 +81,19 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return entity;
     }
 
+    // ---- read ----
+
     @Override
     public T findById(ID id) {
+        Objects.requireNonNull(id, "id must not be null");
         Object queryId = convertIdIfNecessary(id);
         Document document = databaseSupplier.get().getCollection(collectionName).find(Filters.eq("_id", queryId)).first();
         return mongoMappingConvertor.read(document, entityClass);
     }
 
-    /**
-     * 按实体中的非空字段作为条件查询，返回第一条匹配记录。
-     * null 字段会被忽略，如果 entity 所有字段均为 null 则等同于无条件查询，返回集合中的第一条文档。
-     */
     @Override
     public T findOneByEntity(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
         Document query = convertQueryId(mongoMappingConvertor.write(entity));
         Document document = databaseSupplier.get().getCollection(collectionName).find(query).first();
         return mongoMappingConvertor.read(document, entityClass);
@@ -99,14 +101,15 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public <R> T findOne(SFunction<T, R> field, R value) {
+        Objects.requireNonNull(field, "field must not be null");
         Document filter = buildFilterFromLambda(field, value);
         Document document = databaseSupplier.get().getCollection(collectionName).find(filter).first();
         return mongoMappingConvertor.read(document, entityClass);
     }
 
-    // LambdaQueryWrapper / pairs delegations
     @Override
     public T findOne(LambdaQueryWrapper<T> wrapper) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         Document document = databaseSupplier.get().getCollection(collectionName).find(filter).first();
@@ -115,6 +118,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public List<T> findList(LambdaQueryWrapper<T> wrapper) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         List<Document> docs = databaseSupplier.get().getCollection(collectionName).find(filter).into(new ArrayList<>());
@@ -126,7 +130,20 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     @Override
+    public List<T> findAll() {
+        List<Document> docs = databaseSupplier.get().getCollection(collectionName).find().into(new ArrayList<>());
+        List<T> result = new ArrayList<>();
+        for (Document d : docs) {
+            result.add(mongoMappingConvertor.read(d, entityClass));
+        }
+        return result;
+    }
+
+    // ---- count ----
+
+    @Override
     public long count(LambdaQueryWrapper<T> wrapper) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
@@ -137,28 +154,26 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return databaseSupplier.get().getCollection(collectionName).countDocuments();
     }
 
-    /**
-     * 按实体中的非空字段作为条件统计匹配的文档数量。
-     * null 字段会被忽略，entity 所有字段均为 null 时返回集合总文档数。
-     */
     @Override
     public long count(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
         Document query = convertQueryId(mongoMappingConvertor.write(entity));
-
-        return databaseSupplier.get().getCollection(collectionName)
-                .countDocuments(query);
+        return databaseSupplier.get().getCollection(collectionName).countDocuments(query);
     }
 
     @Override
     public <R> long count(SFunction<T, R> field, R value) {
+        Objects.requireNonNull(field, "field must not be null");
         Document filter = buildFilterFromLambda(field, value);
         return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
     }
 
+    // ---- update ----
 
     @Override
     public long updateById(T entity) {
-        fillDate(entity,false);
+        Objects.requireNonNull(entity, "entity must not be null");
+        fillDate(entity, false);
         Document doc = mongoMappingConvertor.write(entity);
         Object id = doc.remove("_id");
         if (id == null) {
@@ -173,8 +188,10 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public <R> long update(SFunction<T, R> field, R value, T entity) {
+        Objects.requireNonNull(field, "field must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
         Document filter = buildFilterFromLambda(field, value);
-        fillDate(entity,false);
+        fillDate(entity, false);
         Document doc = mongoMappingConvertor.write(entity);
         doc.remove("_id");
         Document updateDoc = new Document("$set", doc);
@@ -185,9 +202,12 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     @Override
     public long update(LambdaQueryWrapper<T> wrapper, T entity) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
+        requireNonEmptyWrapper(wrapper, "update");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
-        fillDate(entity,false);
+        fillDate(entity, false);
         Document doc = mongoMappingConvertor.write(entity);
         doc.remove("_id");
         Document updateDoc = new Document("$set", doc);
@@ -197,40 +217,75 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     @Override
+    public long updateAll(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
+        fillDate(entity, false);
+        Document doc = mongoMappingConvertor.write(entity);
+        doc.remove("_id");
+        Document updateDoc = new Document("$set", doc);
+        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
+                .updateMany(new Document(), updateDoc);
+        return updateResult.getModifiedCount();
+    }
+
+    // ---- delete ----
+
+    @Override
     public long deleteById(ID id) {
+        Objects.requireNonNull(id, "id must not be null");
         Object queryId = convertIdIfNecessary(id);
-        DeleteResult result = databaseSupplier.get().getCollection(collectionName).
-                deleteOne(Filters.eq("_id", queryId));
+        DeleteResult result = databaseSupplier.get().getCollection(collectionName)
+                .deleteOne(Filters.eq("_id", queryId));
         return result.getDeletedCount();
     }
 
-    /**
-     * 按实体中的非空字段作为条件删除匹配的所有文档。
-     * <p>
-     * <b>警告：null 字段会被忽略，如果 entity 所有字段均为 null 则等同于无条件执行
-     * deleteMany({})，将清空整个集合。请确保 entity 至少有一个非 null 字段。</b>
-     */
     @Override
     public long deleteByEntity(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
         Document query = convertQueryId(mongoMappingConvertor.write(entity));
+        requireNonEmptyQuery(query, "deleteByEntity");
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(query);
         return result.getDeletedCount();
     }
 
     @Override
     public <R> long delete(SFunction<T, R> field, R value) {
+        Objects.requireNonNull(field, "field must not be null");
         Document filter = buildFilterFromLambda(field, value);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
         return result.getDeletedCount();
     }
 
-
     @Override
     public long delete(LambdaQueryWrapper<T> wrapper) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
+        requireNonEmptyWrapper(wrapper, "delete");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
         return result.getDeletedCount();
+    }
+
+    @Override
+    public long deleteAll() {
+        DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(new Document());
+        return result.getDeletedCount();
+    }
+
+    // ---- internal helpers ----
+
+    private void requireNonEmptyWrapper(LambdaQueryWrapper<T> wrapper, String operation) {
+        if (wrapper.getConditions().isEmpty()) {
+            throw new IllegalArgumentException(
+                    operation + " requires at least one condition. Use " + operation + "All() to operate on all documents.");
+        }
+    }
+
+    private void requireNonEmptyQuery(Document query, String operation) {
+        if (query.isEmpty()) {
+            throw new IllegalArgumentException(
+                    operation + " requires at least one non-null field. Use " + operation + "All() to operate on all documents.");
+        }
     }
 
     private void fillId(T entity){
@@ -329,24 +384,5 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return new Document(mongoFieldName, queryValue);
     }
 
-   private Document buildFilterFromMap(Map<String, Object> criteria) {
-        Document filter = new Document();
-        if (criteria == null || criteria.isEmpty()) return filter;
-        for (Map.Entry<String, Object> e : criteria.entrySet()) {
-            String key = e.getKey();
-            Object val = e.getValue();
-            boolean neg = false;
-            if (key.startsWith("!")) {
-                neg = true;
-                key = key.substring(1);
-            }
-            String mongoFieldName = mongoMappingConvertor.resolveMongoFieldName(entityClass, key);
-            if (neg) {
-                filter.put(mongoFieldName, new Document("$ne", val));
-            } else {
-                filter.put(mongoFieldName, val);
-            }
-        }
-        return convertQueryId(filter);
-    }
  }
+
