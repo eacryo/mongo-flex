@@ -12,8 +12,8 @@
     <modules>
         <module>mongo-flex-core</module>
         <module>mongo-flex-test-common</module>
-        <module>mongo-flex-test-sb2</module>
-        <module>mongo-flex-test-sb3</module>
+        <module>mongo-flex-test-spring-boot2</module>
+        <module>mongo-flex-test-spring-boot3</module>
     </modules>
 
     <properties>

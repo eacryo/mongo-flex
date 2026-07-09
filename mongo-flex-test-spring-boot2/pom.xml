@@ -8,8 +8,8 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>mongo-flex-test-sb2</artifactId>
-    <name>mongo-flex-test-sb2</name>
+    <artifactId>mongo-flex-test-spring-boot2</artifactId>
+    <name>mongo-flex-test-spring-boot2</name>
     <description>integration tests for Spring Boot 2.7.x</description>
 
     <properties>
@@ -82,7 +82,7 @@
                         <goals><goal>add-test-source</goal></goals>
                         <configuration>
                             <sources>
-                                <source>../test-sources/java</source>
+                                <source>../mongo-flex-test-common/src/test/java</source>
                             </sources>
                         </configuration>
                     </execution>
