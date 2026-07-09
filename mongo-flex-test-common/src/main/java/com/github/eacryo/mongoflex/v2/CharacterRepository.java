@@ -8,7 +8,6 @@ import java.util.List;
 @MRepository
 public interface CharacterRepository extends MongoRepository<Character, String> {
 
-
     @Mql("db.getCollection('" + Constant.COLLECTION_NAME + "').find({})")
     List<Character> findAll();
 
@@ -27,7 +26,13 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
     @Mql("db.getCollection('character').count({})")
     long countByMql();
 
-    //TODO:这里如果使用find，虽然有报错但报错难以理解，需要优化
+    @Mql("db.getCollection('character').count({'name':'#{name}'})")
+    long countByCriteria(@Param("name") String name);
+
+    @Mql("db.getCollection('character').findOne({'name':'#{name}'})")
+    Character findOneByName(@Param("name") String name);
+
     @Mql("db.getCollection('character').findOne({'_id':'01K43T5EFTT1QVSS8FPT6XK773','name':'Ganyu'})")
     Character findOneByMql();
 }
+
