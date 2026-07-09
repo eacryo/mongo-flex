@@ -1,0 +1,6 @@
+mongo-flex:
+  uri: ${REMOTE_MONGO_URI}
+logging:
+  level:
+    com.github.eacryo: DEBUG
+    org.mongodb.driver: DEBUG
