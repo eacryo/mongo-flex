@@ -9,7 +9,7 @@ public class ReflectUtil {
      * 使用 ClassValue 缓存 writeReplace Method，一个 lambda class 只反射一次。
      * ClassValue 随 Class 卸载自动清理，无内存泄漏风险。
      */
-    private static final ClassValue<Method> WRITE_REPLACE_CACHE = new ClassValue<>() {
+    private static final ClassValue<Method> WRITE_REPLACE_CACHE = new ClassValue<Method>() {
         @Override
         protected Method computeValue(Class<?> type) {
             try {

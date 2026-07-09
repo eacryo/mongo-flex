@@ -1,2 +1,5 @@
 org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=\
   com.github.eacryo.mongoflex.config.FrameworkExclusionFilter
+
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.github.eacryo.mongoflex.v2.MyOrmAutoConfiguration

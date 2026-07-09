@@ -16,11 +16,11 @@
 
     <!-- 添加属性管理 -->
     <properties>
-        <java.version>21</java.version>
+        <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>3.5.4</spring-boot.version> <!-- 统一版本管理 -->
+        <spring-boot.version>2.7.18</spring-boot.version> <!-- 统一版本管理 -->
         <!--        &lt;!&ndash; 添加编译器参数 &ndash;&gt;-->
         <!--        <maven.compiler.parameters>true</maven.compiler.parameters>-->
         <!--        <maven.compiler.release>21</maven.compiler.release>-->
@@ -74,11 +74,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -88,18 +90,33 @@
         <dependency>
             <groupId>com.github.f4b6a3</groupId>
             <artifactId>ulid-creator</artifactId>
-            <version>5.2.3</version>
+            <version>4.2.1</version>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <scope>provided</scope>     <!-- 关键1：不打包到产物中 -->
-            <optional>true</optional>  <!-- 关键2：阻止依赖传递 -->
+            <version>1.18.46</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
+        <!-- MongoDB driver：optional，由用户根据自身 Spring Boot 版本自行引入 -->
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
-            <version>5.5.1</version>
+            <version>4.11.1</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-core</artifactId>
+            <version>4.11.1</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>bson</artifactId>
+            <version>4.11.1</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
@@ -123,10 +140,11 @@
                 <version>3.14.0</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
-                    <annotationProcessorPaths>
+                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+            <version>1.18.46</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>

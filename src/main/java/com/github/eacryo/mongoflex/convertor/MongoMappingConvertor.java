@@ -56,10 +56,11 @@ public class MongoMappingConvertor {
         FieldMapping mapping = getFieldMapping(clazz, javaFieldName);
         if (mapping == null) return null;
         Type genericType = mapping.getGenericType();
-        if (genericType instanceof ParameterizedType pt) {
+        if (genericType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) genericType;
             Type[] args = pt.getActualTypeArguments();
-            if (args.length > 0 && args[0] instanceof Class<?> c) {
-                return c;
+            if (args.length > 0 && args[0] instanceof Class) {
+                return (Class<?>) args[0];
             }
         }
         return null;

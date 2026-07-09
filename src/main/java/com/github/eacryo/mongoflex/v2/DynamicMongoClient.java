@@ -7,9 +7,9 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Component;
@@ -24,7 +24,7 @@ import java.util.Objects;
  */
 @Component
 @Slf4j
-public class DynamicMongoClient {
+public class DynamicMongoClient implements InitializingBean {
     private static final String MONGO_CLIENT_PREFIX = "mongoClient_";
 
     private Map<String, MongoClient> clients = new HashMap<>();
@@ -61,8 +61,11 @@ public class DynamicMongoClient {
         return clients.get(tenant);
     }
 
-    @PostConstruct
-    //标注为private也能获取到
+    @Override
+    public void afterPropertiesSet() {
+        initializeTemplates();
+    }
+
     private void initializeTemplates() {
         if (mongoFlexProperties.isEnableMultiTenants()) initWhenEnabled();
         else initWhenDisabled();

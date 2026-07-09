@@ -5,7 +5,6 @@ import com.mongodb.client.model.Filters;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -31,55 +30,55 @@ public class MongoBsonRenderer {
 
             switch (c.operator()) {
 
-                case EQ -> filters.add(
-                        Filters.eq(field, c.value())
-                );
+                case EQ:
+                    filters.add(Filters.eq(field, c.value()));
+                    break;
 
-                case NE -> filters.add(
-                        Filters.ne(field, c.value())
-                );
+                case NE:
+                    filters.add(Filters.ne(field, c.value()));
+                    break;
 
-                case GT -> filters.add(
-                        Filters.gt(field, c.value())
-                );
+                case GT:
+                    filters.add(Filters.gt(field, c.value()));
+                    break;
 
-                case LT -> filters.add(
-                        Filters.lt(field, c.value())
-                );
+                case LT:
+                    filters.add(Filters.lt(field, c.value()));
+                    break;
 
-                case GTE -> filters.add(
-                        Filters.gte(field, c.value())
-                );
+                case GTE:
+                    filters.add(Filters.gte(field, c.value()));
+                    break;
 
-                case LTE -> filters.add(
-                        Filters.lte(field, c.value())
-                );
+                case LTE:
+                    filters.add(Filters.lte(field, c.value()));
+                    break;
 
-                case REGEX -> filters.add(
-                        Filters.regex(field, c.value().toString())
-                );
+                case REGEX:
+                    filters.add(Filters.regex(field, c.value().toString()));
+                    break;
 
-                case IN -> filters.add(
-                        Filters.in(field, (Iterable<?>) c.value())
-                );
+                case IN:
+                    filters.add(Filters.in(field, (Iterable<?>) c.value()));
+                    break;
 
-                case NIN -> filters.add(
-                        Filters.nin(field, (Iterable<?>) c.value())
-                );
+                case NIN:
+                    filters.add(Filters.nin(field, (Iterable<?>) c.value()));
+                    break;
 
-                case EXISTS -> filters.add(
-                        Filters.exists(field, (Boolean) c.value())
-                );
+                case EXISTS:
+                    filters.add(Filters.exists(field, (Boolean) c.value()));
+                    break;
 
-                case ALL -> filters.add(
-                        Filters.all(field, (Iterable<?>) c.value())
-                );
+                case ALL:
+                    filters.add(Filters.all(field, (Iterable<?>) c.value()));
+                    break;
 
-                case SIZE -> filters.add(
-                        Filters.size(field, (Integer) c.value())
-                );
+                case SIZE:
+                    filters.add(Filters.size(field, (Integer) c.value()));
+                    break;
 
-                case ELEM_MATCH -> {
+                case ELEM_MATCH: {
                     LambdaQueryWrapper<?> subWrapper = (LambdaQueryWrapper<?>) c.value();
                     if (entityClass != null && subWrapper.getEntityClass() == null) {
                         Class<?> subClass = convertor.getFieldGenericElementType(entityClass, c.field());
@@ -89,6 +88,7 @@ public class MongoBsonRenderer {
                     }
                     Bson subFilter = render(subWrapper, convertor);
                     filters.add(Filters.elemMatch(field, subFilter));
+                    break;
                 }
 
             }
@@ -99,3 +99,4 @@ public class MongoBsonRenderer {
     }
 
 }
+

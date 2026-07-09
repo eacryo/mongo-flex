@@ -6,6 +6,7 @@ import com.github.eacryo.mongoflex.annotation.CreateDate;
 import com.github.eacryo.mongoflex.annotation.UpdateDate;
 
 import java.lang.reflect.Field;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,7 +61,7 @@ public class ClassFieldMetaData {
                 }
             }
         }
-        this.fieldMappingByJavaName = Map.copyOf(mappingByJavaName);
+        this.fieldMappingByJavaName = Collections.unmodifiableMap(new HashMap<>(mappingByJavaName));
         this.collectionIdField = foundCollectionIdField;
         this.createDateField = foundCreateDateField;
         this.updateDateField = foundUpdateDateField;
