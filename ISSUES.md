@@ -17,7 +17,7 @@
 **问题:** 同 C-2，`doc.remove("_id")` 触发 NPE。
 **解决方案:** 同 C-2。
 
-### C-4. FindExecutor ClassCastException — 不处理原始 List 返回类型
+### C-4. ~~FindExecutor ClassCastException — 不处理原始 List 返回类型~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/strategy/FindExecutor.java:26`
 **问题:** `(ParameterizedType) genericReturnType` — 如果 @Mql 方法返回原始 `List`（不带泛型），强制转型抛 `ClassCastException`。
 **修复:** 先检查 `instanceof ParameterizedType`，否则回退到 `Object.class`。
@@ -105,10 +105,10 @@
 **问题:** 对所有字段（包括 static final 常量）调用 `setAccessible(true)`，JPMS 下可能抛 `InaccessibleObjectException`。
 **修复:** 跳过 static/final 字段，或推迟到实际访问时才 setAccessible。
 
-### H-9. RepositoryRegistrar 扫描了错误的包
+### H-9. ~~RepositoryRegistrar 扫描了错误的包~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/RepositoryRegistrar.java:31`
 **问题:** basePackage 取的是库自身的包 `com.github.eacryo.mongoflex.v2`，用户应用的 `@MRepository` 接口永远不会被扫描到。
-**修复:** 接受外部 `scanBasePackages` 参数，或用 `@AutoConfigurationPackages` 获取用户包路径。
+**修复:** 通过 `AutoConfigurationPackages` 获取用户包路径，多包路径逐一扫描并集，`registry` 不支持或返回空时回退到原行为。
 
 ---
 

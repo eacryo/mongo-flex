@@ -1,7 +1,9 @@
 package com.github.eacryo.mongoflex.v2;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
@@ -16,6 +18,7 @@ import org.springframework.util.ClassUtils;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -26,12 +29,21 @@ public class RepositoryRegistrar implements ImportBeanDefinitionRegistrar {
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        // 获取导入这个注册器的类的包名。
-        // 在自动配置的场景中，这里通常是你的 MyOrmAutoConfiguration 类所在的包
-        String basePackage = ClassUtils.getPackageName(importingClassMetadata.getClassName());
+        Set<Class<?>> repositoryInterfaces = new HashSet<>();
 
-        // 使用这个包名作为扫描的起点
-        Set<Class<?>> repositoryInterfaces = scanRepositoryInterfaces(basePackage);
+        if (registry instanceof ConfigurableListableBeanFactory) {
+            List<String> packages = AutoConfigurationPackages.get((ConfigurableListableBeanFactory) registry);
+            if (!packages.isEmpty()) {
+                for (String pkg : packages) {
+                    repositoryInterfaces.addAll(scanRepositoryInterfaces(pkg));
+                }
+            }
+        }
+
+        if (repositoryInterfaces.isEmpty()) {
+            String basePackage = ClassUtils.getPackageName(importingClassMetadata.getClassName());
+            repositoryInterfaces = scanRepositoryInterfaces(basePackage);
+        }
 
         // 为每一个找到的接口创建并注册一个 FactoryBean
         for (Class<?> repositoryInterface : repositoryInterfaces) {
