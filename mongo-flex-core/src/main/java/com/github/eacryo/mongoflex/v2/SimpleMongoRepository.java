@@ -47,12 +47,11 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     public SimpleMongoRepository(Supplier<MongoDatabase> databaseSupplier, String collectionName, Class<T> entityClass,
                                  MongoMappingConvertor mongoMappingConvertor, IdGenerator<?> idGenerator) {
-        this.databaseSupplier = databaseSupplier;
-        this.collectionName = collectionName;
-        this.entityClass = entityClass;
-        this.mongoMappingConvertor = mongoMappingConvertor;
-        this.idGenerator = idGenerator;
-
+        this.databaseSupplier = Objects.requireNonNull(databaseSupplier, "databaseSupplier must not be null");
+        this.collectionName = Objects.requireNonNull(collectionName, "collectionName must not be null");
+        this.entityClass = Objects.requireNonNull(entityClass, "entityClass must not be null");
+        this.mongoMappingConvertor = Objects.requireNonNull(mongoMappingConvertor, "mongoMappingConvertor must not be null");
+        this.idGenerator = Objects.requireNonNull(idGenerator, "idGenerator must not be null");
     }
 
     // ---- create ----

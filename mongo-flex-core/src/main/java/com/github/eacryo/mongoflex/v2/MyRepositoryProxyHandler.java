@@ -34,11 +34,11 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
                                     MongoMappingConvertor mongoMappingConvertor,
                                     SimpleMongoRepository<T, ID> baseRepository,
                                     ExecutorProxy executorProxy) {
-        this.repositoryInterface = repositoryInterface;
-        this.databaseSupplier = databaseSupplier;
-        this.mongoMappingConvertor = mongoMappingConvertor;
-        this.baseRepository = baseRepository;
-        this.executorProxy = executorProxy;
+        this.repositoryInterface = Objects.requireNonNull(repositoryInterface, "repositoryInterface must not be null");
+        this.databaseSupplier = Objects.requireNonNull(databaseSupplier, "databaseSupplier must not be null");
+        this.mongoMappingConvertor = Objects.requireNonNull(mongoMappingConvertor, "mongoMappingConvertor must not be null");
+        this.baseRepository = Objects.requireNonNull(baseRepository, "baseRepository must not be null");
+        this.executorProxy = Objects.requireNonNull(executorProxy, "executorProxy must not be null");
     }
 
     @Override

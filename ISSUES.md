@@ -119,12 +119,12 @@
 **问题:** `static final Map` 在多 ApplicationContext（如测试）间共享，注册泄露。
 **修复:** 去掉 `static`。
 
-### M-2. SimpleMongoRepository 构造函数不校验 null
+### M-2. ~~SimpleMongoRepository 构造函数不校验 null~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:49-57`
 **问题:** 5 个构造参数都不做 null 检查，后续 NPE 难定位。
 **修复:** 各参数加 `Objects.requireNonNull`。
 
-### M-3. MyRepositoryProxyHandler 构造函数不校验 null
+### M-3. ~~MyRepositoryProxyHandler 构造函数不校验 null~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/MyRepositoryProxyHandler.java:32-42`
 **问题:** 同 M-2。
 **修复:** 同 M-2。
