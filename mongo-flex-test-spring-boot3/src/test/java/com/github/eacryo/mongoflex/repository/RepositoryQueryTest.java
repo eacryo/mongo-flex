@@ -86,8 +86,8 @@ public class RepositoryQueryTest {
         log.info("=== test count(entity) ===");
         Character query = new Character();
         query.setArea("Sumeru");
-        long count = repo.count(query);
-        log.info("count(entity) result: {}", count);
+        long count = repo.countByEntity(query);
+        log.info("countByEntity(entity) result: {}", count);
         Assertions.assertTrue(count >= 2);
     }
 
@@ -124,9 +124,9 @@ public class RepositoryQueryTest {
     @Test
     @Order(7)
     void testCountByEntityEmpty() {
-        log.info("=== test count(empty entity) ===");
+        log.info("=== test countByEntity(empty entity) ===");
         Character query = new Character();
-        long count = repo.count(query);
+        long count = repo.countByEntity(query);
         long total = repo.count();
         log.info("count(empty)={}, total={}", count, total);
         Assertions.assertEquals(total, count);

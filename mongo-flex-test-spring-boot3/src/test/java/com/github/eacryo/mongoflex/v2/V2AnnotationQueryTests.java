@@ -94,7 +94,7 @@ public class V2AnnotationQueryTests {
         System.out.println(characterRepositoryV2.count());
         Character character = new Character();
         character.setName("Hu Tao");
-        System.out.println(characterRepositoryV2.count(character));
+        System.out.println(characterRepositoryV2.countByEntity(character));
     }
 
     @Test

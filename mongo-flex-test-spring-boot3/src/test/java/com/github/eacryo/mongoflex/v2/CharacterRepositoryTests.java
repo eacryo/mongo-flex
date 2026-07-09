@@ -126,8 +126,8 @@ public class CharacterRepositoryTests {
 
         Character c = new Character();
         c.setName("CountEntityTest");
-        long c2 = characterRepositoryV2.count(c);
-        System.out.println("count(entity): " + c2);
+        long c2 = characterRepositoryV2.countByEntity(c);
+        System.out.println("countByEntity(entity): " + c2);
 
         long c3 = characterRepositoryV2.count(Character::getName, "CountEntityTest");
         System.out.println("count(field,value): " + c3);

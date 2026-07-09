@@ -155,7 +155,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     @Override
-    public long count(T entity) {
+    public long countByEntity(T entity) {
         Objects.requireNonNull(entity, "entity must not be null");
         Document query = convertQueryId(mongoMappingConvertor.write(entity));
         return databaseSupplier.get().getCollection(collectionName).countDocuments(query);

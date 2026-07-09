@@ -89,7 +89,7 @@ public class LambdaQueryErrorTest {
     void testNullEntityForCountByEntity() {
         log.info("=== test null entity count -> NPE ===");
         assertThrows(NullPointerException.class, () ->
-                repo.count((Character) null));
+                repo.countByEntity((Character) null));
         log.info("correctly threw NullPointerException");
     }
 

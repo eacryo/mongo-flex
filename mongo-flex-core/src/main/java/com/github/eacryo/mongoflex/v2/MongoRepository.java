@@ -68,7 +68,7 @@ public interface MongoRepository<T, ID> {
      * 按实体中的非空字段作为条件统计，entity 不可为 null。
      * null 字段会被忽略。
      */
-    long count(T entity);
+    long countByEntity(T entity);
 
     /**
      * 按单个字段的值统计，field 不可为 null。
