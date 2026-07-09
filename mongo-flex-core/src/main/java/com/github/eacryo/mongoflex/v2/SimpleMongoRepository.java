@@ -51,7 +51,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         this.collectionName = Objects.requireNonNull(collectionName, "collectionName must not be null");
         this.entityClass = Objects.requireNonNull(entityClass, "entityClass must not be null");
         this.mongoMappingConvertor = Objects.requireNonNull(mongoMappingConvertor, "mongoMappingConvertor must not be null");
-        this.idGenerator = Objects.requireNonNull(idGenerator, "idGenerator must not be null");
+        this.idGenerator = idGenerator;
     }
 
     // ---- create ----

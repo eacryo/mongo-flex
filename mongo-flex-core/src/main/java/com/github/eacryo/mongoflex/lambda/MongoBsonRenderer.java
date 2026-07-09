@@ -19,10 +19,48 @@ public class MongoBsonRenderer {
             LambdaQueryWrapper<?> wrapper,
             MongoMappingConvertor convertor) {
 
-        List<Bson> filters = new ArrayList<>();
+        List<Condition> allConditions = wrapper.getConditions();
         Class<?> entityClass = wrapper.getEntityClass();
 
-        for (Condition c : wrapper.getConditions()) {
+        List<List<Condition>> groups = new ArrayList<>();
+        List<Condition> currentGroup = new ArrayList<>();
+        for (Condition c : allConditions) {
+            if (c.isOrSeparator()) {
+                if (!currentGroup.isEmpty()) {
+                    groups.add(currentGroup);
+                    currentGroup = new ArrayList<>();
+                }
+            } else {
+                currentGroup.add(c);
+            }
+        }
+        if (!currentGroup.isEmpty() || groups.isEmpty()) {
+            groups.add(currentGroup);
+        }
+
+        if (groups.size() == 1) {
+            return renderGroup(groups.get(0), entityClass, convertor);
+        }
+
+        List<Bson> orFilters = new ArrayList<>();
+        for (List<Condition> group : groups) {
+            if (!group.isEmpty()) {
+                orFilters.add(renderGroup(group, entityClass, convertor));
+            }
+        }
+        if (orFilters.isEmpty()) {
+            return Filters.empty();
+        }
+        if (orFilters.size() == 1) {
+            return orFilters.get(0);
+        }
+        return Filters.or(orFilters);
+    }
+
+    private static Bson renderGroup(List<Condition> conditions, Class<?> entityClass, MongoMappingConvertor convertor) {
+        List<Bson> filters = new ArrayList<>();
+
+        for (Condition c : conditions) {
 
             String field = entityClass != null
                     ? convertor.resolveMongoFieldName(entityClass, c.field())
@@ -95,8 +133,10 @@ public class MongoBsonRenderer {
 
         }
 
+        if (filters.isEmpty()) {
+            return Filters.empty();
+        }
         return Filters.and(filters);
     }
 
 }
-

@@ -149,10 +149,10 @@
 **问题:** `into(new ArrayList<>())` 一次加载全部结果，大数据集 OOM。
 **修复:** 加分页支持，或提供流式/游标 API。
 
-### M-8. LambdaQueryWrapper 不支持 OR 逻辑
+### M-8. ~~LambdaQueryWrapper 不支持 OR 逻辑~~ ✅ 已解决
 **文件:** `lambda/LambdaQueryWrapper.java`
 **问题:** 所有条件固定 AND 连接，无法表达 `WHERE a=1 OR b=2`。
-**修复:** 加 `or(LambdaQueryWrapper<T>)` 和嵌套分组支持。
+**修复:** 添加 `or()` 和 `or(LambdaQueryWrapper<T>)` 方法。`or()` 插入 sentinel 分割条件组，渲染时组内 AND、组间 OR。
 
 ### M-9. ReflectUtil.getFieldNameFromLambda 对 boolean getter 前缀处理不准确
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/ReflectUtil.java:31-37`

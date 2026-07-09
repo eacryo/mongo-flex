@@ -128,4 +128,16 @@ public class LambdaQueryWrapper<T> {
     public List<Condition> getConditions() {
         return conditions;
     }
+
+    public LambdaQueryWrapper<T> or() {
+        conditions.add(new Condition());
+        return this;
+    }
+
+    public LambdaQueryWrapper<T> or(LambdaQueryWrapper<T> orWrapper) {
+        Objects.requireNonNull(orWrapper, "orWrapper must not be null");
+        conditions.add(new Condition());
+        conditions.addAll(orWrapper.getConditions());
+        return this;
+    }
 }

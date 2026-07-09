@@ -14,6 +14,12 @@ public final class Condition {
         this.value = value;
     }
 
+    Condition() {
+        this.field = null;
+        this.operator = null;
+        this.value = null;
+    }
+
     public String field() {
         return field;
     }
@@ -24,6 +30,10 @@ public final class Condition {
 
     public Object value() {
         return value;
+    }
+
+    public boolean isOrSeparator() {
+        return field == null && operator == null;
     }
 
     @Override
@@ -46,8 +56,8 @@ public final class Condition {
         return "Condition[" +
                 "field=" + field + ", " +
                 "operator=" + operator + ", " +
-                "value=" + value + ']';
+                "value=" + value + ", " +
+                "isOrSeparator=" + isOrSeparator() + ']';
     }
 
 }
-
