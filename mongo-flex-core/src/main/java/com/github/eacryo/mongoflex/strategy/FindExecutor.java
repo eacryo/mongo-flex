@@ -23,10 +23,13 @@ public class FindExecutor implements CommandExecutor {
     @Override
     public Object execute(String command, MongoCollection<Document> collection, Document queryContent, Method method, Object[] args) throws Exception {
         Type genericReturnType = method.getGenericReturnType();
-        ParameterizedType pType = (ParameterizedType) genericReturnType;
-        Type rawType = pType.getRawType();
-        Type actualType = pType.getActualTypeArguments()[0]; // 获取泛型参数T
-        Class<?> listElementClass = (Class<?>) actualType;
+        Class<?> listElementClass;
+        if (genericReturnType instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) genericReturnType;
+            listElementClass = (Class<?>) pType.getActualTypeArguments()[0];
+        } else {
+            listElementClass = Object.class;
+        }
         List<Object> results = new ArrayList<>();
         collection.find(queryContent).forEach(doc -> {
             Object entity = mongoMappingConvertor.read(doc, listElementClass);

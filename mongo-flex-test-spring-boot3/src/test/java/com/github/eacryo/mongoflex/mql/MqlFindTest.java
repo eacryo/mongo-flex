@@ -101,5 +101,13 @@ public class MqlFindTest {
         Assertions.assertNotNull(result);
     }
 
+    @Test
+    @Order(7)
+    void testRawListReturnType() {
+        log.info("=== test raw List return type (C-4) ===");
+        List result = repo.findListRaw();
+        log.info("raw List result: {}", result);
+    }
+
 }
 

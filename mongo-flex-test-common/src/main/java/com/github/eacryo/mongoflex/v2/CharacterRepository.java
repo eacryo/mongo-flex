@@ -34,5 +34,8 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
 
     @Mql("db.getCollection('character').findOne({'_id':'01K43T5EFTT1QVSS8FPT6XK773','name':'Ganyu'})")
     Character findOneByMql();
+
+    @Mql("db.getCollection('character').find({})")
+    List findListRaw();
 }
 
