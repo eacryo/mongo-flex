@@ -2,6 +2,7 @@ package com.github.eacryo.mongoflex.lambda;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.mongodb.client.model.Filters;
+import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
@@ -128,6 +129,61 @@ public class MongoBsonRenderer {
                     filters.add(Filters.elemMatch(field, subFilter));
                     break;
                 }
+
+                case LIKE: {
+                    String regex = c.value().toString()
+                            .replace("*", ".*")
+                            .replace("%", ".*");
+                    filters.add(Filters.regex(field, regex));
+                    break;
+                }
+
+                case NOT_LIKE: {
+                    String regex = c.value().toString()
+                            .replace("*", ".*")
+                            .replace("%", ".*");
+                    // $not must be field-level, not top-level
+                    filters.add(new Document(field, new Document("$not", new Document("$regex", regex))));
+                    break;
+                }
+
+                case BETWEEN: {
+                    List<?> range = (List<?>) c.value();
+                    filters.add(Filters.and(
+                            Filters.gte(field, range.get(0)),
+                            Filters.lte(field, range.get(1))
+                    ));
+                    break;
+                }
+
+                case IS_NULL:
+                    filters.add(Filters.exists(field, false));
+                    break;
+
+                case IS_NOT_NULL:
+                    filters.add(Filters.exists(field, true));
+                    break;
+
+                case NOT: {
+                    LambdaQueryWrapper<?> subWrapper = (LambdaQueryWrapper<?>) c.value();
+                    if (entityClass != null && subWrapper.getEntityClass() == null) {
+                        ((LambdaQueryWrapper) subWrapper).setEntityClass(entityClass);
+                    }
+                    Bson subFilter = render(subWrapper, convertor);
+                    // Use $nor instead of $not — $not is not a valid top-level operator
+                    filters.add(Filters.nor(subFilter));
+                    break;
+                }
+
+                case MOD: {
+                    List<?> modArgs = (List<?>) c.value();
+                    filters.add(Filters.mod(field, (Integer) modArgs.get(0), (Integer) modArgs.get(1)));
+                    break;
+                }
+
+                case TYPE:
+                    filters.add(Filters.type(field, c.value().toString()));
+                    break;
 
             }
 

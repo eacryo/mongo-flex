@@ -4,6 +4,7 @@ import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -122,6 +123,88 @@ public class LambdaQueryWrapper<T> {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
         conditions.add(new Condition(javaField, Operator.ELEM_MATCH, subWrapper));
+        return this;
+    }
+
+    /**
+     * SQL-style LIKE: supports * and % as wildcards, automatically converted to regex.
+     * Example: like(User::getName, "*Tom*") → { name: { $regex: ".*Tom.*" } }
+     */
+    public <R> LambdaQueryWrapper<T> like(SFunction<T, R> field, String pattern) {
+        Objects.requireNonNull(field, "field must not be null");
+        String javaField = ReflectUtil.getFieldNameFromLambda(field);
+        conditions.add(new Condition(javaField, Operator.LIKE, pattern));
+        return this;
+    }
+
+    /**
+     * SQL-style NOT LIKE: negated LIKE, same wildcard conversion.
+     */
+    public <R> LambdaQueryWrapper<T> notLike(SFunction<T, R> field, String pattern) {
+        Objects.requireNonNull(field, "field must not be null");
+        String javaField = ReflectUtil.getFieldNameFromLambda(field);
+        conditions.add(new Condition(javaField, Operator.NOT_LIKE, pattern));
+        return this;
+    }
+
+    /**
+     * Range query: field BETWEEN start AND end → { field: { $gte: start, $lte: end } }
+     */
+    public <R> LambdaQueryWrapper<T> between(SFunction<T, R> field, R start, R end) {
+        Objects.requireNonNull(field, "field must not be null");
+        String javaField = ReflectUtil.getFieldNameFromLambda(field);
+        conditions.add(new Condition(javaField, Operator.BETWEEN, Arrays.asList(start, end)));
+        return this;
+    }
+
+    /**
+     * IS NULL → { field: { $exists: false } }
+     */
+    public LambdaQueryWrapper<T> isNull(SFunction<T, ?> field) {
+        Objects.requireNonNull(field, "field must not be null");
+        String javaField = ReflectUtil.getFieldNameFromLambda(field);
+        conditions.add(new Condition(javaField, Operator.IS_NULL, null));
+        return this;
+    }
+
+    /**
+     * IS NOT NULL → { field: { $exists: true } }
+     */
+    public LambdaQueryWrapper<T> isNotNull(SFunction<T, ?> field) {
+        Objects.requireNonNull(field, "field must not be null");
+        String javaField = ReflectUtil.getFieldNameFromLambda(field);
+        conditions.add(new Condition(javaField, Operator.IS_NOT_NULL, null));
+        return this;
+    }
+
+    /**
+     * Logical NOT: negates a sub-query.
+     * Example: not(w -> w.eq(User::getName, "Tom")) → { name: { $not: { $eq: "Tom" } } }
+     */
+    public LambdaQueryWrapper<T> not(LambdaQueryWrapper<T> subWrapper) {
+        Objects.requireNonNull(subWrapper, "subWrapper must not be null");
+        conditions.add(new Condition(null, Operator.NOT, subWrapper));
+        return this;
+    }
+
+    /**
+     * Modulo: { field: { $mod: [divisor, remainder] } }
+     */
+    public <R> LambdaQueryWrapper<T> mod(SFunction<T, R> field, int divisor, int remainder) {
+        Objects.requireNonNull(field, "field must not be null");
+        String javaField = ReflectUtil.getFieldNameFromLambda(field);
+        conditions.add(new Condition(javaField, Operator.MOD, Arrays.asList(divisor, remainder)));
+        return this;
+    }
+
+    /**
+     * BSON type check: { field: { $type: "string" } } or { field: { $type: "int" } }
+     * Common type names: "string", "int", "double", "array", "objectId", "bool", "date"
+     */
+    public LambdaQueryWrapper<T> type(SFunction<T, ?> field, String bsonTypeName) {
+        Objects.requireNonNull(field, "field must not be null");
+        String javaField = ReflectUtil.getFieldNameFromLambda(field);
+        conditions.add(new Condition(javaField, Operator.TYPE, bsonTypeName));
         return this;
     }
 

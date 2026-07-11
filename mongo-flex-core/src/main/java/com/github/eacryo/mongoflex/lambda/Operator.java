@@ -16,6 +16,10 @@ public enum Operator {
 
     REGEX,
 
+    LIKE,
+
+    NOT_LIKE,
+
     IN,
 
     NIN,
@@ -26,6 +30,18 @@ public enum Operator {
 
     SIZE,
 
-    ELEM_MATCH
+    ELEM_MATCH,
+
+    NOT,
+
+    BETWEEN,
+
+    IS_NULL,
+
+    IS_NOT_NULL,
+
+    MOD,
+
+    TYPE
 
 }
