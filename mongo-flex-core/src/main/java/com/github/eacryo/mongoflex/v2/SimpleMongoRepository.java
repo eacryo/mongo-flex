@@ -16,6 +16,7 @@ import com.github.f4b6a3.ulid.UlidCreator;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
@@ -126,7 +127,9 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         Objects.requireNonNull(wrapper, "wrapper must not be null");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
-        Document document = databaseSupplier.get().getCollection(collectionName).find(filter).first();
+        FindIterable<Document> iter = databaseSupplier.get().getCollection(collectionName).find(filter);
+        applyProjection(wrapper, iter);
+        Document document = iter.first();
         return mongoMappingConvertor.read(document, entityClass);
     }
 
@@ -135,7 +138,9 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         Objects.requireNonNull(wrapper, "wrapper must not be null");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
-        List<Document> docs = databaseSupplier.get().getCollection(collectionName).find(filter).into(new ArrayList<>());
+        FindIterable<Document> iter = databaseSupplier.get().getCollection(collectionName).find(filter);
+        applyProjection(wrapper, iter);
+        List<Document> docs = iter.into(new ArrayList<>());
         List<T> result = new ArrayList<>();
         for (Document d : docs) {
             result.add(mongoMappingConvertor.read(d, entityClass));
@@ -187,13 +192,16 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         FindIterable<Document> iterable = databaseSupplier.get().getCollection(collectionName)
                 .find(filter).skip(skip).limit(limit);
 
-        // 3. 排序（优先 Lambda 排序，其次 pageDTO.orderBy 字符串排序）
+        // 3. 投影
+        applyProjection(wrapper, iterable);
+
+        // 4. 排序（优先 Lambda 排序，其次 pageDTO.orderBy 字符串排序）
         Document sortDoc = buildSort(wrapper, pageDTO);
         if (sortDoc != null) {
             iterable.sort(sortDoc);
         }
 
-        // 4. 读数据
+        // 5. 读数据
         List<T> records = new ArrayList<>();
         for (Document doc : iterable) {
             records.add(mongoMappingConvertor.read(doc, entityClass));
@@ -523,6 +531,22 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     private void ensureEntityClass(LambdaQueryWrapper<T> wrapper) {
         if (wrapper.getEntityClass() == null) {
             wrapper.setEntityClass(entityClass);
+        }
+    }
+
+    /**
+     * 从 LambdaQueryWrapper 中提取投影字段并应用到 FindIterable。
+     * 使用 MongoDB Driver 原生 {@link Projections#include(String...)} 构建投影。
+     */
+    private void applyProjection(LambdaQueryWrapper<T> wrapper, FindIterable<Document> iter) {
+        if (wrapper != null && !wrapper.getProjections().isEmpty()) {
+            List<String> mongoFields = new ArrayList<>();
+            for (LambdaQueryWrapper.ProjectionField pf : wrapper.getProjections()) {
+                Class<?> resolveClass = pf.getImplClass() != null ? pf.getImplClass() : entityClass;
+                String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, pf.getJavaFieldName());
+                mongoFields.add(mongoField);
+            }
+            iter.projection(Projections.include(mongoFields));
         }
     }
 

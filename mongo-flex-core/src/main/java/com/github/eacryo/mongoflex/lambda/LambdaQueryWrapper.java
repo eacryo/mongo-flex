@@ -3,6 +3,10 @@ package com.github.eacryo.mongoflex.lambda;
 import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -16,6 +20,8 @@ import java.util.Objects;
  * w.eq(User::getUserName, "Tom");
  */
 public class LambdaQueryWrapper<T> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LambdaQueryWrapper.class);
 
     private final List<Condition> conditions = new ArrayList<>();
     private Class<T> entityClass;
@@ -269,5 +275,111 @@ public class LambdaQueryWrapper<T> {
 
     public List<OrderBy> getOrderBys() {
         return orderBys;
+    }
+
+    // ---- 字段投影 ----
+
+    /**
+     * 字段投影条目：包含 Java 字段名、字段声明类。
+     * 用于限制查询仅返回指定字段（MongoDB projection），减少网络传输开销。
+     */
+    public static final class ProjectionField {
+        private final String javaFieldName;
+        private final Class<?> implClass;
+
+        ProjectionField(String javaFieldName, Class<?> implClass) {
+            this.javaFieldName = javaFieldName;
+            this.implClass = implClass;
+        }
+
+        public String getJavaFieldName() { return javaFieldName; }
+        public Class<?> getImplClass() { return implClass; }
+    }
+
+    private final List<ProjectionField> projections = new ArrayList<>();
+
+    /**
+     * 指定查询返回的字段（MongoDB projection include 模式）。
+     * MongoDB 默认会同时返回 {@code _id}，如需要排除可后续扩展。
+     *
+     * <pre>{@code
+     * wrapper.eq(User::getStatus, "active")
+     *        .select(User::getName, User::getAge);
+     * // → find({status: "active"}, {name: 1, age: 1})
+     * }</pre>
+     */
+    @SafeVarargs
+    public final LambdaQueryWrapper<T> select(SFunction<T, ?>... fields) {
+        Objects.requireNonNull(fields, "fields must not be null");
+        for (SFunction<T, ?> field : fields) {
+            Objects.requireNonNull(field, "field must not be null");
+            projections.add(new ProjectionField(
+                    ReflectUtil.getFieldNameFromLambda(field),
+                    ReflectUtil.getImplClassFromLambda(field)));
+        }
+        return this;
+    }
+
+    public List<ProjectionField> getProjections() {
+        return projections;
+    }
+
+    // ---- 静态工厂 ----
+
+    /**
+     * 从实体对象自动构建查询条件。遍历 entity 的所有非 null 字段，每个非 null 字段
+     * 自动生成 {@code eq()} 条件。与 {@link #select(Object...)} 等方法组合使用：
+     *
+     * <pre>{@code
+     * User probe = new User();
+     * probe.setName("Tom");
+     * probe.setStatus("active");
+     * List<User> result = repo.findList(
+     *     LambdaQueryWrapper.fromEntity(probe)
+     *         .select(User::getName, User::getAge)
+     *         .orderByAsc(User::getBirthday)
+     * );
+     * }</pre>
+     *
+     * <p>null 字段会被忽略；static / transient 字段会被跳过。遍历范围包括当前类
+     * 及其所有超类中声明的字段。
+     *
+     * <p><b>关于 {@code implClass}：</b>此方法生成的每个 {@link Condition} 都以
+     * {@code entity.getClass()}（具体运行时类型）作为 {@code implClass}，而非字段实际
+     * 声明的父类。这与 Lambda 路径（{@code eq(Entity::getField, val)} 中
+     * {@code implClass} 指向 getter 方法实际声明的类）不同，但由于
+     * {@code ClassFieldMetaData} 构造时会遍历完整类层次，字段名解析结果一致。
+     * 仅当子类声明了与父类同名的字段且使用了不同的 {@code @CollectionField} 值时
+     * 才会有差异——此时本方法使用子类的映射（最派生类优先生效），这更符合直觉。</p>
+     */
+    public static <T> LambdaQueryWrapper<T> fromEntity(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
+        @SuppressWarnings("unchecked")
+        Class<T> clazz = (Class<T>) entity.getClass();
+        LambdaQueryWrapper<T> wrapper = new LambdaQueryWrapper<>(clazz);
+
+        Class<?> currentClass = clazz;
+        while (currentClass != null && currentClass != Object.class) {
+            for (Field field : currentClass.getDeclaredFields()) {
+                // 跳过 static 和 transient 字段
+                int mod = field.getModifiers();
+                if (java.lang.reflect.Modifier.isStatic(mod) || java.lang.reflect.Modifier.isTransient(mod)) {
+                    continue;
+                }
+                field.setAccessible(true);
+                try {
+                    Object value = field.get(entity);
+                    if (value != null) {
+                        wrapper.conditions.add(
+                                new Condition(field.getName(), Operator.EQ, value, clazz));
+                    }
+                } catch (IllegalAccessException e) {
+                    LOGGER.debug("Cannot access field '{}' on entity of type {}: {}",
+                            field.getName(), clazz.getSimpleName(), e.getMessage());
+                }
+            }
+            currentClass = currentClass.getSuperclass();
+        }
+        return wrapper;
     }
 }
