@@ -37,15 +37,16 @@ public class ClassFieldMetaData {
                 //确定该字段在MongoDB当中对应的字段名
                 //优先使用@CollectionField注解作为指定的名称，否则使用Java字段名
                 String mongoFieldName;
-                if (field.isAnnotationPresent(CollectionField.class)){
+                if (field.isAnnotationPresent(CollectionId.class)) {
+                    // @CollectionId 强制映射到 _id，与 Spring Data MongoDB 的 @Id 行为一致
+                    mongoFieldName = MONGO_ID_FIELD;
+                } else if (field.isAnnotationPresent(CollectionField.class)) {
                     mongoFieldName = field.getAnnotation(CollectionField.class).value();
+                } else if (JAVA_ID_FIELD.equals(field.getName())) {
+                    // 隐式 id → _id 映射（未被 @CollectionId 覆盖时生效）
+                    mongoFieldName = MONGO_ID_FIELD;
                 } else {
                     mongoFieldName = field.getName();
-                }
-
-                //Java中的id字段自动映射为MongoDB中的 _id
-                if (JAVA_ID_FIELD.equals(mongoFieldName)) {
-                    mongoFieldName = MONGO_ID_FIELD;
                 }
                 FieldMapping mapping = new FieldMapping(field, mongoFieldName, field.getType(), field.getGenericType());
                 mappingByJavaName.putIfAbsent(field.getName(), mapping);

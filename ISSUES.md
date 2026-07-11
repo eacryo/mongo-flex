@@ -80,10 +80,10 @@
 **问题:** 无界通配符，ID 生成器产出类型与实体 ID 字段类型不匹配只在运行时报错。
 **修复:** 泛型化：`IdGenerator<ID>`，沿 `SimpleMongoRepository<T, ID>` 传递。
 
-### H-4. convertQueryId 未检查的类型转换
+### H-4. ~~convertQueryId 未检查的类型转换~~ → 已迁移至 [SimpleMongoRepositoryIssue.md](SimpleMongoRepositoryIssue.md)
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:310`
 **问题:** `convertIdIfNecessary((ID) id)` 将 Object 强转为 ID，堆污染风险。
-**修复:** 用正确类型检查替代强转。
+**状态:** 已迁移至 [SimpleMongoRepositoryIssue.md](SimpleMongoRepositoryIssue.md) Bug 2，与 ObjectId 启发式转换问题合并分析。
 
 ### H-5. DynamicMongoClient select() 返回错误客户端
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/DynamicMongoClient.java:49-55`
@@ -169,10 +169,10 @@
 **问题:** `LocalDateTime`、`LocalDate`、`Instant` 等常见类型不支持，抛 `IllegalArgumentException`。
 **修复:** 增加 Java 8+ 时间类型支持。
 
-### M-12. Insert 回填ID 时 ID 字段可能会没有 @CollectionId 注解
+### M-12. ~~Insert 回填ID 时 ID 字段可能会没有 @CollectionId 注解~~ → 已迁移至 [SimpleMongoRepositoryIssue.md](SimpleMongoRepositoryIssue.md)
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:78`
 **问题:** write/read 层隐式映射 `id → _id`，但 post-insert ID 回填只认 @CollectionId 注解，不标注不会收到回填 ID。
-**修复:** 统一 ID 字段发现逻辑。
+**状态:** 已迁移至 [SimpleMongoRepositoryIssue.md](SimpleMongoRepositoryIssue.md) Bug 1，与 `@CollectionId` 非 `id` 字段映射问题合并分析。
 
 ---
 
