@@ -16,7 +16,8 @@ public class DeleteOneExecutor implements CommandExecutor{
 
     @Override
     public Object execute(String command, MongoCollection<Document> collection,
-                          List<Document> arguments, Method method, Object[] args) throws Exception {
+                          List<Document> arguments, Integer skip, Integer limit,
+                          Method method, Object[] args) throws Exception {
         Document queryContent = arguments.get(0);
         DeleteResult result = collection.deleteOne(queryContent);
         Class<?> returnType = method.getReturnType();

@@ -37,5 +37,11 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
 
     @Mql("db.getCollection('character').find({})")
     List findListRaw();
+
+    @Mql("db.getCollection('character').find({}).limit(10)")
+    List<Character> findListWithLimit();
+
+    @Mql("db.getCollection('character').find({}).skip(5).limit(5)")
+    List<Character> findListWithSkipAndLimit();
 }
 

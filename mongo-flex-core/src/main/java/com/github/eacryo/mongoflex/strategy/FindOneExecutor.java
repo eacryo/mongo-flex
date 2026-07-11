@@ -18,7 +18,8 @@ public class FindOneExecutor implements CommandExecutor{
 
     @Override
     public Object execute(String command, MongoCollection<Document> collection,
-                          List<Document> arguments, Method method, Object[] args) throws Exception {
+                          List<Document> arguments, Integer skip, Integer limit,
+                          Method method, Object[] args) throws Exception {
                 Document queryContent = arguments.get(0);
                 Document doc = collection.find(queryContent).first();
                 if (doc != null) {

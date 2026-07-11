@@ -125,5 +125,38 @@ public class MqlFindTest {
         Assertions.assertNotNull(map.get("name"), "name should not be null");
     }
 
+    @Test
+    @Order(8)
+    void testFindListWithLimit() {
+        log.info("=== test @Mql find with limit ===");
+        List<Character> result = repo.findListWithLimit();
+        log.info("findListWithLimit size: {}", result.size());
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(10, result.size(), "limit(10) should return exactly 10 documents");
+    }
+
+    @Test
+    @Order(9)
+    void testFindListWithSkipAndLimit() {
+        log.info("=== test @Mql find with skip and limit ===");
+        // 先获取全部数据的前10条作为参照
+        List<Character> all = repo.findAll();
+        log.info("total documents: {}", all.size());
+        Assertions.assertTrue(all.size() >= 10, "need at least 10 documents for pagination test");
+
+        List<Character> firstPage = repo.findListWithLimit();
+        List<Character> secondPage = repo.findListWithSkipAndLimit();
+
+        log.info("firstPage (limit 10) size: {}", firstPage.size());
+        log.info("secondPage (skip 5, limit 5) size: {}", secondPage.size());
+
+        Assertions.assertEquals(10, firstPage.size());
+        Assertions.assertEquals(5, secondPage.size());
+
+        // 第二页的第1条应该等于全部数据的第6条（skip 5）
+        Assertions.assertEquals(all.get(5).getId(), secondPage.get(0).getId(),
+                "second page first element should equal all.get(5)");
+    }
+
 }
 

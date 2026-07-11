@@ -53,7 +53,8 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             MongoCollection<Document> collection = databaseSupplier.get().getCollection(parsedCommand.collectionName);
 
             // 根据解析出的命令执行相应的操作
-            return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.arguments, method, args);
+            return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.arguments,
+                    parsedCommand.skip, parsedCommand.limit, method, args);
         } else if (isMethodFromTargetInterface(method, targetInterface)) {
             log.info("Method {} inherit from parent interface", method.getName());
             Object invoked = method.invoke(baseRepository, args);

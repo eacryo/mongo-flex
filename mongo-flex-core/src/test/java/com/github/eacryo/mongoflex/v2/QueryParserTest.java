@@ -250,4 +250,71 @@ class QueryParserTest {
                 "{a:'single',b:\"double\"},{c:1}");
         assertEquals(2, result.size());
     }
+
+    // ======================== skip/limit tests ========================
+
+    @Test
+    @DisplayName("skip/limit: find with skip and limit")
+    void testSkipAndLimit() {
+        QueryParser.QueryCommand cmd = parser.parse(
+                "db.getCollection('users').find({'name':'z'}).skip(20).limit(10)");
+
+        assertEquals(1, cmd.arguments.size());
+        assertEquals(Integer.valueOf(20), cmd.skip);
+        assertEquals(Integer.valueOf(10), cmd.limit);
+    }
+
+    @Test
+    @DisplayName("skip/limit: find with limit only")
+    void testLimitOnly() {
+        QueryParser.QueryCommand cmd = parser.parse(
+                "db.getCollection('users').find({}).limit(10)");
+
+        assertEquals(1, cmd.arguments.size());
+        assertNull(cmd.skip);
+        assertEquals(Integer.valueOf(10), cmd.limit);
+    }
+
+    @Test
+    @DisplayName("skip/limit: find with skip only")
+    void testSkipOnly() {
+        QueryParser.QueryCommand cmd = parser.parse(
+                "db.getCollection('users').find({}).skip(5)");
+
+        assertEquals(1, cmd.arguments.size());
+        assertEquals(Integer.valueOf(5), cmd.skip);
+        assertNull(cmd.limit);
+    }
+
+    @Test
+    @DisplayName("skip/limit: find without skip/limit → null")
+    void testNoSkipLimit() {
+        QueryParser.QueryCommand cmd = parser.parse(
+                "db.getCollection('users').find({'name':'z'})");
+
+        assertNull(cmd.skip);
+        assertNull(cmd.limit);
+    }
+
+    @Test
+    @DisplayName("skip/limit: count ignores skip/limit")
+    void testCountWithSkipLimit() {
+        QueryParser.QueryCommand cmd = parser.parse(
+                "db.getCollection('users').count({}).skip(20).limit(10)");
+
+        // 可以解析，但 CountExecutor 会忽略
+        assertEquals(Integer.valueOf(20), cmd.skip);
+        assertEquals(Integer.valueOf(10), cmd.limit);
+    }
+
+    @Test
+    @DisplayName("skip/limit: find with skip/limit and projection")
+    void testSkipLimitWithProjection() {
+        QueryParser.QueryCommand cmd = parser.parse(
+                "db.getCollection('users').find({'name':'z'},{'name':1,'_id':0}).skip(0).limit(100)");
+
+        assertEquals(2, cmd.arguments.size());
+        assertEquals(Integer.valueOf(0), cmd.skip);
+        assertEquals(Integer.valueOf(100), cmd.limit);
+    }
 }

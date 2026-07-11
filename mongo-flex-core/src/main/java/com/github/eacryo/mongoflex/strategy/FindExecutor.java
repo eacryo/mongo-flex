@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.strategy;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,8 @@ public class FindExecutor implements CommandExecutor {
     private MongoMappingConvertor mongoMappingConvertor;
 
     @Override
-    public Object execute(String command, MongoCollection<Document> collection, List<Document> arguments, Method method, Object[] args) throws Exception {
+    public Object execute(String command, MongoCollection<Document> collection, List<Document> arguments,
+                           Integer skip, Integer limit, Method method, Object[] args) throws Exception {
         Document queryContent = arguments.get(0);
         Type genericReturnType = method.getGenericReturnType();
         Class<?> listElementClass;
@@ -30,11 +32,20 @@ public class FindExecutor implements CommandExecutor {
             listElementClass = Object.class;
         }
         List<Object> results = new ArrayList<>();
+
+        FindIterable<Document> findIterable = collection.find(queryContent);
+        if (skip != null) {
+            findIterable = findIterable.skip(skip);
+        }
+        if (limit != null) {
+            findIterable = findIterable.limit(limit);
+        }
+
         if (listElementClass == Object.class) {
-            collection.find(queryContent).forEach(doc ->
+            findIterable.forEach(doc ->
                     results.add(mongoMappingConvertor.documentToMap(doc)));
         } else {
-            collection.find(queryContent).forEach(doc -> {
+            findIterable.forEach(doc -> {
                 Object entity = mongoMappingConvertor.read(doc, listElementClass);
                 results.add(entity);
             });

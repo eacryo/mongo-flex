@@ -13,7 +13,8 @@ public class CountExecutor implements  CommandExecutor {
     private ExecutorProxy executorProxy;
 
     @Override
-    public Object execute(String command, MongoCollection<Document> collection, List<Document> arguments, Method method, Object[] args) throws Exception {
+    public Object execute(String command, MongoCollection<Document> collection, List<Document> arguments,
+                           Integer skip, Integer limit, Method method, Object[] args) throws Exception {
         Document queryContent = arguments.get(0);
         Long count = collection.countDocuments(queryContent);
         // 支持 long / Long / int / Integer 四种返回类型

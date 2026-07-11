@@ -9,7 +9,10 @@ import org.bson.Document;
 public class QueryParser {
     //这里只解析单引号'不解析双引号"
     private final Pattern commandPattern = Pattern.compile("^db\\.getCollection\\('(.*?)'\\)\\." +
-            "(find|findOne|insertOne|updateOne|updateMany|deleteOne|deleteMany|count|aggregate)\\((.*?)\\)$");
+            "(find|findOne|insertOne|updateOne|updateMany|deleteOne|deleteMany|count|aggregate)\\((.*?)\\)(.*)$");
+
+    private static final Pattern SKIP_PATTERN = Pattern.compile("\\.skip\\((\\d+)\\)");
+    private static final Pattern LIMIT_PATTERN = Pattern.compile("\\.limit\\((\\d+)\\)");
 
     public QueryCommand parse(String shellCommand) {
         Matcher matcher = commandPattern.matcher(shellCommand);
@@ -17,6 +20,7 @@ public class QueryParser {
             String collectionName = matcher.group(1);
             String command = matcher.group(2); // "find" or "findOne"
             String argsString = matcher.group(3); // "{}" or "{ 'name': 'value' }" or "{a:1},{b:2}"
+            String chainSuffix = matcher.group(4); // optional: ".skip(20).limit(10)"
 
             List<Document> arguments = new ArrayList<>();
             if (argsString == null || argsString.trim().isEmpty()) {
@@ -33,10 +37,29 @@ public class QueryParser {
                 }
             }
 
-            return new QueryCommand(collectionName, command, arguments);
+            // 解析链式调用中的 skip/limit
+            Integer skip = null;
+            Integer limit = null;
+            if (chainSuffix != null && !chainSuffix.isEmpty()) {
+                skip = parseChainInt(chainSuffix, SKIP_PATTERN);
+                limit = parseChainInt(chainSuffix, LIMIT_PATTERN);
+            }
+
+            return new QueryCommand(collectionName, command, arguments, skip, limit);
         }
         throw new IllegalArgumentException("Invalid MongoDB shell command format: " + shellCommand +
                 ", expected format: db.getCollection('collectionName').find({'filed':'value'})");
+    }
+
+    /**
+     * 从链式后缀中提取数值，如 ".skip(20)" → 20，未匹配返回 null。
+     */
+    private static Integer parseChainInt(String chainSuffix, Pattern pattern) {
+        Matcher m = pattern.matcher(chainSuffix);
+        if (m.find()) {
+            return Integer.parseInt(m.group(1));
+        }
+        return null;
     }
 
     /**
@@ -94,11 +117,18 @@ public class QueryParser {
         public final String collectionName;
         public final String operation;
         public final List<Document> arguments;
+        /** 分页跳过条数，null 表示未指定 */
+        public final Integer skip;
+        /** 分页限制条数，null 表示未指定 */
+        public final Integer limit;
 
-        public QueryCommand(String collectionName, String operation, List<Document> arguments) {
+        public QueryCommand(String collectionName, String operation, List<Document> arguments,
+                            Integer skip, Integer limit) {
             this.collectionName = collectionName;
             this.operation = operation;
             this.arguments = arguments;
+            this.skip = skip;
+            this.limit = limit;
         }
     }
 }
