@@ -6,12 +6,10 @@ import com.github.eacryo.mongoflex.constant.MongoFlexConstant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
 //如果是同一个数据库但不同表的多租户实现,则需要根据tablePrefix和collectionName拼接出实际的collectionName
-@Component
 public class CollectionNameUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CollectionNameUtil.class);

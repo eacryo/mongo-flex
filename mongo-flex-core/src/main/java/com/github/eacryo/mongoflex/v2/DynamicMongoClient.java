@@ -12,7 +12,6 @@ import org.slf4j.MDC;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.util.HashMap;
@@ -22,7 +21,6 @@ import java.util.Objects;
 /**
  * 在启动时根据多租户信息注入多个 MongoClient 实例，并注册到 Spring 容器中。
  */
-@Component
 @Slf4j
 public class DynamicMongoClient implements InitializingBean {
     private static final String MONGO_CLIENT_PREFIX = "mongoClient_";

@@ -3,11 +3,9 @@ package com.github.eacryo.mongoflex.strategy;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 
-@Component
 public class CountExecutor implements  CommandExecutor {
 
     @Autowired

@@ -2,13 +2,10 @@ package com.github.eacryo.mongoflex.strategy;
 
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
-import org.springframework.stereotype.Component;
-
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-@Component
 public class ExecutorProxy {
     private final Map<String, CommandExecutor> executors = new HashMap<>();
 

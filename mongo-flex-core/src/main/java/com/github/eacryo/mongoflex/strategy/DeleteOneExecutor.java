@@ -3,14 +3,11 @@ package com.github.eacryo.mongoflex.strategy;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.internal.bulk.DeleteRequest;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 
-@Component
 public class DeleteOneExecutor implements CommandExecutor{
 
     @Autowired

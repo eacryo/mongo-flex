@@ -4,7 +4,6 @@ import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -12,7 +11,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class FindExecutor implements CommandExecutor {
 
     @Autowired
