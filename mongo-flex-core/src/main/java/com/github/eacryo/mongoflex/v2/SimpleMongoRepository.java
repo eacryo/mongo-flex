@@ -99,6 +99,18 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     @Override
+    public List<T> findListByEntity(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
+        Document query = convertQueryId(mongoMappingConvertor.write(entity));
+        List<Document> docs = databaseSupplier.get().getCollection(collectionName).find(query).into(new ArrayList<>());
+        List<T> result = new ArrayList<>();
+        for (Document d : docs) {
+            result.add(mongoMappingConvertor.read(d, entityClass));
+        }
+        return result;
+    }
+
+    @Override
     public <R> T findOne(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         Document filter = buildFilterFromLambda(field, value);

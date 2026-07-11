@@ -106,6 +106,34 @@ public class CharacterRepositoryTests {
     }
 
     @Test
+    public void testFindListByEntity() {
+        // 插入两条同 name 的记录
+        String commonName = "FindListEntityTest-" + UlidCreator.getUlid().toString();
+        Character c1 = new Character();
+        c1.setId(UlidCreator.getUlid().toString());
+        c1.setName(commonName);
+        c1.setAddress("Addr1");
+        characterRepositoryV2.insert(c1);
+
+        Character c2 = new Character();
+        c2.setId(UlidCreator.getUlid().toString());
+        c2.setName(commonName);
+        c2.setAddress("Addr2");
+        characterRepositoryV2.insert(c2);
+
+        // 按 name 查，应返回两条
+        Character query = new Character();
+        query.setName(commonName);
+        List<Character> list = characterRepositoryV2.findListByEntity(query);
+        System.out.println("findListByEntity size: " + (list != null ? list.size() : 0));
+        System.out.println("findListByEntity: " + list);
+
+        // cleanup
+        characterRepositoryV2.deleteById(c1.getId());
+        characterRepositoryV2.deleteById(c2.getId());
+    }
+
+    @Test
     public void testFindOneByFunction() {
         Character c = new Character();
         String id = UlidCreator.getUlid().toString();
@@ -126,7 +154,7 @@ public class CharacterRepositoryTests {
 
         Character c = new Character();
         c.setName("CountEntityTest");
-        long c2 = characterRepositoryV2.count(c);
+        long c2 = characterRepositoryV2.countByEntity(c);
         System.out.println("count(entity): " + c2);
 
         long c3 = characterRepositoryV2.count(Character::getName, "CountEntityTest");

@@ -35,6 +35,12 @@ public interface MongoRepository<T, ID> {
     T findOneByEntity(T entity);
 
     /**
+     * 按实体中的非空字段作为条件查询，返回所有匹配记录的列表。
+     * null 字段会被忽略，entity 不可为 null。若所有字段均为 null 则返回全集合。
+     */
+    List<T> findListByEntity(T entity);
+
+    /**
      * 按单个字段的值查询，field 不可为 null。
      */
     <R> T findOne(SFunction<T, R> field, R value);
