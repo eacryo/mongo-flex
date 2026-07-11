@@ -20,6 +20,9 @@ public class FindOneExecutor implements CommandExecutor{
                           Document queryContent, Method method, Object[] args) throws Exception {
                 Document doc = collection.find(queryContent).first();
                 if (doc != null) {
+                    if (method.getReturnType() == Object.class) {
+                        return mongoMappingConvertor.documentToMap(doc);
+                    }
                     return mongoMappingConvertor.read(doc,method.getReturnType());
                 }
                 return doc;

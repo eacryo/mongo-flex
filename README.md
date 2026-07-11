@@ -116,7 +116,58 @@ long total = repo.count();
 long deleted = repo.deleteAll();
 ```
 
-### 5. Multi-tenancy (optional)
+### 5. Entity Inheritance
+
+Mongo-flex follows the **MyBatis-Plus style** of explicit type binding: a `Repository<T>` works with exactly `T` — no more, no less.
+
+```java
+// Parent entity
+@CollectionName("character")
+public class Character {
+    @CollectionId(IdType.ULID)
+    private String id;
+    private String name;
+    private String vision;
+}
+
+// Child entity with extra fields
+public class LiyueCharacter extends Character {
+    private String title;              // 称号
+    @CollectionField("is_adeptus")
+    private Boolean isAdeptus;         // 是否仙人
+}
+```
+
+**Key rule:** Use a dedicated Repository for each type you want to fully read/write.
+
+```java
+// ✅ Read parent fields via parent Repository
+@MRepository
+public interface CharacterRepository extends MongoRepository<Character, String> {}
+
+Character c = characterRepo.findById(id);
+c.getVision();  // ✅ works
+
+// ✅ Read all fields (parent + child) via child Repository
+@MRepository
+public interface LiyueCharacterRepository extends MongoRepository<LiyueCharacter, String> {}
+
+LiyueCharacter lc = liyueRepo.findById(id);
+lc.getVision();     // ✅ inherited field
+lc.getTitle();      // ✅ child field
+lc.getIsAdeptus();  // ✅ child field, @CollectionField("is_adeptus") honored
+```
+
+```java
+// ❌ Don't expect child fields through parent Repository
+Character c = characterRepo.findById(id);
+c.getTitle();       // ❌ compile error — Character has no getTitle()
+c instanceof LiyueCharacter;  // ❌ always false — read() returns Character, never LiyueCharacter
+```
+
+**Why not auto-polymorphism like Spring Data MongoDB?** Spring Data stores a `_class` discriminator and automatically instantiates the subclass — but this means `repo.findById(id)` can silently return a `LiyueCharacter` when you declared `Character`. It's flexible but requires `instanceof` guards. Mongo-flex chooses explicit type binding: insert stores all fields (runtime type), but read returns only what the Repository interface declares (compile-time type). No surprises.
+
+### 6. Multi-tenancy (optional)
 
 ```yaml
 mongo-flex:

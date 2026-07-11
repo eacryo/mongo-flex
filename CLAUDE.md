@@ -21,7 +21,7 @@ mvn test -pl mongo-flex-test-spring-boot3 -Dtest=LambdaQueryWrapperOperatorTest#
 mvn clean install -pl mongo-flex-core -am -DskipTests
 ```
 
-Tests connect to a remote MongoDB Atlas cluster via the `REMOTE_MONGO_URI` environment variable. There is no embedded MongoDB.
+Tests connect to a remote MongoDB Atlas cluster via the `REMOTE_MONGO_URI` environment variable. There is no embedded MongoDB. **Tests are slow** (remote Atlas latency): a single test class takes 2–5 minutes; the full suite takes 10+ minutes. Always use a generous timeout when running test commands (≥ 600 seconds for Bash tool timeout).
 
 ## Java 8 Constraint
 
@@ -42,6 +42,10 @@ type: feat|fix|refactor|test|docs|chore|style|perf
 ```
 
 Do **not** run `git commit`. Suggest the message and let the developer commit manually.
+
+## Documentation Sync
+
+When modifying `README.md`, apply the same changes to `README-zh.md` (Chinese translation). Both files must stay in sync.
 
 ## Architecture Overview
 

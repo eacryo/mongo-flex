@@ -12,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @SpringBootTest(classes = {TestApplication.class})
@@ -61,6 +62,13 @@ public class MqlFindTest {
         log.info("findAllObj size: {}", result.size());
         Assertions.assertNotNull(result);
         Assertions.assertFalse(result.isEmpty());
+        // 验证返回的是 Map（Document 已转为普通 Map），且包含文档字段数据
+        Object first = result.get(0);
+        Assertions.assertTrue(first instanceof Map, "element should be Map, got: " + first.getClass());
+        Map<String, Object> map = (Map<String, Object>) first;
+        Assertions.assertTrue(map.containsKey("_id"), "Map should contain _id");
+        Assertions.assertTrue(map.containsKey("name"), "Map should contain name");
+        Assertions.assertNotNull(map.get("_id"), "_id should not be null");
     }
 
     @Test
@@ -104,9 +112,17 @@ public class MqlFindTest {
     @Test
     @Order(7)
     void testRawListReturnType() {
-        log.info("=== test raw List return type (C-4) ===");
+        log.info("=== test raw List return type ===");
         List result = repo.findListRaw();
-        log.info("raw List result: {}", result);
+        log.info("raw List result size: {}, element: {}", result.size(), result.isEmpty() ? "empty" : result.get(0).getClass());
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result.isEmpty());
+        // 验证原始 List 的元素也是 Map（不是空 Object）
+        Object first = result.get(0);
+        Assertions.assertTrue(first instanceof Map, "raw List element should be Map, got: " + first.getClass());
+        Map<String, Object> map = (Map<String, Object>) first;
+        Assertions.assertTrue(map.containsKey("name"), "Map should contain name");
+        Assertions.assertNotNull(map.get("name"), "name should not be null");
     }
 
 }

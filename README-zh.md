@@ -116,7 +116,58 @@ long total = repo.count();
 long deleted = repo.deleteAll();
 ```
 
-### 5. 多租户（可选）
+### 5. 实体继承
+
+Mongo-flex 采用 **MyBatis-Plus 风格**的显式类型绑定：`Repository<T>` 只处理 `T` 的字段，不多不少。
+
+```java
+// 父类实体
+@CollectionName("character")
+public class Character {
+    @CollectionId(IdType.ULID)
+    private String id;
+    private String name;
+    private String vision;
+}
+
+// 子类，包含额外字段
+public class LiyueCharacter extends Character {
+    private String title;              // 称号
+    @CollectionField("is_adeptus")
+    private Boolean isAdeptus;         // 是否仙人
+}
+```
+
+**核心规则：** 每种需要完整读写的类型都应定义独立的 Repository。
+
+```java
+// ✅ 通过父类 Repository 读取父类字段
+@MRepository
+public interface CharacterRepository extends MongoRepository<Character, String> {}
+
+Character c = characterRepo.findById(id);
+c.getVision();  // ✅ 正常
+
+// ✅ 通过子类 Repository 读取全部字段（父类 + 子类）
+@MRepository
+public interface LiyueCharacterRepository extends MongoRepository<LiyueCharacter, String> {}
+
+LiyueCharacter lc = liyueRepo.findById(id);
+lc.getVision();     // ✅ 继承字段
+lc.getTitle();      // ✅ 子类字段
+lc.getIsAdeptus();  // ✅ 子类字段，@CollectionField("is_adeptus") 正确映射
+```
+
+```java
+// ❌ 不要期望通过父类 Repository 获取子类字段
+Character c = characterRepo.findById(id);
+c.getTitle();       // ❌ 编译错误 — Character 没有 getTitle()
+c instanceof LiyueCharacter;  // ❌ 永远为 false — read() 返回的是 Character，不会变成 LiyueCharacter
+```
+
+**为什么不像 Spring Data MongoDB 那样自动多态？** Spring Data 会存储 `_class` 鉴别字段并自动实例化子类——但这意味着 `repo.findById(id)` 在你声明 `Character` 时可能悄悄返回一个 `LiyueCharacter`。灵活但需要 `instanceof` 防御。Mongo-flex 选择显式类型绑定：insert 存入全部字段（运行时类型），但 read 只返回 Repository 接口声明的字段（编译期类型）。没有意外。
+
+### 6. 多租户（可选）
 
 ```yaml
 mongo-flex:

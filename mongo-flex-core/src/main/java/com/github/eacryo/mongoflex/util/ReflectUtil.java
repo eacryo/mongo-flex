@@ -24,8 +24,7 @@ public class ReflectUtil {
 
     public static <T,R> String getFieldNameFromLambda(SFunction<T,R> func) {
         try {
-            Method writeReplace = WRITE_REPLACE_CACHE.get(func.getClass());
-            SerializedLambda serializedLambda = (SerializedLambda) writeReplace.invoke(func);
+            SerializedLambda serializedLambda = getSerializedLambda(func);
             String methodName = serializedLambda.getImplMethodName();
             String fieldName;
             if (methodName.startsWith("get") && methodName.length() > 3) {
@@ -39,6 +38,26 @@ public class ReflectUtil {
         } catch (Exception e) {
             throw new RuntimeException("Failed to resolve field name from lambda", e);
         }
+    }
+
+    /**
+     * 从 lambda 方法引用中提取实际声明该方法的类。
+     * 例如 LiyueCharacter::getIsAdeptus 返回 LiyueCharacter.class，
+     * 用于字段名映射时使用正确的 ClassFieldMetaData。
+     */
+    public static <T, R> Class<?> getImplClassFromLambda(SFunction<T, R> func) {
+        try {
+            SerializedLambda sl = getSerializedLambda(func);
+            String implClass = sl.getImplClass().replace('/', '.');
+            return Class.forName(implClass);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to resolve impl class from lambda", e);
+        }
+    }
+
+    private static <T, R> SerializedLambda getSerializedLambda(SFunction<T, R> func) throws Exception {
+        Method writeReplace = WRITE_REPLACE_CACHE.get(func.getClass());
+        return (SerializedLambda) writeReplace.invoke(func);
     }
 
 }

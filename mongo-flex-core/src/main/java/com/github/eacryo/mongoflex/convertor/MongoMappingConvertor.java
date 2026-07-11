@@ -241,6 +241,39 @@ public class MongoMappingConvertor {
         return bsonValue;
     }
 
+    // --- Document → Map 转换（用于 Object.class 等无实体映射场景） ---
+
+    /**
+     * 将 BSON Document 递归转换为普通的 {@link Map}&lt;String, Object&gt;，
+     * 嵌套的 Document 和 List 中的 Document 也会被递归转换。
+     * 当 {@code @Mql} 方法返回 {@code List<Object>} 或 {@code Object} 时使用，
+     * 用户可自行对 Map 做序列化/反序列化处理。
+     */
+    public Map<String, Object> documentToMap(Document doc) {
+        if (doc == null) {
+            return null;
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : doc.entrySet()) {
+            result.put(entry.getKey(), convertDocumentValue(entry.getValue()));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object convertDocumentValue(Object value) {
+        if (value instanceof Document) {
+            return documentToMap((Document) value);
+        } else if (value instanceof List) {
+            List<Object> list = new ArrayList<>();
+            for (Object item : (List<?>) value) {
+                list.add(convertDocumentValue(item));
+            }
+            return list;
+        }
+        return value;
+    }
+
     // --- 辅助方法 ---
 
     /**

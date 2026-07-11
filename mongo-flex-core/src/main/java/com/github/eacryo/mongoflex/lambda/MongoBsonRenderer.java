@@ -63,8 +63,12 @@ public class MongoBsonRenderer {
 
         for (Condition c : conditions) {
 
-            String field = entityClass != null
-                    ? convertor.resolveMongoFieldName(entityClass, c.field())
+            // 优先用字段声明类的元数据（implClass），其次用 entityClass。
+            // 这样 LiyueCharacter::getIsAdeptus 通过 CharacterRepository 查询时，
+            // 也能正确解析 @CollectionField("is_adeptus") 映射。
+            Class<?> resolveClass = c.implClass() != null ? c.implClass() : entityClass;
+            String field = resolveClass != null
+                    ? convertor.resolveMongoFieldName(resolveClass, c.field())
                     : c.field();
 
             switch (c.operator()) {

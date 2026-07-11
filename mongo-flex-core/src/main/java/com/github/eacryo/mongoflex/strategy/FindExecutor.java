@@ -29,10 +29,15 @@ public class FindExecutor implements CommandExecutor {
             listElementClass = Object.class;
         }
         List<Object> results = new ArrayList<>();
-        collection.find(queryContent).forEach(doc -> {
-            Object entity = mongoMappingConvertor.read(doc, listElementClass);
-            results.add(entity);
-        });
+        if (listElementClass == Object.class) {
+            collection.find(queryContent).forEach(doc ->
+                    results.add(mongoMappingConvertor.documentToMap(doc)));
+        } else {
+            collection.find(queryContent).forEach(doc -> {
+                Object entity = mongoMappingConvertor.read(doc, listElementClass);
+                results.add(entity);
+            });
+        }
 
         // 处理返回类型
         if (method.getReturnType().equals(List.class)) {

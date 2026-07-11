@@ -38,91 +38,91 @@ public class LambdaQueryWrapper<T> {
     public <R> LambdaQueryWrapper<T> eq(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.EQ, value));
+        conditions.add(new Condition(javaField, Operator.EQ, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> ne(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.NE, value));
+        conditions.add(new Condition(javaField, Operator.NE, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> gt(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.GT, value));
+        conditions.add(new Condition(javaField, Operator.GT, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> lt(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.LT, value));
+        conditions.add(new Condition(javaField, Operator.LT, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> gte(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.GTE, value));
+        conditions.add(new Condition(javaField, Operator.GTE, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> lte(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.LTE, value));
+        conditions.add(new Condition(javaField, Operator.LTE, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> regex(SFunction<T, R> field, String pattern) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.REGEX, pattern));
+        conditions.add(new Condition(javaField, Operator.REGEX, pattern, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> in(SFunction<T, R> field, Collection<?> values) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.IN, values));
+        conditions.add(new Condition(javaField, Operator.IN, values, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> nin(SFunction<T, R> field, Collection<?> values) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.NIN, values));
+        conditions.add(new Condition(javaField, Operator.NIN, values, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public LambdaQueryWrapper<T> exists(SFunction<T, ?> field, boolean value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.EXISTS, value));
+        conditions.add(new Condition(javaField, Operator.EXISTS, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public <R> LambdaQueryWrapper<T> all(SFunction<T, R> field, Collection<?> values) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.ALL, values));
+        conditions.add(new Condition(javaField, Operator.ALL, values, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public LambdaQueryWrapper<T> size(SFunction<T, ?> field, int value) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.SIZE, value));
+        conditions.add(new Condition(javaField, Operator.SIZE, value, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     public LambdaQueryWrapper<T> elemMatch(SFunction<T, ?> field, LambdaQueryWrapper<?> subWrapper) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.ELEM_MATCH, subWrapper));
+        conditions.add(new Condition(javaField, Operator.ELEM_MATCH, subWrapper, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
@@ -133,7 +133,7 @@ public class LambdaQueryWrapper<T> {
     public <R> LambdaQueryWrapper<T> like(SFunction<T, R> field, String pattern) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.LIKE, pattern));
+        conditions.add(new Condition(javaField, Operator.LIKE, pattern, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
@@ -143,7 +143,7 @@ public class LambdaQueryWrapper<T> {
     public <R> LambdaQueryWrapper<T> notLike(SFunction<T, R> field, String pattern) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.NOT_LIKE, pattern));
+        conditions.add(new Condition(javaField, Operator.NOT_LIKE, pattern, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
@@ -153,7 +153,7 @@ public class LambdaQueryWrapper<T> {
     public <R> LambdaQueryWrapper<T> between(SFunction<T, R> field, R start, R end) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.BETWEEN, Arrays.asList(start, end)));
+        conditions.add(new Condition(javaField, Operator.BETWEEN, Arrays.asList(start, end), ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
@@ -163,7 +163,7 @@ public class LambdaQueryWrapper<T> {
     public LambdaQueryWrapper<T> isNull(SFunction<T, ?> field) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.IS_NULL, null));
+        conditions.add(new Condition(javaField, Operator.IS_NULL, null, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
@@ -173,17 +173,18 @@ public class LambdaQueryWrapper<T> {
     public LambdaQueryWrapper<T> isNotNull(SFunction<T, ?> field) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.IS_NOT_NULL, null));
+        conditions.add(new Condition(javaField, Operator.IS_NOT_NULL, null, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
     /**
      * Logical NOT: negates a sub-query.
-     * Example: not(w -> w.eq(User::getName, "Tom")) → { name: { $not: { $eq: "Tom" } } }
+     * No field parameter — implClass is null.
+     * Example: not(w -> w.eq(User::getName, "Tom")) → { $nor: [...] }
      */
     public LambdaQueryWrapper<T> not(LambdaQueryWrapper<T> subWrapper) {
         Objects.requireNonNull(subWrapper, "subWrapper must not be null");
-        conditions.add(new Condition(null, Operator.NOT, subWrapper));
+        conditions.add(new Condition(null, Operator.NOT, subWrapper, null));
         return this;
     }
 
@@ -193,7 +194,7 @@ public class LambdaQueryWrapper<T> {
     public <R> LambdaQueryWrapper<T> mod(SFunction<T, R> field, int divisor, int remainder) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.MOD, Arrays.asList(divisor, remainder)));
+        conditions.add(new Condition(javaField, Operator.MOD, Arrays.asList(divisor, remainder), ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 
@@ -204,7 +205,7 @@ public class LambdaQueryWrapper<T> {
     public LambdaQueryWrapper<T> type(SFunction<T, ?> field, String bsonTypeName) {
         Objects.requireNonNull(field, "field must not be null");
         String javaField = ReflectUtil.getFieldNameFromLambda(field);
-        conditions.add(new Condition(javaField, Operator.TYPE, bsonTypeName));
+        conditions.add(new Condition(javaField, Operator.TYPE, bsonTypeName, ReflectUtil.getImplClassFromLambda(field)));
         return this;
     }
 

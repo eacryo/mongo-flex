@@ -7,17 +7,20 @@ public final class Condition {
     private final String field;
     private final Operator operator;
     private final Object value;
+    private final Class<?> implClass;
 
-    public Condition(String field, Operator operator, Object value) {
+    public Condition(String field, Operator operator, Object value, Class<?> implClass) {
         this.field = field;
         this.operator = operator;
         this.value = value;
+        this.implClass = implClass;
     }
 
     Condition() {
         this.field = null;
         this.operator = null;
         this.value = null;
+        this.implClass = null;
     }
 
     public String field() {
@@ -32,6 +35,10 @@ public final class Condition {
         return value;
     }
 
+    public Class<?> implClass() {
+        return implClass;
+    }
+
     public boolean isOrSeparator() {
         return field == null && operator == null;
     }
@@ -43,12 +50,13 @@ public final class Condition {
         Condition condition = (Condition) o;
         return Objects.equals(field, condition.field)
                 && operator == condition.operator
-                && Objects.equals(value, condition.value);
+                && Objects.equals(value, condition.value)
+                && Objects.equals(implClass, condition.implClass);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(field, operator, value);
+        return Objects.hash(field, operator, value, implClass);
     }
 
     @Override
@@ -57,6 +65,7 @@ public final class Condition {
                 "field=" + field + ", " +
                 "operator=" + operator + ", " +
                 "value=" + value + ", " +
+                "implClass=" + (implClass != null ? implClass.getSimpleName() : "null") + ", " +
                 "isOrSeparator=" + isOrSeparator() + ']';
     }
 
