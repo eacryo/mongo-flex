@@ -3,7 +3,6 @@ package com.github.eacryo.mongoflex.convertor;
 
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -16,7 +15,6 @@ import java.util.stream.Collectors;
  * MongoMappingConverter: 基于反射的 POJO <-> BSON Document 转换器。
  * 实现了嵌套对象处理、Date <-> ISODate 转换以及 id <-> _id 映射。
  */
-@Component
 public class MongoMappingConvertor {
 
     private static final String MONGO_ID_FIELD = "_id";
@@ -87,7 +85,7 @@ public class MongoMappingConvertor {
      */
     public <T> Document write(T entity) {
         if (entity == null) {
-            return null;
+            throw new IllegalArgumentException("entity must not be null");
         }
         // 使用 Document 构造函数，利用其对 java.util.Date 的原生支持
         return new Document(convertToMap(entity));

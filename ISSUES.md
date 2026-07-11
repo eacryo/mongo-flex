@@ -139,10 +139,10 @@
 **问题:** 正则捕获 9 种操作但只注册了 4 种 Executor，其他操作解析成功但执行时才报 UnsupportedOperationException。
 **修复:** 解析后校验操作是否已注册，提前报错。
 
-### M-6. MongoMappingConvertor.write(null) 返回 null
+### M-6. ~~MongoMappingConvertor.write(null) 返回 null~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/convertor/MongoMappingConvertor.java:88-90`
 **问题:** 返回 null 而非抛明确异常，所有调用方必须自行判空。
-**修复:** 抛 `IllegalArgumentException("entity must not be null")`。
+**解决方案:** 抛 `IllegalArgumentException("entity must not be null")`。同时移除 `@Component` 注解，改为在 `MyOrmAutoConfiguration` 中通过 `@Bean` 显式注册，防止用户直接 `@Autowired` 此内部组件。
 
 ### M-7. SimpleMongoRepository.findList 全量加载到内存
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:120`
