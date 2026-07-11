@@ -345,7 +345,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
                 String pattern = updateDateField.getAnnotation(UpdateDate.class).pattern();
                 updateDateField.set(entity, DateValueGenerator.generateCurrentDate(updateDateField.getType(), pattern));
             }
-        } catch (Exception e){
+        } catch (IllegalAccessException e){
             throw new RuntimeException("Failed to set date fields", e);
         }
 

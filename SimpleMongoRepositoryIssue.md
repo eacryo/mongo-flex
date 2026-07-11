@@ -103,7 +103,7 @@ private Object convertIdIfNecessary(ID id) {
 
 ---
 
-## 问题 3（低，代码质量）：`doc.remove("_id")` + `$set` 模式重复 4 次
+## 问题 3（低，代码质量，❌ 不需要解决）：`doc.remove("_id")` + `$set` 模式重复 4 次
 
 **文件:** `mongo-flex-core/src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java`
 
@@ -126,7 +126,7 @@ Document updateDoc = new Document("$set", doc);
 
 ---
 
-## 问题 4（低，代码质量）：`fillDate` 异常捕获过于宽泛
+## 问题 4（已修复 ✅）：`fillDate` 异常捕获过于宽泛
 
 **文件:** `mongo-flex-core/src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:348`
 
