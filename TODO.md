@@ -58,37 +58,44 @@ QueryParser 正则已能解析 9 种 MongoDB shell 命令，但仅 4 个有 Exec
 **涉及文件:**
 - `mongo-flex-core/.../v2/MyRepositoryProxyHandler.java`
 
-### LambdaQueryWrapper 缺少查询修饰字段
+### LambdaQueryWrapper 缺少查询修饰字段 🔄 部分完成
 
-当前 `LambdaQueryWrapper` 只承载过滤条件（15 种操作符 + OR），缺少 sort、limit、skip、projection 等查询修饰字段。需要扩展 wrapper 使其成为完整的查询载体。
+~~当前 LambdaQueryWrapper 只承载过滤条件（15 种操作符 + OR），缺少 sort、limit、skip、projection 等查询修饰字段。~~
+
+- `orderByAsc/Desc` ✅ 已完成
+- `limit` / `skip` — 通过 `PageDTO` 参数传入 `findPage`，无需在 wrapper 上重复
+- `projection` — ❌ 待实现
 
 **涉及文件:**
 - `mongo-flex-core/.../lambda/LambdaQueryWrapper.java`
 - `mongo-flex-core/.../lambda/MongoBsonRenderer.java`
 
-### LambdaQueryWrapper 缺少 MongoDB 操作符
+### LambdaQueryWrapper 缺少 MongoDB 操作符 🔄 部分完成
 
-当前支持的 15 种操作符中缺少以下常见 MongoDB 操作符：
+~~当前支持的 15 种操作符中缺少以下常见 MongoDB 操作符~~ 已补齐 `not`/`nor`、`mod`、`type`。仍缺少：
 
-| 操作符 | 说明 |
-|------|------|
-| `not` / `nor` | 逻辑取反 / 全不匹配 |
-| `near` / `nearSphere` | 地理位置查询 |
-| `text` | 全文搜索 |
-| `mod` / `type` / `expr` | 取模 / 类型匹配 / 表达式 |
+| 操作符 | 说明 | 状态 |
+|------|------|------|
+| `not` / `nor` | 逻辑取反 / 全不匹配 | ✅ 已完成 |
+| `mod` / `type` | 取模 / 类型匹配 | ✅ 已完成 |
+| `near` / `nearSphere` | 地理位置查询 | ❌ 待实现 |
+| `text` | 全文搜索 | ❌ 待实现 |
+| `expr` | 表达式 | ❌ 待实现 |
 
 **涉及文件:**
 - `mongo-flex-core/.../lambda/LambdaQueryWrapper.java`
 - `mongo-flex-core/.../lambda/Operator.java`
 - `mongo-flex-core/.../lambda/MongoBsonRenderer.java`
 
-### upsert 支持
+### upsert 支持 ✅ 已完成
 
-update 相关方法（MongoRepository 的 `update`、`updateById`、`updateAll`，以及将来 @Mql 的 updateExecutor）均不支持 upsert 选项。需增加 `upsert` 参数或在方法签名中提供 upsert 版本。
+~~update 相关方法均不支持 upsert 选项。~~
+
+已新增 `upsertById`、`upsert(SFunction)`、`upsert(Wrapper)` 三个方法，与现有 update 方法一一对应。upsert 插入新文档时 fillDate(isInsert=true) 会同时填充 @CreateDate 和 @UpdateDate；更新已有文档时填充 @UpdateDate。
 
 **涉及文件:**
-- `mongo-flex-core/.../v2/SimpleMongoRepository.java`
-- `mongo-flex-core/.../v2/MongoRepository.java`
+- `mongo-flex-core/.../v2/MongoRepository.java` ✅
+- `mongo-flex-core/.../v2/SimpleMongoRepository.java` ✅
 
 ### 批量插入（insertMany）
 

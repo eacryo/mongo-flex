@@ -280,6 +280,37 @@ public class CharacterRepositoryTests {
     }
 
     @Test
+    public void testUpsert() {
+        String id = UlidCreator.getUlid().toString();
+        // 先确认这条记录不存在
+        Character fetched = characterRepositoryV2.findById(id);
+        System.out.println("pre-upsert findById: " + fetched);
+
+        // upsert：不存在则插入
+        Character c = new Character();
+        c.setId(id);
+        c.setName("UpsertTest-" + id);
+        c.setAddress("Upserted");
+        long result1 = characterRepositoryV2.upsertById(c);
+        System.out.println("upsertById (insert) result: " + result1);
+
+        // 验证已插入
+        Character afterInsert = characterRepositoryV2.findById(id);
+        System.out.println("after upsertById: " + afterInsert);
+
+        // 再次 upsert 同 _id：应更新
+        c.setAddress("Upserted-Updated");
+        long result2 = characterRepositoryV2.upsertById(c);
+        System.out.println("upsertById (update) result: " + result2);
+
+        Character afterUpdate = characterRepositoryV2.findById(id);
+        System.out.println("after second upsertById: " + afterUpdate);
+
+        // cleanup
+        characterRepositoryV2.deleteById(id);
+    }
+
+    @Test
     public void testDeleteById() {
         Character c = new Character();
         String id = UlidCreator.getUlid().toString();

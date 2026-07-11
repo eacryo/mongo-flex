@@ -118,6 +118,22 @@ public interface MongoRepository<T, ID> {
     long updateAll(T entity);
 
     /**
+     * 按 ID upsert：如果 _id 匹配则更新，否则插入一条新文档。entity 不可为 null，且必须包含非 null 的 _id。
+     */
+    long upsertById(T entity);
+
+    /**
+     * 按单个字段的值作为条件 upsert，field 和 entity 不可为 null。
+     */
+    <R> long upsert(SFunction<T, R> field, R value, T entity);
+
+    /**
+     * 按 LambdaQueryWrapper 条件 upsert，wrapper 和 entity 不可为 null。
+     * wrapper 条件不能为空，全量 upsert 请使用 {@link #upsertAll(Object)}（如果有的话）。
+     */
+    long upsert(LambdaQueryWrapper<T> wrapper, T entity);
+
+    /**
      * 按 ID 删除，id 不可为 null。
      */
     long deleteById(ID id);

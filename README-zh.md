@@ -114,6 +114,37 @@ long total = repo.count();
 
 // 删除全部（显式操作）
 long deleted = repo.deleteAll();
+
+// 实体示例查询
+Character probe = new Character();
+probe.setName("Furina");
+Character one = repo.findOneByEntity(probe);        // 查第一条匹配
+List<Character> list = repo.findListByEntity(probe); // 查全部匹配
+
+// 分页 + Lambda 排序
+PageDTO<Character> page = new PageDTO<>();
+page.setCurrentPage(1L);
+page.setPageSize(10L);
+
+LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
+wrapper.eq(Character::getArea, "Fontaine")
+       .orderByAsc(Character::getName);
+PageDTO<Character> result = repo.findPage(wrapper, page);
+result.getRecords();   // 当前页数据
+result.getTotal();     // 匹配文档总数
+
+// upsert：存在则更新，不存在则插入
+Character ganyu = new Character();
+ganyu.setId("some-id");
+ganyu.setName("Ganyu");
+ganyu.setArea("Liyue");
+repo.upsertById(ganyu);  // 按 _id upsert
+repo.upsert(Character::getName, "Ganyu", ganyu);  // 按字段 upsert
+
+// OR 查询
+wrapper.or(w -> w.eq(Character::getArea, "Liyue")
+                  .eq(Character::getArea, "Fontaine"));
+List<Character> orResult = repo.findList(wrapper);
 ```
 
 ### 5. 实体继承

@@ -114,6 +114,37 @@ long total = repo.count();
 
 // delete all (explicit opt-in)
 long deleted = repo.deleteAll();
+
+// entity example queries
+Character probe = new Character();
+probe.setName("Furina");
+Character one = repo.findOneByEntity(probe);     // find first match
+List<Character> list = repo.findListByEntity(probe);  // find all matching
+
+// pagination with Lambda sort
+PageDTO<Character> page = new PageDTO<>();
+page.setCurrentPage(1L);
+page.setPageSize(10L);
+
+LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
+wrapper.eq(Character::getArea, "Fontaine")
+       .orderByAsc(Character::getName);
+PageDTO<Character> result = repo.findPage(wrapper, page);
+result.getRecords();   // current page data
+result.getTotal();     // total matching documents
+
+// upsert: update if exists, insert if not
+Character ganyu = new Character();
+ganyu.setId("some-id");
+ganyu.setName("Ganyu");
+ganyu.setArea("Liyue");
+repo.upsertById(ganyu);  // upsert by _id
+repo.upsert(Character::getName, "Ganyu", ganyu);  // upsert by field
+
+// OR queries
+wrapper.or(w -> w.eq(Character::getArea, "Liyue")
+                  .eq(Character::getArea, "Fontaine"));
+List<Character> orResult = repo.findList(wrapper);
 ```
 
 ### 5. Entity Inheritance

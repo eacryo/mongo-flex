@@ -23,6 +23,8 @@ mvn clean install -pl mongo-flex-core -am -DskipTests
 
 Tests connect to a remote MongoDB Atlas cluster via the `REMOTE_MONGO_URI` environment variable. There is no embedded MongoDB. **Tests are slow** (remote Atlas latency): a single test class takes 2–5 minutes; the full suite takes 10+ minutes. Always use a generous timeout when running test commands (≥ 600 seconds for Bash tool timeout).
 
+**当前只需验证 SB3 测试：** `mongo-flex-test-spring-boot2` 是遗留模块，保持编译通过即可，不需要运行测试。所有测试验证集中在 `mongo-flex-test-spring-boot3`。
+
 ## Java 8 Constraint
 
 The project targets **Java 8 bytecode** (`<java.version>1.8</java.version>`). Do not use APIs introduced after JDK 8:

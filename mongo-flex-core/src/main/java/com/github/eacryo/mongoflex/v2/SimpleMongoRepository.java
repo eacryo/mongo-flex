@@ -16,6 +16,7 @@ import com.github.f4b6a3.ulid.UlidCreator;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
@@ -314,6 +315,54 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         Document updateDoc = new Document("$set", doc);
         UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
                 .updateMany(new Document(), updateDoc);
+        return updateResult.getModifiedCount();
+    }
+
+    // ---- upsert ----
+
+    @Override
+    public long upsertById(T entity) {
+        Objects.requireNonNull(entity, "entity must not be null");
+        fillDate(entity, true);
+        Document doc = mongoMappingConvertor.write(entity);
+        Object id = doc.remove("_id");
+        if (id == null) {
+            throw new IllegalArgumentException("Entity must have an non-null id for upsertById");
+        }
+        Object queryId = (id instanceof String && ObjectId.isValid((String) id)) ? new ObjectId((String) id) : id;
+        Document updateDoc = new Document("$set", doc);
+        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
+                .updateOne(Filters.eq("_id", queryId), updateDoc, new UpdateOptions().upsert(true));
+        return updateResult.getModifiedCount();
+    }
+
+    @Override
+    public <R> long upsert(SFunction<T, R> field, R value, T entity) {
+        Objects.requireNonNull(field, "field must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
+        Document filter = buildFilterFromLambda(field, value);
+        fillDate(entity, true);
+        Document doc = mongoMappingConvertor.write(entity);
+        doc.remove("_id");
+        Document updateDoc = new Document("$set", doc);
+        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
+                .updateMany(filter, updateDoc, new UpdateOptions().upsert(true));
+        return updateResult.getModifiedCount();
+    }
+
+    @Override
+    public long upsert(LambdaQueryWrapper<T> wrapper, T entity) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
+        requireNonEmptyWrapper(wrapper, "upsert");
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
+        fillDate(entity, true);
+        Document doc = mongoMappingConvertor.write(entity);
+        doc.remove("_id");
+        Document updateDoc = new Document("$set", doc);
+        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
+                .updateMany(filter, updateDoc, new UpdateOptions().upsert(true));
         return updateResult.getModifiedCount();
     }
 
