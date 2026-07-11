@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Component
 public class ExecutorProxy {
-    private static final Map<String,CommandExecutor> executors = new HashMap<>();
+    private final Map<String, CommandExecutor> executors = new HashMap<>();
 
     public Object execute(String command, MongoCollection<Document> collection, Document queryContent, Method method, Object[] args) throws Exception {
         CommandExecutor executor = executors.get(command);

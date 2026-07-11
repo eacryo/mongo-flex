@@ -114,10 +114,10 @@
 
 ## 中（Medium）
 
-### M-1. ExecutorProxy 静态字段跨 Spring 上下文污染
+### M-1. ~~ExecutorProxy 静态字段跨 Spring 上下文污染~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/strategy/ExecutorProxy.java:13`
 **问题:** `static final Map` 在多 ApplicationContext（如测试）间共享，注册泄露。
-**修复:** 去掉 `static`。
+**解决方案:** 去掉 `static`。`ExecutorProxy` 本身是 Spring 单例 Bean，同一 ApplicationContext 内所有消费者拿到的都是同一个实例，实例字段天然提供正确的隔离边界。
 
 ### M-2. ~~SimpleMongoRepository 构造函数不校验 null~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:49-57`
@@ -234,6 +234,7 @@
 ### L-15. 各 Executor 注入 ExecutorProxy 仅用于注册
 **文件:** FindExecutor、FindOneExecutor、CountExecutor、DeleteOneExecutor
 **修复:** 改为 ExecutorProxy 通过 `List<CommandExecutor>` 自动发现并注册。
+**暂缓原因:** 当前 push 模式（Executor 自我注册）功能正确，M-1 已通过去掉 `static` 解决了跨 Context 污染问题，剩余价值仅为减少样板代码，是纯风格改进而非 bug。若要改为 pull 模式，需给 `CommandExecutor` 接口新增方法（如 `String getOperation()`）以识别每个 Executor 处理的操作类型，改动面扩大。建议在未来新增 Executor（insertOne、updateOne 等）时一次性重构，届时样板代码增多，收益更大。
 
 ### L-16. AutoConfiguration.imports 列入了非 AutoConfiguration 类
 **文件:** `src/main/resources/META-INF/spring/...AutoConfiguration.imports`
