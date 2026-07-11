@@ -6,22 +6,23 @@
 
 ## 待实现
 
-### PageDTO 分页
+### PageDTO 分页 ✅ 已完成
 
-当前 PageDTO 仅定义了字段（page、size、orderBy等），但分页查询逻辑尚未实现。后续需要在 `SimpleMongoRepository` 中添加分页查询方法，基于 MongoDB 的 `skip()` / `limit()` 或 `$facet` 实现。
+分页查询逻辑已实现。`MongoRepository` 新增 `findPage`（LambdaQueryWrapper 条件分页）和 `findPageByEntity`（实体条件分页），底层基于 MongoDB 的 `skip()` / `limit()` + `countDocuments()`。
 
 **涉及文件:**
 - `mongo-flex-core/.../entity/PageDTO.java`
+- `mongo-flex-core/.../v2/MongoRepository.java`
 - `mongo-flex-core/.../v2/SimpleMongoRepository.java`
 
-### 排序（sort / orderBy）
+### 排序（sort / orderBy）🔄 部分完成
 
-三种查询方式（MongoRepository / @Mql / LambdaQueryWrapper）都没有排序支持。LambdaQueryWrapper 只承载过滤条件，无 sort 字段；@Mql 的 find 命令不解析 sort/projection 参数；MongoRepository 的 `findList` 等无排序入参。
+LambdaQueryWrapper 已支持 `orderByAsc/Desc(SFunction)` 类型安全排序（含 @CollectionField 映射），Repository 的 `findPage` 已集成。`@Mql` 的 `FindExecutor` 仍不支持 sort/projection 参数。
 
 **涉及文件:**
-- `mongo-flex-core/.../lambda/LambdaQueryWrapper.java`
-- `mongo-flex-core/.../v2/SimpleMongoRepository.java`
-- `mongo-flex-core/.../strategy/FindExecutor.java`
+- `mongo-flex-core/.../lambda/LambdaQueryWrapper.java` ✅
+- `mongo-flex-core/.../v2/SimpleMongoRepository.java` ✅
+- `mongo-flex-core/.../strategy/FindExecutor.java` ❌ 待实现
 
 ### 投影 / 字段筛选（projection）
 

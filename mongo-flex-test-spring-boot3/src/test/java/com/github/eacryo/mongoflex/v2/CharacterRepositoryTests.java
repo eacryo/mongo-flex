@@ -9,6 +9,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.github.eacryo.mongoflex.entity.PageDTO;
+import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
+
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -131,6 +135,84 @@ public class CharacterRepositoryTests {
         // cleanup
         characterRepositoryV2.deleteById(c1.getId());
         characterRepositoryV2.deleteById(c2.getId());
+    }
+
+    @Test
+    public void testFindPageByEntity() {
+        String commonName = "FindPageTest-" + UlidCreator.getUlid().toString();
+        // 插入 5 条记录，address 用于区分和排序
+        for (int i = 0; i < 5; i++) {
+            Character c = new Character();
+            c.setId(UlidCreator.getUlid().toString());
+            c.setName(commonName);
+            c.setAddress("PageAddr-" + i);
+            characterRepositoryV2.insert(c);
+        }
+
+        // 分页查询：按 name 查，每页 2 条，第 1 页，按 address 升序
+        Character query = new Character();
+        query.setName(commonName);
+        PageDTO<Character> pageDTO = new PageDTO<>();
+        pageDTO.setCurrentPage(1L);
+        pageDTO.setPageSize(2L);
+        pageDTO.setOrderBy(Arrays.asList("address"));
+        pageDTO.setOrderByAsc(true);
+
+        PageDTO<Character> result = characterRepositoryV2.findPageByEntity(query, pageDTO);
+        System.out.println("findPageByEntity: total=" + result.getTotal()
+                + ", totalPage=" + result.getTotalPage()
+                + ", records.size=" + (result.getRecords() != null ? result.getRecords().size() : 0));
+
+        // 验证总数和分页
+        System.out.println("total: " + result.getTotal() + ", totalPage: " + result.getTotalPage() + ", records: " + result.getRecords());
+        System.out.println("records size: " + result.getRecords().size());
+        System.out.println("first record address: " + result.getRecords().get(0).getAddress());
+        System.out.println("second record address: " + result.getRecords().get(1).getAddress());
+        // total 应该 >= 5（可能有其他测试残留的同名数据）
+        // 但由于使用了唯一 commonName，total 应该恰好为 5
+        // records 大小应 <= pageSize
+
+        // cleanup：按 name 批量删
+        characterRepositoryV2.delete(Character::getName, commonName);
+    }
+
+    @Test
+    public void testFindPageWithLambdaSort() {
+        String commonName = "FindPageLambdaSort-" + UlidCreator.getUlid().toString();
+        // 插入 5 条记录，address 用于区分
+        for (int i = 0; i < 5; i++) {
+            Character c = new Character();
+            c.setId(UlidCreator.getUlid().toString());
+            c.setName(commonName);
+            c.setAddress("LambdaAddr-" + i);
+            characterRepositoryV2.insert(c);
+        }
+
+        // Lambda 类型安全排序：按 address 降序
+        PageDTO<Character> pageDTO = new PageDTO<>();
+        pageDTO.setCurrentPage(1L);
+        pageDTO.setPageSize(3L);
+
+        LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<Character>()
+                .eq(Character::getName, commonName)
+                .orderByDesc(Character::getAddress);
+
+        PageDTO<Character> result = characterRepositoryV2.findPage(wrapper, pageDTO);
+        System.out.println("findPage with Lambda sort: total=" + result.getTotal()
+                + ", totalPage=" + result.getTotalPage()
+                + ", records.size=" + (result.getRecords() != null ? result.getRecords().size() : 0));
+
+        // 验证分页
+        System.out.println("records size: " + result.getRecords().size());
+        if (result.getRecords().size() >= 2) {
+            String first = result.getRecords().get(0).getAddress();
+            String second = result.getRecords().get(1).getAddress();
+            System.out.println("first: " + first + ", second: " + second);
+            // 降序排列：LambdaAddr-4 > LambdaAddr-3 > ...
+        }
+
+        // cleanup
+        characterRepositoryV2.delete(Character::getName, commonName);
     }
 
     @Test

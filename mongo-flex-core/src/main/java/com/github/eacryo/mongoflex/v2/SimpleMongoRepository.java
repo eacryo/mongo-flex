@@ -6,12 +6,14 @@ import com.github.eacryo.mongoflex.annotation.UpdateDate;
 import com.github.eacryo.mongoflex.config.IdGenerator;
 import com.github.eacryo.mongoflex.constant.IdType;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import com.github.eacryo.mongoflex.entity.PageDTO;
 import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.lambda.MongoBsonRenderer;
 import com.github.eacryo.mongoflex.util.DateValueGenerator;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.f4b6a3.ulid.UlidCreator;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.result.DeleteResult;
@@ -148,6 +150,82 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
             result.add(mongoMappingConvertor.read(d, entityClass));
         }
         return result;
+    }
+
+    // ---- page ----
+
+    @Override
+    public PageDTO<T> findPage(LambdaQueryWrapper<T> wrapper, PageDTO<T> pageDTO) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
+        Objects.requireNonNull(pageDTO, "pageDTO must not be null");
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
+        return doFindPage(filter, wrapper, pageDTO);
+    }
+
+    @Override
+    public PageDTO<T> findPageByEntity(T entity, PageDTO<T> pageDTO) {
+        Objects.requireNonNull(entity, "entity must not be null");
+        Objects.requireNonNull(pageDTO, "pageDTO must not be null");
+        Document query = convertQueryId(mongoMappingConvertor.write(entity));
+        return doFindPage(query, null, pageDTO);
+    }
+
+    private PageDTO<T> doFindPage(Bson filter, LambdaQueryWrapper<T> wrapper, PageDTO<T> pageDTO) {
+        long currentPage = pageDTO.getCurrentPage() != null ? pageDTO.getCurrentPage() : 1L;
+        long pageSize = pageDTO.getPageSize() != null ? pageDTO.getPageSize() : 10L;
+
+        // 1. 查总数
+        long total = databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
+        pageDTO.setTotal(total);
+        pageDTO.setTotalPage(total == 0 ? 0 : (total + pageSize - 1) / pageSize);
+
+        // 2. skip + limit
+        int skip = (int) ((currentPage - 1) * pageSize);
+        int limit = (int) pageSize;
+        FindIterable<Document> iterable = databaseSupplier.get().getCollection(collectionName)
+                .find(filter).skip(skip).limit(limit);
+
+        // 3. 排序（优先 Lambda 排序，其次 pageDTO.orderBy 字符串排序）
+        Document sortDoc = buildSort(wrapper, pageDTO);
+        if (sortDoc != null) {
+            iterable.sort(sortDoc);
+        }
+
+        // 4. 读数据
+        List<T> records = new ArrayList<>();
+        for (Document doc : iterable) {
+            records.add(mongoMappingConvertor.read(doc, entityClass));
+        }
+        pageDTO.setRecords(records);
+        return pageDTO;
+    }
+
+    /**
+     * 构建排序 Document。优先使用 LambdaQueryWrapper 的类型安全排序
+     * （可正确解析 @CollectionField 映射），否则 fallback 到 PageDTO 的字符串排序。
+     */
+    private Document buildSort(LambdaQueryWrapper<T> wrapper, PageDTO<T> pageDTO) {
+        // 优先：Lambda 类型安全排序
+        if (wrapper != null && !wrapper.getOrderBys().isEmpty()) {
+            Document sort = new Document();
+            for (LambdaQueryWrapper.OrderBy ob : wrapper.getOrderBys()) {
+                Class<?> resolveClass = ob.getImplClass() != null ? ob.getImplClass() : entityClass;
+                String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, ob.getJavaFieldName());
+                sort.append(mongoField, ob.isAscending() ? 1 : -1);
+            }
+            return sort;
+        }
+        // Fallback：PageDTO 字符串排序
+        if (pageDTO.getOrderBy() != null && !pageDTO.getOrderBy().isEmpty()) {
+            Document sort = new Document();
+            for (String field : pageDTO.getOrderBy()) {
+                String mongoField = mongoMappingConvertor.resolveMongoFieldName(entityClass, field);
+                sort.append(mongoField, pageDTO.isOrderByAsc() ? 1 : -1);
+            }
+            return sort;
+        }
+        return null;
     }
 
     // ---- count ----

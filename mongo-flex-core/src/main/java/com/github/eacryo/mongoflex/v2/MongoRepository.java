@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.v2;
 
 
+import com.github.eacryo.mongoflex.entity.PageDTO;
 import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.util.SFunction;
 
@@ -59,6 +60,20 @@ public interface MongoRepository<T, ID> {
      * 查询全集合所有文档。
      */
     List<T> findAll();
+
+    /**
+     * 按 LambdaQueryWrapper 条件分页查询。
+     * 回填 pageDTO 的 total/totalPage/records 后返回同一对象。
+     * wrapper 不可为 null，空条件视为无条件分页。
+     */
+    PageDTO<T> findPage(LambdaQueryWrapper<T> wrapper, PageDTO<T> pageDTO);
+
+    /**
+     * 按实体中的非空字段作为条件分页查询。
+     * null 字段会被忽略，entity 和 pageDTO 不可为 null。
+     * 若所有字段均为 null 则视为无条件分页。
+     */
+    PageDTO<T> findPageByEntity(T entity, PageDTO<T> pageDTO);
 
     /**
      * 按 LambdaQueryWrapper 条件统计，wrapper 不可为 null。

@@ -224,4 +224,50 @@ public class LambdaQueryWrapper<T> {
         conditions.addAll(orWrapper.getConditions());
         return this;
     }
+
+    // ---- 排序 ----
+
+    /**
+     * 排序条目：包含 Java 字段名、字段声明类、升降序方向。
+     * 由 Lambda 方法引用自动提取，字段映射可正确解析 @CollectionField 注解。
+     */
+    public static final class OrderBy {
+        private final String javaFieldName;
+        private final Class<?> implClass;
+        private final boolean ascending;
+
+        OrderBy(String javaFieldName, Class<?> implClass, boolean ascending) {
+            this.javaFieldName = javaFieldName;
+            this.implClass = implClass;
+            this.ascending = ascending;
+        }
+
+        public String getJavaFieldName() { return javaFieldName; }
+        public Class<?> getImplClass() { return implClass; }
+        public boolean isAscending() { return ascending; }
+    }
+
+    private final List<OrderBy> orderBys = new ArrayList<>();
+
+    public LambdaQueryWrapper<T> orderByAsc(SFunction<T, ?> field) {
+        Objects.requireNonNull(field, "field must not be null");
+        orderBys.add(new OrderBy(
+                ReflectUtil.getFieldNameFromLambda(field),
+                ReflectUtil.getImplClassFromLambda(field),
+                true));
+        return this;
+    }
+
+    public LambdaQueryWrapper<T> orderByDesc(SFunction<T, ?> field) {
+        Objects.requireNonNull(field, "field must not be null");
+        orderBys.add(new OrderBy(
+                ReflectUtil.getFieldNameFromLambda(field),
+                ReflectUtil.getImplClassFromLambda(field),
+                false));
+        return this;
+    }
+
+    public List<OrderBy> getOrderBys() {
+        return orderBys;
+    }
 }
