@@ -53,6 +53,11 @@ public class Character {
 
     @CollectionId(IdType.ULID)
     private String id;
+    // Available ID strategies:
+    //   IdType.NONE  — MongoDB native ObjectId (default, stored as 24-char hex String)
+    //   IdType.ULID  — 26-char sortable unique ID, recommended for new projects
+    //   IdType.UUID  — standard UUID v4
+    //   IdType.INPUT — custom IdGenerator implementation
 
     private String name;
 

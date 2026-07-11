@@ -352,10 +352,24 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     private Object convertIdIfNecessary(ID id){
-        if (id instanceof String && ObjectId.isValid((String) id)){
+        if (shouldConvertToObjectId() && id instanceof String && ObjectId.isValid((String) id)){
             return new ObjectId((String) id);
         }
         return id;
+    }
+
+    /**
+     * 判断是否需要将 String ID 转为 ObjectId。
+     * 仅在 {@link IdType#NONE} 模式下才需要转换，因为此时 MongoDB 生成的 ObjectId
+     * 被映射为 hex String 存储在 Java 字段中，查询时必须转回 ObjectId。
+     */
+    private boolean shouldConvertToObjectId() {
+        Field idField = mongoMappingConvertor.getCollectionIdField(entityClass);
+        if (idField == null) {
+            return false;
+        }
+        CollectionId annotation = idField.getAnnotation(CollectionId.class);
+        return annotation.value() == IdType.NONE;
     }
 
     private Document convertQueryId(Document query){
@@ -377,7 +391,8 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         String javaFieldName = ReflectUtil.getFieldNameFromLambda(field);
         String mongoFieldName = mongoMappingConvertor.resolveMongoFieldName(entityClass, javaFieldName);
         Object queryValue = value;
-        if ("_id".equals(mongoFieldName) && value instanceof String && ObjectId.isValid((String) value)) {
+        if ("_id".equals(mongoFieldName) && shouldConvertToObjectId()
+                && value instanceof String && ObjectId.isValid((String) value)) {
             queryValue = new ObjectId((String) value);
         }
         return new Document(mongoFieldName, queryValue);

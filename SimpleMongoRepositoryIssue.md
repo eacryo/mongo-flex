@@ -48,28 +48,58 @@ if (field.isAnnotationPresent(CollectionId.class)) {
 
 ---
 
-## Bug 2（中等）：`ObjectId.isValid()` 启发式转换可能误判 String 类型的 `_id`
+## Bug 2（已修复 ✅）：`ObjectId.isValid()` 启发式转换可能误判 String 类型的 `_id`
 
 **文件:** `mongo-flex-core/src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java`
 
-- `convertIdIfNecessary`:355
-- `buildFilterFromLambda`:380
+- `convertIdIfNecessary`
+- `buildFilterFromLambda`
 
-**问题:** 两处方法均使用 `ObjectId.isValid()` 判断一个 String 是否应该被转换为 ObjectId：
+**问题:** 原逻辑使用 `ObjectId.isValid()` 猜测一个 String 是否应转为 ObjectId，纯粹基于字符串格式。虽然 ULID（26 字符）和 UUID（36 字符）天然不会误判，但如果用户使用 `IdType.INPUT` + 自定义 `IdGenerator` 生成 24 位 hex 字符串作为 ID，会被错误转换为 ObjectId，导致 MongoDB 中 String 和 ObjectId 类型不匹配，查询静默返回空。
 
 ```java
+// 原逻辑：凭字符串格式猜测
 if (id instanceof String && ObjectId.isValid((String) id)) {
     return new ObjectId((String) id);
 }
 ```
 
-如果用户有意使用 24 位 hex 字符串（如某些 hash 值、自定义 ID 格式）作为 String 类型的 `_id`，该方法会错误地将其转换为 `ObjectId`。MongoDB 中 `ObjectId("507f1f77bcf86cd799439011")` 与 `"507f1f77bcf86cd799439011"`（String）是两种不同类型，查询将静默返回空结果。
+**修复方案:** 利用框架已有的 `IdType` 元数据做精确判断——仅在 `IdType.NONE` 下才转换，因为此时 MongoDB 生成的是 ObjectId，Java 侧以 hex String 存储，查询时必须转回。
 
-**当前为何未暴露:** 常见 ID 格式不易与 ObjectId 的 24 位 hex 格式碰撞——ULID 为 26 字符，UUID 带连字符为 36 字符。但这属于巧合，不是设计保证。
+| IdType | 存储的实际类型 | 是否需要 String→ObjectId |
+|--------|-------------|------------------------|
+| `NONE` | ObjectId（MongoDB 生成） | ✅ 是 |
+| `ULID` | String | ❌ 否 |
+| `UUID` | String | ❌ 否 |
+| `INPUT` | 取决于生成器 | ❌ 否 |
 
-**影响方法:** `findById`、`deleteById`、`findOneByEntity`、`countByEntity`、`deleteByEntity`，以及所有 `SFunction` 版本的单字段查询（`findOne`、`count`、`update`、`delete`）。
+```java
+// 新增辅助方法
+private boolean shouldConvertToObjectId() {
+    Field idField = mongoMappingConvertor.getCollectionIdField(entityClass);
+    if (idField == null) return false;
+    return idField.getAnnotation(CollectionId.class).value() == IdType.NONE;
+}
 
-**修复:** 改为从 `ClassFieldMetaData` 中读取 ID 字段的实际 Java 类型来决定是否需要转换，而非仅凭字符串格式猜测。
+// 改后：仅 NONE 模式下才转换
+private Object convertIdIfNecessary(ID id) {
+    if (shouldConvertToObjectId()
+        && id instanceof String
+        && ObjectId.isValid((String) id)) {
+        return new ObjectId((String) id);
+    }
+    return id;
+}
+```
+
+**对比 Spring Data MongoDB:** Spring Data 以声明类型（`String` vs `ObjectId`）做判断；mongo-flex 不能照搬，因为 mongo-flex 的 `IdType.NONE` 模式下声明类型为 `String` 但实际存储为 `ObjectId`，必须结合 `IdType` 一起判断。这个方案比 Spring Data 的更贴合 mongo-flex 的模型。
+
+**测试验证:** `ObjectIdConversionTest` — 4 个测试覆盖 `IdType.NONE` 转换和 `IdType.ULID` 不转换两个方向。
+
+**测试文件:**
+- `mongo-flex-test-common/.../bean/ObjectIdEntity.java`
+- `mongo-flex-test-common/.../v2/ObjectIdEntityRepository.java`
+- `mongo-flex-test-spring-boot3/.../v2/ObjectIdConversionTest.java`
 
 ---
 

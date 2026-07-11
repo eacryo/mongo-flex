@@ -53,6 +53,11 @@ public class Character {
 
     @CollectionId(IdType.ULID)
     private String id;
+    // 可用 ID 策略：
+    //   IdType.NONE  — MongoDB 原生 ObjectId（默认，Java 侧存为 24 字符 hex String）
+    //   IdType.ULID  — 26 字符字典序可排序唯一 ID，推荐用于新项目
+    //   IdType.UUID  — 标准 UUID v4
+    //   IdType.INPUT — 自定义 IdGenerator 实现
 
     private String name;
 
