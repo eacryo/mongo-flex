@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-//解决启动时默认访问localhost的mongodb导致报错
+// 解决启动时默认访问 localhost 的 MongoDB 导致报错
 public class FrameworkExclusionFilter implements AutoConfigurationImportFilter {
 
     private static final Set<String> EXCLUDED_CONFIGURATIONS = new HashSet<>(Arrays.asList(

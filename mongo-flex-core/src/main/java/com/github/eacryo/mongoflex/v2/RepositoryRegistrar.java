@@ -45,9 +45,9 @@ public class RepositoryRegistrar implements ImportBeanDefinitionRegistrar {
             repositoryInterfaces = scanRepositoryInterfaces(basePackage);
         }
 
-        // 为每一个找到的接口创建并注册一个 FactoryBean
+        // 为每一个找到的接口创建并注册一个 RepositoryFactoryBean
         for (Class<?> repositoryInterface : repositoryInterfaces) {
-            // 创建一个 MyOrmFactoryBean 的 BeanDefinition
+            // 创建一个 RepositoryFactoryBean 的 BeanDefinition
             RootBeanDefinition beanDefinition = new RootBeanDefinition(RepositoryFactoryBean.class);
             Class<?> entityClass = null;
             Class<?> idClass = null;

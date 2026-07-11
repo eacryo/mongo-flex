@@ -23,11 +23,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
     private final QueryParser queryParser = new QueryParser();
     private final MongoMappingConvertor mongoMappingConvertor;
     private final SimpleMongoRepository<T, ID> baseRepository;
-    //只能通过下面的构造器来注入
     private final ExecutorProxy executorProxy;
-
-    // 这里的 collection 不再是固定的，因为查询语句可以指定不同的集合
-    // private final MongoCollection<Document> collection;
 
     public MyRepositoryProxyHandler(Class<?> repositoryInterface,
                                     Supplier<MongoDatabase> databaseSupplier,
@@ -50,17 +46,13 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             //TODO
             Parameter[] parameters = method.getParameters();
             shellCommand = replaceShellCommand(shellCommand, parameters, args);
-            //shellCommand = shellCommand.replace("#{name}", (String) args[0]);
-            // 1. 解析 MongoDB Shell 语句
-            // 这里的 args 数组将用于替换占位符，但你希望解析完整的shell语句，所以先不处理占位符
+            // 解析 MongoDB Shell 语句
             QueryParser.QueryCommand parsedCommand = queryParser.parse(shellCommand);
 
-            // 2. 获取对应的 MongoCollection
+            // TODO：下面这考虑挪到QueryParser里面
             MongoCollection<Document> collection = databaseSupplier.get().getCollection(parsedCommand.collectionName);
-            //TODO：下面这考虑挪到QueryParser里面
 
-            // 3. 根据解析出的命令执行相应的操作
-            //处理来自IBaseRepositoryV2中的方法
+            // 根据解析出的命令执行相应的操作
             return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.queryDoc, method, args);
         } else if (isMethodFromTargetInterface(method, targetInterface)) {
             log.info("Method {} inherit from parent interface", method.getName());
@@ -72,24 +64,12 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             }
             return method.invoke(baseRepository, args);
         } else {
-            //不是通过@Mql注解的方法，也不是继承自IBaseRepositoryV2的方法，抛出异常
+            // 不是 @Mql 方法，也不是继承自 MongoRepository 的方法
             throw new UnsupportedOperationException("Method " + method.getName() +
-                    " is neither annotated with @Mql nor inherited from IBaseRepositoryV2.");
+                    " is neither annotated with @Mql nor inherited from MongoRepository.");
 
         }
 
-    }
-
-    // 辅助方法：将Document映射回Java对象
-    private <T> T mapDocumentToEntity(Document doc, Class<T> clazz) {
-        // ... (保持不变，或使用更完善的映射逻辑)
-        try {
-            T instance = clazz.getDeclaredConstructor().newInstance();
-            instance = mongoMappingConvertor.read(doc, clazz);
-            return instance;
-        } catch (Exception e) {
-            throw new RuntimeException("Error mapping document to entity", e);
-        }
     }
 
     private String replaceShellCommand(String shellCommand, Parameter[] parameters, Object[] args) {

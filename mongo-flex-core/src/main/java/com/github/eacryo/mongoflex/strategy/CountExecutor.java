@@ -13,9 +13,8 @@ public class CountExecutor implements  CommandExecutor {
 
     @Override
     public Object execute(String command, MongoCollection<Document> collection,Document queryContent,Method method, Object[] args) throws Exception {
-        // 新增 count 逻辑
         Long count = collection.countDocuments(queryContent);
-        // 返回类型可以是 long 或 Long
+        // 支持 long / Long / int / Integer 四种返回类型
         if (method.getReturnType().equals(Long.class) || method.getReturnType().equals(long.class)) {
             return count;
         }

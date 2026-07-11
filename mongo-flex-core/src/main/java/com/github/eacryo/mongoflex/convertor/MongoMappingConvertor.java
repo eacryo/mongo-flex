@@ -28,9 +28,12 @@ public class MongoMappingConvertor {
 
 
     /**
-     * 将Java字段名解析为MongoDB中对应的字段名
-     * 例如将id -> _id, 或者使用 @CollectionField中注解指定的名称
-     * @return
+     * 将 Java 字段名解析为 MongoDB 中对应的字段名。
+     * 例如将 {@code id} 映射为 {@code _id}，或使用 {@code @CollectionField} 注解指定的名称。
+     *
+     * @param clazz         实体类
+     * @param javaFieldName Java 字段名
+     * @return MongoDB 中对应的字段名，若未找到映射则返回原始字段名
      */
     public String resolveMongoFieldName(Class<?> clazz, String javaFieldName){
         FieldMapping mapping = getMetaData(clazz).getFieldMappingByJavaName().get(javaFieldName);

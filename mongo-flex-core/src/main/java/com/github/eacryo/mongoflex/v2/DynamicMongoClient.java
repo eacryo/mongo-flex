@@ -33,11 +33,9 @@ public class DynamicMongoClient implements InitializingBean {
     @Autowired
     private MongoFlexProperties mongoFlexProperties;
 
-    //无参构造
     public DynamicMongoClient() {
     }
 
-    //final标记在方法如参上，明示这个参数不能被改变
     public DynamicMongoClient(final Map<String, MongoClient> clients) {
         this.clients = clients;
     }
@@ -97,7 +95,7 @@ public class DynamicMongoClient implements InitializingBean {
     }
 
     private void initWhenDisabled() {
-        //只注入一个MongoClient
+        // 只注入一个 MongoClient
         String tenantId = MongoFlexConstant.DEFAULT_TENANT_WHEN_DISABLE;
         String beanName = MONGO_CLIENT_PREFIX + tenantId;
         try {
@@ -106,7 +104,7 @@ public class DynamicMongoClient implements InitializingBean {
             // 注册Bean
             genericApplicationContext.registerBean(beanName, MongoClient.class,
                     () -> MongoClients.create(mongoClientSettings));
-            // 从 Spring 容器中获取对应的 MongoTemplate Bean
+            // 从 Spring 容器中获取对应的 MongoClient Bean
             MongoClient mongoClient = genericApplicationContext.getBean(beanName, MongoClient.class);
             clients.put(tenantId, mongoClient);
             log.info("Added MongoClient for tenant: {}", tenantId);
