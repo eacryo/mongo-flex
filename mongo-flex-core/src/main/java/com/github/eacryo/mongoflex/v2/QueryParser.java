@@ -1,5 +1,7 @@
 package com.github.eacryo.mongoflex.v2;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bson.Document;
@@ -14,32 +16,89 @@ public class QueryParser {
         if (matcher.find()) {
             String collectionName = matcher.group(1);
             String command = matcher.group(2); // "find" or "findOne"
-            String queryJson = matcher.group(3); // "{}" or "{ 'name': 'value' }"
+            String argsString = matcher.group(3); // "{}" or "{ 'name': 'value' }" or "{a:1},{b:2}"
 
-            // 处理空查询文档，例如 "db.getCollection('x').find()"
-            if (queryJson == null || queryJson.trim().isEmpty()) {
-                queryJson = "{}";
+            List<Document> arguments = new ArrayList<>();
+            if (argsString == null || argsString.trim().isEmpty()) {
+                arguments.add(new Document());
+            } else {
+                List<String> segments = splitTopLevelArguments(argsString);
+                for (String segment : segments) {
+                    String trimmed = segment.trim();
+                    if (trimmed.isEmpty()) {
+                        arguments.add(new Document());
+                    } else {
+                        arguments.add(Document.parse(trimmed));
+                    }
+                }
             }
 
-            // 这里只是简单的字符串处理，如果查询参数是 ?0 等占位符，需要在这里处理
-            Document queryDoc = Document.parse(queryJson);
-
-            return new QueryCommand(collectionName, command, queryDoc);
+            return new QueryCommand(collectionName, command, arguments);
         }
         throw new IllegalArgumentException("Invalid MongoDB shell command format: " + shellCommand +
                 ", expected format: db.getCollection('collectionName').find({'filed':'value'})");
+    }
+
+    /**
+     * 按顶层逗号分割参数字符串，正确处理嵌套的 {}、[] 和引号内的逗号。
+     * 例如 "{a:1}, {$set: {b: 2}}, {upsert: true}" 分割为三个部分。
+     */
+    static List<String> splitTopLevelArguments(String argsString) {
+        List<String> result = new ArrayList<>();
+        if (argsString == null || argsString.isEmpty()) {
+            return result;
+        }
+
+        int braceDepth = 0;
+        int bracketDepth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        int lastSplit = 0;
+
+        for (int i = 0; i < argsString.length(); i++) {
+            char c = argsString.charAt(i);
+
+            // 反斜杠转义：在引号内跳过下一个字符
+            if (c == '\\' && (inSingleQuote || inDoubleQuote)) {
+                i++;
+                continue;
+            }
+
+            if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+            } else if (c == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+            } else if (!inSingleQuote && !inDoubleQuote) {
+                if (c == '{') {
+                    braceDepth++;
+                } else if (c == '}') {
+                    braceDepth--;
+                } else if (c == '[') {
+                    bracketDepth++;
+                } else if (c == ']') {
+                    bracketDepth--;
+                } else if (c == ',' && braceDepth == 0 && bracketDepth == 0) {
+                    result.add(argsString.substring(lastSplit, i));
+                    lastSplit = i + 1;
+                }
+            }
+        }
+
+        // 添加最后一段
+        result.add(argsString.substring(lastSplit));
+        return result;
     }
 
     // 内部类用于封装解析结果
     public static class QueryCommand {
         public final String collectionName;
         public final String operation;
-        public final Document queryDoc;
+        public final List<Document> arguments;
 
-        public QueryCommand(String collectionName, String operation, Document queryDoc) {
+        public QueryCommand(String collectionName, String operation, List<Document> arguments) {
             this.collectionName = collectionName;
             this.operation = operation;
-            this.queryDoc = queryDoc;
+            this.arguments = arguments;
         }
     }
 }

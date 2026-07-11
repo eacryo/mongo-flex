@@ -7,6 +7,7 @@ import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class DeleteOneExecutor implements CommandExecutor{
 
@@ -15,7 +16,8 @@ public class DeleteOneExecutor implements CommandExecutor{
 
     @Override
     public Object execute(String command, MongoCollection<Document> collection,
-                          Document queryContent, Method method, Object[] args) throws Exception {
+                          List<Document> arguments, Method method, Object[] args) throws Exception {
+        Document queryContent = arguments.get(0);
         DeleteResult result = collection.deleteOne(queryContent);
         Class<?> returnType = method.getReturnType();
         if (returnType == boolean.class || returnType == Boolean.class) {

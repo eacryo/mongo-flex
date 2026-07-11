@@ -5,6 +5,7 @@ import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class CountExecutor implements  CommandExecutor {
 
@@ -12,7 +13,8 @@ public class CountExecutor implements  CommandExecutor {
     private ExecutorProxy executorProxy;
 
     @Override
-    public Object execute(String command, MongoCollection<Document> collection,Document queryContent,Method method, Object[] args) throws Exception {
+    public Object execute(String command, MongoCollection<Document> collection, List<Document> arguments, Method method, Object[] args) throws Exception {
+        Document queryContent = arguments.get(0);
         Long count = collection.countDocuments(queryContent);
         // 支持 long / Long / int / Integer 四种返回类型
         if (method.getReturnType().equals(Long.class) || method.getReturnType().equals(long.class)) {

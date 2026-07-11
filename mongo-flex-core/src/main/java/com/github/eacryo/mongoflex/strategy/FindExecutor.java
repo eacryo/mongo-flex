@@ -19,7 +19,8 @@ public class FindExecutor implements CommandExecutor {
     private MongoMappingConvertor mongoMappingConvertor;
 
     @Override
-    public Object execute(String command, MongoCollection<Document> collection, Document queryContent, Method method, Object[] args) throws Exception {
+    public Object execute(String command, MongoCollection<Document> collection, List<Document> arguments, Method method, Object[] args) throws Exception {
+        Document queryContent = arguments.get(0);
         Type genericReturnType = method.getGenericReturnType();
         Class<?> listElementClass;
         if (genericReturnType instanceof ParameterizedType) {

@@ -7,6 +7,7 @@ import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class FindOneExecutor implements CommandExecutor{
 
@@ -17,7 +18,8 @@ public class FindOneExecutor implements CommandExecutor{
 
     @Override
     public Object execute(String command, MongoCollection<Document> collection,
-                          Document queryContent, Method method, Object[] args) throws Exception {
+                          List<Document> arguments, Method method, Object[] args) throws Exception {
+                Document queryContent = arguments.get(0);
                 Document doc = collection.find(queryContent).first();
                 if (doc != null) {
                     if (method.getReturnType() == Object.class) {

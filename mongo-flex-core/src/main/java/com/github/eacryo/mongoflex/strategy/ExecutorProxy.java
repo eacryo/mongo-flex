@@ -4,17 +4,18 @@ import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ExecutorProxy {
     private final Map<String, CommandExecutor> executors = new HashMap<>();
 
-    public Object execute(String command, MongoCollection<Document> collection, Document queryContent, Method method, Object[] args) throws Exception {
+    public Object execute(String command, MongoCollection<Document> collection, List<Document> arguments, Method method, Object[] args) throws Exception {
         CommandExecutor executor = executors.get(command);
         if (executor == null) {
             throw new UnsupportedOperationException("Unsupported command: " + command);
         } else {
-            return executor.execute(command, collection, queryContent, method, args);
+            return executor.execute(command, collection, arguments, method, args);
         }
     }
 
