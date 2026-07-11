@@ -297,19 +297,30 @@ public class LambdaQueryWrapper<T> {
     }
 
     private final List<ProjectionField> projections = new ArrayList<>();
+    private final List<ProjectionField> excludes = new ArrayList<>();
 
     /**
      * 指定查询返回的字段（MongoDB projection include 模式）。
-     * MongoDB 默认会同时返回 {@code _id}，如需要排除可后续扩展。
+     * 只有列出的字段会被返回，MongoDB 默认仍会返回 {@code _id}。
+     * 如需同时排除 {@code _id}，可链式调用 {@link #exclude(SFunction...)}：
      *
      * <pre>{@code
      * wrapper.eq(User::getStatus, "active")
-     *        .select(User::getName, User::getAge);
+     *        .include(User::getName, User::getAge);
      * // → find({status: "active"}, {name: 1, age: 1})
+     *
+     * wrapper.eq(User::getStatus, "active")
+     *        .include(User::getName, User::getAge)
+     *        .exclude(User::getId);
+     * // → find({status: "active"}, {name: 1, age: 1, _id: 0})
      * }</pre>
+     *
+     * <p>注意：MongoDB 不允许同时使用 include 和 exclude（{@code _id} 除外）。
+     * 如果先调用了 {@code include()}，再调用 {@code exclude()} 只能排除
+     * 映射到 {@code _id} 的字段，否则会抛出 {@link IllegalArgumentException}。</p>
      */
     @SafeVarargs
-    public final LambdaQueryWrapper<T> select(SFunction<T, ?>... fields) {
+    public final LambdaQueryWrapper<T> include(SFunction<T, ?>... fields) {
         Objects.requireNonNull(fields, "fields must not be null");
         for (SFunction<T, ?> field : fields) {
             Objects.requireNonNull(field, "field must not be null");
@@ -324,11 +335,41 @@ public class LambdaQueryWrapper<T> {
         return projections;
     }
 
+    /**
+     * 指定查询排除的字段（MongoDB projection exclude 模式）。
+     * 除列出的字段外，其他字段均返回（包括 {@code _id}）。
+     *
+     * <pre>{@code
+     * wrapper.eq(User::getStatus, "active")
+     *        .exclude(User::getPassword, User::getLargeData);
+     * // → find({status: "active"}, {password: 0, largeData: 0})
+     * }</pre>
+     *
+     * <p>注意：MongoDB 不允许同时使用 include 和 exclude（{@code _id} 除外）。
+     * 如果先调用了 {@link #include(SFunction...)}，再调用此方法只能排除
+     * 映射到 {@code _id} 的字段，否则会抛出 {@link IllegalArgumentException}。</p>
+     */
+    @SafeVarargs
+    public final LambdaQueryWrapper<T> exclude(SFunction<T, ?>... fields) {
+        Objects.requireNonNull(fields, "fields must not be null");
+        for (SFunction<T, ?> field : fields) {
+            Objects.requireNonNull(field, "field must not be null");
+            excludes.add(new ProjectionField(
+                    ReflectUtil.getFieldNameFromLambda(field),
+                    ReflectUtil.getImplClassFromLambda(field)));
+        }
+        return this;
+    }
+
+    public List<ProjectionField> getExcludes() {
+        return excludes;
+    }
+
     // ---- 静态工厂 ----
 
     /**
      * 从实体对象自动构建查询条件。遍历 entity 的所有非 null 字段，每个非 null 字段
-     * 自动生成 {@code eq()} 条件。与 {@link #select(Object...)} 等方法组合使用：
+     * 自动生成 {@code eq()} 条件。与 {@link #include(Object...)} 等方法组合使用：
      *
      * <pre>{@code
      * User probe = new User();
@@ -336,7 +377,7 @@ public class LambdaQueryWrapper<T> {
      * probe.setStatus("active");
      * List<User> result = repo.findList(
      *     LambdaQueryWrapper.fromEntity(probe)
-     *         .select(User::getName, User::getAge)
+     *         .include(User::getName, User::getAge)
      *         .orderByAsc(User::getBirthday)
      * );
      * }</pre>

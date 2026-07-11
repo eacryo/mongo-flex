@@ -536,18 +536,58 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     /**
      * 从 LambdaQueryWrapper 中提取投影字段并应用到 FindIterable。
-     * 使用 MongoDB Driver 原生 {@link Projections#include(String...)} 构建投影。
+     * 支持 include（{@link Projections#include(String...)}）、exclude
+     * （{@link Projections#exclude(String...)}）以及 include + {@code _id} 排除的混合模式。
+     *
+     * <p>MongoDB 不允许同时使用 include 和 exclude（{@code _id} 除外）。
+     * 若同时指定了 includes 和 excludes 且存在非 {@code _id} 的 exclude 字段，将抛出
+     * {@link IllegalArgumentException}。</p>
      */
     private void applyProjection(LambdaQueryWrapper<T> wrapper, FindIterable<Document> iter) {
-        if (wrapper != null && !wrapper.getProjections().isEmpty()) {
-            List<String> mongoFields = new ArrayList<>();
-            for (LambdaQueryWrapper.ProjectionField pf : wrapper.getProjections()) {
-                Class<?> resolveClass = pf.getImplClass() != null ? pf.getImplClass() : entityClass;
-                String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, pf.getJavaFieldName());
-                mongoFields.add(mongoField);
-            }
-            iter.projection(Projections.include(mongoFields));
+        if (wrapper == null) {
+            return;
         }
+        List<LambdaQueryWrapper.ProjectionField> includeFields = wrapper.getProjections();
+        List<LambdaQueryWrapper.ProjectionField> excludeFields = wrapper.getExcludes();
+
+        if (includeFields.isEmpty() && excludeFields.isEmpty()) {
+            return;
+        }
+
+        // 将 Java 字段名解析为 MongoDB 字段名
+        List<String> includeMongoFields = resolveProjectionFields(includeFields);
+        List<String> excludeMongoFields = resolveProjectionFields(excludeFields);
+
+        if (!includeMongoFields.isEmpty() && excludeMongoFields.isEmpty()) {
+            // 纯 include 模式
+            iter.projection(Projections.include(includeMongoFields));
+        } else if (includeMongoFields.isEmpty() && !excludeMongoFields.isEmpty()) {
+            // 纯 exclude 模式
+            iter.projection(Projections.exclude(excludeMongoFields));
+        } else {
+            // 混合模式：只允许 exclude _id
+            for (String f : excludeMongoFields) {
+                if (!"_id".equals(f)) {
+                    throw new IllegalArgumentException(
+                            "MongoDB does not allow mixing include and exclude projections. "
+                                    + "Found non-_id exclude field: '" + f + "'. "
+                                    + "Use either include() or exclude(), or exclude only the _id field with include().");
+                }
+            }
+            iter.projection(Projections.fields(
+                    Projections.include(includeMongoFields),
+                    Projections.excludeId()));
+        }
+    }
+
+    private List<String> resolveProjectionFields(List<LambdaQueryWrapper.ProjectionField> fields) {
+        List<String> mongoFields = new ArrayList<>();
+        for (LambdaQueryWrapper.ProjectionField pf : fields) {
+            Class<?> resolveClass = pf.getImplClass() != null ? pf.getImplClass() : entityClass;
+            String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, pf.getJavaFieldName());
+            mongoFields.add(mongoField);
+        }
+        return mongoFields;
     }
 
     private <R> Document buildFilterFromLambda(SFunction<T, R> field, R value) {
