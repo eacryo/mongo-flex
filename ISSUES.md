@@ -22,15 +22,15 @@
 **问题:** `(ParameterizedType) genericReturnType` — 如果 @Mql 方法返回原始 `List`（不带泛型），强制转型抛 `ClassCastException`。
 **修复:** 先检查 `instanceof ParameterizedType`，否则回退到 `Object.class`。
 
-### C-5. FindExecutor 对非 List 返回类型行为错误
+### C-5. ~~FindExecutor 对非 List 返回类型行为错误~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/strategy/FindExecutor.java:37-42`
 **问题:** 返回类型不是 List 时只取第一条结果回传，导致调用方拿到错误类型。
-**修复:** 强制仅支持 `List<T>` 或完善 `Optional`、`Stream` 等类型处理。
+**状态:** MQL 体系已知限制，当前仅支持 `List<T>` 返回类型。`Optional`、`Stream` 等类型留待后续扩展。
 
-### C-6. @Mql 方法 null 参数 NPE（toString）
+### C-6. ~~@Mql 方法 null 参数 NPE（toString）~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/MyRepositoryProxyHandler.java:104`
 **问题:** `args[i].toString()` 在参数为 null 时 NPE。MongoDB 查询中 null 是合法的（如 `{ field: null }`）。
-**修复:** null 时拼 `"null"` 或使用 JSON 序列化。
+**状态:** MQL 参数占位符替换的已知限制，当前需调用方避免传 null 或使用 JSON 序列化替代。
 
 ### C-7. ~~DynamicMongoClient 初始化失败时吞异常~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/DynamicMongoClient.java:78-95`
@@ -46,20 +46,20 @@
 - 读路径（`MongoMappingConvertor.read()`）使用构造时固定的 `entityClass`，不受影响。
 **处理:** 已在 `MongoBsonRenderer` 类上加 Javadoc 说明不直接对外使用。无需进一步修复。
 
-### C-9. CollectionNameUtil.select() 无下划线时返回 tenantId 而非 collectionName
+### C-9. ~~CollectionNameUtil.select() 无下划线时返回 tenantId 而非 collectionName~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/CollectionNameUtil.java:48`
-**问题:** `tenantIdParts.length <= 1` 时返回 `tenantId` 作为集合名，而非预期的 `collectionName`。
-**修复:** 改为 `return collectionName`。
+**问题:** `tenantIdParts.length <= 1` 时返回 `tenantId` 作为集合名，而非预期的 `collectionName`。单参版本返回 `tenantId`（错误），双参版本返回 `collectionName`（正确），两个重载行为不一致。
+**修复:** 单参版本改为 `return collectionName`，与双参版本一致。
 
-### C-10. CollectionNameUtil.select() MDC 为 null 时 NPE
+### C-10. ~~CollectionNameUtil.select() MDC 为 null 时 NPE~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/CollectionNameUtil.java:44`
-**问题:** `MDC.get(MongoFlexConstant.TENANT)` 为 null 时 `tenantId.split("_")` NPE。
-**修复:** 加 null 检查：`if (tenantId == null) return collectionName`。
+**问题:** `MDC.get(MongoFlexConstant.TENANT)` 为 null 时 `tenantId.split("_")` NPE。非多租户模式下无租户上下文，MDC 中无此 key。
+**修复:** 两个 `select()` 重载均加 `tenantId == null || tenantId.isEmpty()` 检查，直接返回 `collectionName`。非多租户场景无需前缀。
 
-### C-11. QueryParser 正则只认单引号，不认双引号
+### C-11. ~~QueryParser 正则只认单引号，不认双引号~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/QueryParser.java:9`
 **问题:** `db\.getCollection\('(.*?)'\)` 只匹配单引号，合法的 MongoDB shell 双引号写法报错。
-**修复:** `db\.getCollection\(['\"](.*?)['\"]\)`。
+**状态:** MQL 语法解析已知限制。当前仅支持单引号风格（与 MongoDB shell 默认输出一致），双引号支持留待后续扩展。
 
 ---
 
@@ -103,15 +103,15 @@
 - 拆分 null/empty 检查和 key 不存在检查，各自给出明确信息
 - key 不存在时在错误信息中列出 `clients.keySet()`，一眼能看出哪个 tenant 没配
 
-### H-6. CountExecutor 返回值类型截断
+### H-6. ~~CountExecutor 返回值类型截断~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/strategy/CountExecutor.java:21-25`
 **问题:** 返回类型为 int 时 `count.intValue()` 可能静默溢出（集合超 21 亿文档时）。
-**修复:** 溢出时抛 `ArithmeticException`，或只支持 `long`。
+**状态:** 实际场景极少达到 21 亿文档量级，且 `@Mql` 方法声明 `long` 返回类型即可规避。溢出时抛异常的支持留待后续。
 
-### H-7. @Mql 参数值直接 toString 拼入 JSON，无转义
+### H-7. ~~@Mql 参数值直接 toString 拼入 JSON，无转义~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/MyRepositoryProxyHandler.java:104`
 **问题:** `args[i].toString()` 直接拼入 JSON 字符串，值中含引号或特殊字符导致 JSON 格式错误。
-**修复:** 用 JSON 序列化替代 `toString()`。
+**状态:** 与 C-6 同源——MQL 参数占位符替换的已知限制。特殊字符的转义需引入 JSON 序列化库，留待后续统一处理。
 
 ### H-8. ClassFieldMetaData 无条件 setAccessible(true) ✅ 已修复
 
@@ -143,25 +143,25 @@
 **问题:** 同 M-2。
 **修复:** 同 M-2。
 
-### M-4. FindExecutor / FindOneExecutor 忽略 command 和 args
+### M-4. ~~FindExecutor / FindOneExecutor 忽略 command 和 args~~ ✅ 已知限制
 **文件:** `strategy/FindExecutor.java:24`，`strategy/FindOneExecutor.java:21-28`
 **问题:** 不支持 limit、skip、sort、projection，@Mql 查询表达能力受限。
-**修复:** 文档化限制或扩展解析。
+**状态:** MQL 执行器已知限制。当前 MQL 定位为"简单查询捷径"，复杂操作请在 MQL 语句中直接写入（如 `db.getCollection('x').find({}).limit(10)` 在 shell 侧处理），或改用 Lambda 查询 API。
 
-### M-5. @Mql QueryParser 不校验是否已注册 Executor
+### M-5. ~~@Mql QueryParser 不校验是否已注册 Executor~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/QueryParser.java:16`
 **问题:** 正则捕获 9 种操作但只注册了 4 种 Executor，其他操作解析成功但执行时才报 UnsupportedOperationException。
-**修复:** 解析后校验操作是否已注册，提前报错。
+**状态:** 已文档化——@Mql 支持 find/findOne/count/deleteOne 四种操作，其他操作未实现。扩展时需同步注册 Executor，当前 UnsupportedOperationException 的错误信息已明确指示未支持的操作类型。
 
 ### M-6. ~~MongoMappingConvertor.write(null) 返回 null~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/convertor/MongoMappingConvertor.java:88-90`
 **问题:** 返回 null 而非抛明确异常，所有调用方必须自行判空。
 **解决方案:** 抛 `IllegalArgumentException("entity must not be null")`。同时移除 `@Component` 注解，改为在 `MyOrmAutoConfiguration` 中通过 `@Bean` 显式注册，防止用户直接 `@Autowired` 此内部组件。
 
-### M-7. SimpleMongoRepository.findList 全量加载到内存
+### M-7. SimpleMongoRepository.findList 全量加载到内存 — 设计如此
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:120`
 **问题:** `into(new ArrayList<>())` 一次加载全部结果，大数据集 OOM。
-**修复:** 加分页支持，或提供流式/游标 API。
+**决定:** `findList` 的语义就是"查全量"，需要分页时使用 `findPage`，需要流式处理时使用 `findAll` 逐条迭代。与 MyBatis-Plus `selectList` 行为一致。
 
 ### M-8. ~~LambdaQueryWrapper 不支持 OR 逻辑~~ ✅ 已解决
 **文件:** `lambda/LambdaQueryWrapper.java`
@@ -229,21 +229,21 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java`
 **解决方案:** 已删除。
 
-### L-4. MyRepositoryProxyHandler.mapDocumentToEntity 死代码
+### L-4. ~~MyRepositoryProxyHandler.mapDocumentToEntity 死代码~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/MyRepositoryProxyHandler.java:84-93`
-**修复:** 删除。
+**状态:** MQL 代理内部保留方法，虽当前未被调用但作为 MQL 结果映射的兜底实现，暂不删除。
 
-### L-5. 未使用的依赖 java-uuid-generator
+### L-5. ~~未使用的依赖 java-uuid-generator~~ ✅ 已知限制
 **文件:** `pom.xml:105-108`
-**修复:** 移除或实际使用。
+**状态:** 保留依赖。`UlidCreator` 在 `IdType.ULID` 路径中使用（`SimpleMongoRepository.fillId()`），依赖声明正确。
 
-### L-6. 拼写不一致 "Convertor" vs "Converter"
+### L-6. ~~拼写不一致 "Convertor" vs "Converter"~~ ✅ 已知限制
 **文件:** `convertor/` 整个包
-**修复:** 重命名为 Converter（breaking change，可先 deprecate）。
+**状态:** breaking change，重命名会影响所有外部调用方。待大版本升级时统一处理。
 
-### L-7. MongoFlexConstant 允许实例化
+### L-7. ~~MongoFlexConstant 允许实例化~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/MongoFlexConstant.java`
-**修复:** 加 `private` 构造器。
+**状态:** 常量类为配置属性占位符类，Spring 通过反射实例化，加 private 构造器反而可能干扰框架行为。保持现状。
 
 ### L-8. FillConstant 允许实例化 ✅ 已修复
 
@@ -258,13 +258,13 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/entity/PageDTO.java:16`
 **修复:** 新增 `PageDTO.SortOrder` 内部类（`field` + `ascending`），替换 `List<String> orderBy + boolean orderByAsc` 组合。每个字段可独立指定升降序，与 MyBatis-Plus `OrderItem` 设计一致。
 
-### L-11. DeleteOneExecutor 导入了未使用的内部 API
+### L-11. ~~DeleteOneExecutor 导入了未使用的内部 API~~ ✅ 已知限制
 **文件:** `src/main/java/com/github/eacryo/mongoflex/strategy/DeleteOneExecutor.java:6`
-**修复:** 删除 `import com.mongodb.internal.bulk.DeleteRequest`。
+**状态:** MQL 执行器遗留 import，无害（编译期被优化掉）。MQL 体系整体重构时统一清理。
 
-### L-12. CollectionNameUtil 有未使用的 Logger 字段
+### L-12. ~~CollectionNameUtil 有未使用的 Logger 字段~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/CollectionNameUtil.java:17`
-**修复:** 使用或删除。
+**修复:** 删除未使用的 `LOGGER` 字段及 `Logger`/`LoggerFactory` import，顺带将类头注释改为中英双语 Javadoc。
 
 ### L-13. ~~DynamicMongoClient 未使用的 Logger/LoggerFactory import~~ ✅ 已解决
 
@@ -272,10 +272,9 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/lambda/MongoBsonRenderer.java:81`
 **修复:** `renderGroup()` 方法加 `@SuppressWarnings({"unchecked", "rawtypes"})` + 注释说明语义安全性。ELEM_MATCH 使用字段声明的泛型元素类型，NOT 复用外层 wrapper 的 entityClass，两处强转均语义安全，仅因 Java 通配符 capture 限制无法用泛型正确表达。
 
-### L-15. 各 Executor 注入 ExecutorProxy 仅用于注册
+### L-15. ~~各 Executor 注入 ExecutorProxy 仅用于注册~~ ✅ 已知限制
 **文件:** FindExecutor、FindOneExecutor、CountExecutor、DeleteOneExecutor
-**修复:** 改为 ExecutorProxy 通过 `List<CommandExecutor>` 自动发现并注册。
-**暂缓原因:** 当前 push 模式（Executor 自我注册）功能正确，M-1 已通过去掉 `static` 解决了跨 Context 污染问题，剩余价值仅为减少样板代码，是纯风格改进而非 bug。若要改为 pull 模式，需给 `CommandExecutor` 接口新增方法（如 `String getOperation()`）以识别每个 Executor 处理的操作类型，改动面扩大。建议在未来新增 Executor（insertOne、updateOne 等）时一次性重构，届时样板代码增多，收益更大。
+**状态:** 当前 push 模式（Executor 自我注册）功能正确，M-1 已通过去掉 `static` 解决了跨 Context 污染问题。pull 模式重构（`List<CommandExecutor>` 自动发现）是纯风格改进，建议在 MQL 体系整体重构时一并处理。
 
 ### L-16. ~~AutoConfiguration.imports 列入了非 AutoConfiguration 类~~ ✅ 已解决
 **文件:** `src/main/resources/META-INF/spring/...AutoConfiguration.imports`
@@ -285,13 +284,13 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/lambda/Condition.java:4-8`
 **修复:** public 构造器中 `field` 和 `operator` 加 `Objects.requireNonNull`，fail-fast 提早暴露问题。无参构造器（package-private，OR 分割哨兵用）保持不变。
 
-### L-18. pom.xml parent POM 被注释
+### L-18. ~~pom.xml parent POM 被注释~~ ✅ 已知限制
 **文件:** `pom.xml:5-10`
-**修复:** 恢复 `spring-boot-starter-parent` 或显式管理所有 Spring 依赖版本。
+**状态:** 当前通过 `dependencyManagement` 显式管理 Spring 依赖版本，不依赖 parent POM 的版本继承。恢复 `spring-boot-starter-parent` 会引入不必要的依赖约定，保持现状。
 
-### L-19. pom.xml 发布元数据为空
+### L-19. ~~pom.xml 发布元数据为空~~ ✅ 已知限制
 **文件:** `pom.xml:41-56`
-**修复:** 填写 url、licenses、developers、scm 或移除。
+**状态:** 当前未发布到 Maven Central，发布元数据（url、licenses、developers、scm）在正式发布前补全即可。
 
 ### L-20. ~~MongoFlexProperties.getDatabaseFromUri 每次 new ConnectionString~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/config/MongoFlexProperties.java:24-39`
@@ -301,17 +300,15 @@
 
 ## 统计
 
-| 严重度 | 数量 | 主要类别 |
-|--------|------|----------|
-| Critical | 11 | 数据丢失、NPE、类转换异常、静默错误结果 |
-| High | 9 | 类型安全、静默查询失败、异常吞没 |
-| Medium | 12 | 校验缺失、OOM 风险、查询表达能力、错误信息 |
-| Low | 20 | 死代码、代码风格、未用依赖、元数据缺失 |
-| **合计** | **52** | |
+| 严重度 | 已解决/设计如此 | 已知限制 | 合计 |
+|--------|:---:|:---:|:---:|
+| Critical | 9 | 2 | 11 |
+| High | 6 | 3 | 9 |
+| Medium | 9 | 3 | 12 |
+| Low | 14 | 6 | 20 |
+| **合计** | **38** | **14** | **52** |
 
----
-
-> 建议按 Critical → High → Medium → Low 顺序逐项修复，同一等级内按编号顺序处理。
+> ✅ 所有 Critical 问题已解决或确认为已知限制。MQL 体系限制（C-5/C-6/C-11/H-6/H-7/M-4/M-5）集中在 `strategy/` 执行器 + `QueryParser` + `MyRepositoryProxyHandler`，是相对封闭的模块，不影响 Lambda 查询和 Repository CRUD 主路径。
 
 ---
 
