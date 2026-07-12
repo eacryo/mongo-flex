@@ -48,8 +48,13 @@ public class DynamicMongoClient implements InitializingBean {
     }
 
     public MongoClient select(String tenant) {
-        if (!StringUtils.hasText(tenant) || !clients.containsKey(tenant)) {
-            throw new NullPointerException("cannot found MongoClient for tenant: " + tenant);
+        if (!StringUtils.hasText(tenant)) {
+            throw new IllegalArgumentException("tenant must not be null or empty / tenant 不能为 null 或空字符串");
+        }
+        if (!clients.containsKey(tenant)) {
+            throw new IllegalArgumentException(
+                    "Cannot find MongoClient for tenant: " + tenant
+                    + ". Available tenants: " + clients.keySet() + " / 未找到 tenant 对应的 MongoClient，可用 tenant: " + clients.keySet());
         }
         if (log.isDebugEnabled()) {
             log.debug("using MongoClient for tenant {}", tenant);

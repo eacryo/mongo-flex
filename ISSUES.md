@@ -94,10 +94,14 @@
 **问题:** `convertIdIfNecessary((ID) id)` 将 Object 强转为 ID，堆污染风险。
 **状态:** 已在本文件附录 B 中详细分析。
 
-### H-5. DynamicMongoClient select() 返回错误客户端
+### H-5. DynamicMongoClient select() 返回错误客户端 ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/DynamicMongoClient.java:49-55`
-**问题:** 非多租户模式下选 `DEFAULT_TENANT_WHEN_DISABLE`，如果未初始化则 NPE。
-**修复:** @PostConstruct 验证 clients map 非空。
+**问题:** `NullPointerException` 用作参数校验异常不恰当，且错误信息只报 tenant 名却不列出可用 tenant 列表，排查困难。
+**修复:**
+- `select(String)` 将 `NullPointerException` 改为 `IllegalArgumentException`
+- 拆分 null/empty 检查和 key 不存在检查，各自给出明确信息
+- key 不存在时在错误信息中列出 `clients.keySet()`，一眼能看出哪个 tenant 没配
 
 ### H-6. CountExecutor 返回值类型截断
 **文件:** `src/main/java/com/github/eacryo/mongoflex/strategy/CountExecutor.java:21-25`
