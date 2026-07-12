@@ -159,6 +159,59 @@ Lambda query wrappers use method references to extract field names. The resoluti
 
 > **Known Limitation:** A method like `isActive()` is inherently ambiguous — it could be the getter for `boolean active` or `boolean isActive`. The resolver always assumes the former (JavaBeans convention). If your field is literally named `isActive`, use `@CollectionField("is_active")` to override the MongoDB field mapping, or rename your Java field to `active`.
 
+#### Auto-fill Date/Time Fields
+
+Use `@CreateDate` and `@UpdateDate` to auto-fill timestamps on insert and update. No configuration needed — just annotate the field.
+
+```java
+@CreateDate
+private LocalDateTime createAt;   // auto-filled on insert
+
+@UpdateDate
+private LocalDateTime updateAt;   // auto-filled on every insert & update
+```
+
+**Built-in type support:**
+
+| Field Type | Generated Value |
+|---|---|
+| `java.util.Date` | `new Date()` |
+| `String` | `LocalDateTime.now().format(pattern)` |
+| `LocalDateTime` | `LocalDateTime.now()` |
+| `LocalDate` | `LocalDate.now()` |
+| `Instant` | `Instant.now()` |
+| `Long` / `long` | `System.currentTimeMillis()` |
+
+**Custom pattern for String fields:**
+
+```java
+@CreateDate(pattern = "yyyy/MM/dd HH:mm")
+private String createTime;  // → "2026/07/12 14:30"
+```
+
+**Per-field custom provider:**
+
+```java
+// 1. Implement DateValueProvider
+public class MyZonedProvider implements DateValueProvider {
+    @Override
+    public Object generateCurrentDate(Class<?> fieldType, String pattern) {
+        if (fieldType == ZonedDateTime.class) return ZonedDateTime.now();
+        return null; // let built-ins handle other types
+    }
+}
+
+// 2. Reference on the field
+@CreateDate(providerClass = MyZonedProvider.class)
+private ZonedDateTime createAt;
+```
+
+**Global provider (applies to all fields):**
+
+Register a `DateValueProvider` Spring bean — it serves as the default fallback before the built-in type table.
+
+> **Resolution order:** `providerClass` on annotation → global `DateValueProvider` bean → built-in type table.
+
 ### 5. Entity Inheritance
 
 Mongo-flex follows the **MyBatis-Plus style** of explicit type binding: a `Repository<T>` works with exactly `T` — no more, no less.

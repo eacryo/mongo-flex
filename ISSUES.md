@@ -191,10 +191,22 @@
 - `resolveTypeVariable(Type, Map)` — 用映射表将 TypeVariable 替换为实际类型
 - `registerBeanDefinitions()` 调用 `resolveMongoRepositoryTypes()` 替代原先的扁平 for 循环
 
-### M-11. DateValueGenerator 只支持 Date 和 String
+### M-11. DateValueGenerator 只支持 Date 和 String ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/DateValueGenerator.java:20-28`
 **问题:** `LocalDateTime`、`LocalDate`、`Instant` 等常见类型不支持，抛 `IllegalArgumentException`。
-**修复:** 增加 Java 8+ 时间类型支持。
+**修复:** 内置类型表 + 用户扩展接口：
+- 新增 `DateValueProvider` 接口（`@FunctionalInterface`），用户实现后注册 Spring bean 即可扩展自定义时间类型或覆盖内置行为
+- 内置支持 6 种类型：`Date`、`String`、`LocalDateTime`、`LocalDate`、`Instant`、`Long`/`long`
+- `generateCurrentDate(type, pattern, provider)` 遵循优先级：用户 provider → 内置类型表 → 抛异常
+- `SimpleMongoRepository` 通过 `@Autowired(required = false)` 注入后传入 `DateValueGenerator`
+- 向后兼容：原有的 `generateCurrentDate(type)` / `generateCurrentDate(type, pattern)` 签名保持不变
+
+**涉及文件:**
+- `mongo-flex-core/.../config/DateValueProvider.java` — 新增
+- `mongo-flex-core/.../util/DateValueGenerator.java` — 重构
+- `mongo-flex-core/.../v2/SimpleMongoRepository.java` — 注入 provider
+- `mongo-flex-core/.../v2/RepositoryFactoryBean.java` — 装配
 
 ### M-12. ~~Insert 回填ID 时 ID 字段可能会没有 @CollectionId 注解~~ → 详见 [附录 B: Bug 1](#附录-b-simplemongoRepository-问题)
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:78`

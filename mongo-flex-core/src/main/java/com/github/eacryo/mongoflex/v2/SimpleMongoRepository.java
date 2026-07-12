@@ -3,6 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CreateDate;
 import com.github.eacryo.mongoflex.annotation.UpdateDate;
+import com.github.eacryo.mongoflex.config.DateValueProvider;
 import com.github.eacryo.mongoflex.config.IdGenerator;
 import com.github.eacryo.mongoflex.constant.IdType;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
@@ -50,17 +51,22 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     private final Class<T> entityClass;
     private final MongoMappingConvertor mongoMappingConvertor;
     private final IdGenerator<?> idGenerator;
+    private final DateValueProvider dateValueProvider;
     /** Cache for per-entity-class ID generator instances, populated from @CollectionId.generatorClass. / 按实体类缓存 ID 生成器实例，从 @CollectionId.generatorClass 中解析。 */
     private final Map<Class<? extends IdGenerator>, IdGenerator<?>> generatorCache = new ConcurrentHashMap<>();
+    /** Cache for per-class DateValueProvider instances, populated from @CreateDate/@UpdateDate.providerClass. / 按类缓存 DateValueProvider 实例，从 @CreateDate/@UpdateDate.providerClass 中解析。 */
+    private final Map<Class<? extends DateValueProvider>, DateValueProvider> dateProviderCache = new ConcurrentHashMap<>();
 
 
     public SimpleMongoRepository(Supplier<MongoDatabase> databaseSupplier, String collectionName, Class<T> entityClass,
-                                 MongoMappingConvertor mongoMappingConvertor, IdGenerator<?> idGenerator) {
+                                 MongoMappingConvertor mongoMappingConvertor, IdGenerator<?> idGenerator,
+                                 DateValueProvider dateValueProvider) {
         this.databaseSupplier = Objects.requireNonNull(databaseSupplier, "databaseSupplier must not be null");
         this.collectionName = Objects.requireNonNull(collectionName, "collectionName must not be null");
         this.entityClass = Objects.requireNonNull(entityClass, "entityClass must not be null");
         this.mongoMappingConvertor = Objects.requireNonNull(mongoMappingConvertor, "mongoMappingConvertor must not be null");
         this.idGenerator = idGenerator;
+        this.dateValueProvider = dateValueProvider;
     }
 
     // ---- create ----
@@ -548,6 +554,27 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         }
     }
 
+    /**
+     * Resolve the DateValueProvider for the current field: annotation-specified class first, fallback to global bean. / 解析当前字段的 DateValueProvider：优先使用注解指定的类，回退到全局 bean。
+     */
+    private DateValueProvider resolveDateProvider(Class<? extends DateValueProvider> providerClass) {
+        // Per-field provider specified in annotation / 注解中指定了按字段提供器
+        if (providerClass != DateValueProvider.None.class) {
+            return dateProviderCache.computeIfAbsent(providerClass, clazz -> {
+                try {
+                    return clazz.getDeclaredConstructor().newInstance();
+                } catch (Exception e) {
+                    throw new RuntimeException(
+                            "Failed to instantiate DateValueProvider: " + clazz.getName()
+                            + ". Ensure it has a public no-arg constructor. / 无法实例化 DateValueProvider: " + clazz.getName()
+                            + "，请确保它有一个 public 的无参构造函数。", e);
+                }
+            });
+        }
+        // Fallback to global DateValueProvider bean (may be null) / 回退到全局 DateValueProvider bean（可为 null）
+        return dateValueProvider;
+    }
+
     private void fillDate(T entity, boolean isInsert){
         try{
             if (isInsert){
@@ -555,17 +582,18 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
                 if (createDateField != null){
                     createDateField.setAccessible(true);
                     if (createDateField.get(entity) == null){
-                        String pattern = createDateField.getAnnotation(CreateDate.class).pattern();
-                        createDateField.set(entity, DateValueGenerator.generateCurrentDate(createDateField.getType(), pattern));
-
+                        CreateDate ann = createDateField.getAnnotation(CreateDate.class);
+                        DateValueProvider provider = resolveDateProvider(ann.providerClass());
+                        createDateField.set(entity, DateValueGenerator.generateCurrentDate(createDateField.getType(), ann.pattern(), provider));
                     }
                 }
             }
             Field updateDateField = mongoMappingConvertor.getUpdateDateField(entityClass);
             if (updateDateField != null){
                 updateDateField.setAccessible(true);
-                String pattern = updateDateField.getAnnotation(UpdateDate.class).pattern();
-                updateDateField.set(entity, DateValueGenerator.generateCurrentDate(updateDateField.getType(), pattern));
+                UpdateDate ann = updateDateField.getAnnotation(UpdateDate.class);
+                DateValueProvider provider = resolveDateProvider(ann.providerClass());
+                updateDateField.set(entity, DateValueGenerator.generateCurrentDate(updateDateField.getType(), ann.pattern(), provider));
             }
         } catch (IllegalAccessException e){
             throw new RuntimeException("Failed to set date fields", e);

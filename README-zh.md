@@ -159,6 +159,59 @@ Lambda 查询包装器通过方法引用提取字段名，解析规则遵循 **M
 
 > **已知限制：** `isActive()` 这样的方法具有天然歧义——它可能是 `boolean active` 的 getter，也可能是 `boolean isActive` 的 getter。解析器始终按 JavaBeans 约定采用前一种解释。如果你的字段确实叫 `isActive`，请使用 `@CollectionField("is_active")` 覆盖 MongoDB 字段映射，或将 Java 字段重命名为 `active`。
 
+#### 日期/时间字段自动填充
+
+使用 `@CreateDate` 和 `@UpdateDate` 在插入和更新时自动填充时间戳。无需配置——直接注解字段即可。
+
+```java
+@CreateDate
+private LocalDateTime createAt;   // 插入时自动填充
+
+@UpdateDate
+private LocalDateTime updateAt;   // 每次插入和更新时自动填充
+```
+
+**内置类型支持：**
+
+| 字段类型 | 生成值 |
+|---|---|
+| `java.util.Date` | `new Date()` |
+| `String` | `LocalDateTime.now().format(pattern)` |
+| `LocalDateTime` | `LocalDateTime.now()` |
+| `LocalDate` | `LocalDate.now()` |
+| `Instant` | `Instant.now()` |
+| `Long` / `long` | `System.currentTimeMillis()` |
+
+**String 字段自定义格式：**
+
+```java
+@CreateDate(pattern = "yyyy/MM/dd HH:mm")
+private String createTime;  // → "2026/07/12 14:30"
+```
+
+**按字段自定义提供器：**
+
+```java
+// 1. 实现 DateValueProvider 接口
+public class MyZonedProvider implements DateValueProvider {
+    @Override
+    public Object generateCurrentDate(Class<?> fieldType, String pattern) {
+        if (fieldType == ZonedDateTime.class) return ZonedDateTime.now();
+        return null; // 其他类型交给内置处理器
+    }
+}
+
+// 2. 在字段上引用
+@CreateDate(providerClass = MyZonedProvider.class)
+private ZonedDateTime createAt;
+```
+
+**全局提供器（作用于所有字段）：**
+
+注册一个 `DateValueProvider` Spring bean——它会在内置类型表之前作为默认回退。
+
+> **解析优先级：** 注解上的 `providerClass` → 全局 `DateValueProvider` bean → 内置类型表。
+
 ### 5. 实体继承
 
 Mongo-flex 采用 **MyBatis-Plus 风格**的显式类型绑定：`Repository<T>` 只处理 `T` 的字段，不多不少。
