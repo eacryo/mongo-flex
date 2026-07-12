@@ -147,6 +147,18 @@ wrapper.or(w -> w.eq(Character::getArea, "Liyue")
 List<Character> orResult = repo.findList(wrapper);
 ```
 
+#### Field Name Resolution from Lambda Methods
+
+Lambda query wrappers use method references to extract field names. The resolution follows the **MyBatis `PropertyNamer` convention** (JavaBeans standard):
+
+| Method Reference | Resolved Field | Rule |
+|---|---|---|
+| `Entity::getName` | `name` | Strip `get` prefix, lowercase first char |
+| `Entity::isActive` | `active` | Strip `is` prefix, lowercase first char |
+| `Entity::getURL` | `URL` | Acronym: second char uppercase → keep first char uppercase |
+
+> **Known Limitation:** A method like `isActive()` is inherently ambiguous — it could be the getter for `boolean active` or `boolean isActive`. The resolver always assumes the former (JavaBeans convention). If your field is literally named `isActive`, use `@CollectionField("is_active")` to override the MongoDB field mapping, or rename your Java field to `active`.
+
 ### 5. Entity Inheritance
 
 Mongo-flex follows the **MyBatis-Plus style** of explicit type binding: a `Repository<T>` works with exactly `T` — no more, no less.

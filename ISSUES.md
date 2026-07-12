@@ -113,10 +113,11 @@
 **问题:** `args[i].toString()` 直接拼入 JSON 字符串，值中含引号或特殊字符导致 JSON 格式错误。
 **修复:** 用 JSON 序列化替代 `toString()`。
 
-### H-8. ClassFieldMetaData 无条件 setAccessible(true)
+### H-8. ClassFieldMetaData 无条件 setAccessible(true) ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/convertor/ClassFieldMetaData.java:35`
 **问题:** 对所有字段（包括 static final 常量）调用 `setAccessible(true)`，JPMS 下可能抛 `InaccessibleObjectException`。
-**修复:** 跳过 static/final 字段，或推迟到实际访问时才 setAccessible。
+**修复:** 用 `Modifier.isStatic()` 跳过 static 字段，它们不参与文档映射，也无需打破访问控制。
 
 ### H-9. ~~RepositoryRegistrar 扫描了错误的包~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/RepositoryRegistrar.java:31`
@@ -167,10 +168,18 @@
 **问题:** 所有条件固定 AND 连接，无法表达 `WHERE a=1 OR b=2`。
 **修复:** 添加 `or()` 和 `or(LambdaQueryWrapper<T>)` 方法。`or()` 插入 sentinel 分割条件组，渲染时组内 AND、组间 OR。
 
-### M-9. ReflectUtil.getFieldNameFromLambda 对 boolean getter 前缀处理不准确
+### M-9. ReflectUtil.getFieldNameFromLambda 对 boolean getter 前缀处理不准确 ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/ReflectUtil.java:31-37`
 **问题:** `isActive()` 始终解析为 `active`，但实际字段名可能是 `isActive`（`is` 不是 getter 前缀时）。
-**修复:** 加返回值类型检查，仅 `boolean`/`Boolean` 时才去 `is` 前缀。
+
+**分析:** 这是 JavaBeans 规范的固有歧义——`isActive()` 可能是 `boolean active` 或 `boolean isActive` 的 getter，仅靠方法名无法区分。MyBatis 的 `PropertyNamer` 同样不解决此问题。
+
+**修复:** 重构为与 MyBatis `PropertyNamer.methodToProperty()` 一致的规则：
+- 提取 `methodToProperty()` 方法，遵循 MyBatis 的 getter→property 命名规则
+- 新增 JavaBeans 大写规则：第二个字母大写时保留首字母（如 `getURL` → `URL`）
+- 非 getter 风格的方法名抛 `IllegalArgumentException`（明确 fail-fast，而非静默使用原方法名）
+- 在类 Javadoc 中明确记录此已知限制，并说明用 `@CollectionField` 覆盖的方式
 
 ### M-10. 泛型解析只检查直接接口，不支持层级接口继承
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/RepositoryRegistrar.java:43-55`

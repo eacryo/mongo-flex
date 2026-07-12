@@ -472,7 +472,8 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     private void requireNonEmptyQuery(Document query, String operation) {
         if (query.isEmpty()) {
             throw new IllegalArgumentException(
-                    operation + " requires at least one non-null field. Use " + operation + "All() to operate on all documents.");
+                    operation + " requires at least one non-null field. Use deleteAll() to operate on all documents."
+                    + " / " + operation + " 至少需要一个非空字段，全量操作请使用 deleteAll()。");
         }
     }
 

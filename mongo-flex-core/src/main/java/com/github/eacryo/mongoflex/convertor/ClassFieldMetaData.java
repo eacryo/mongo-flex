@@ -6,6 +6,7 @@ import com.github.eacryo.mongoflex.annotation.CreateDate;
 import com.github.eacryo.mongoflex.annotation.UpdateDate;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +34,10 @@ public class ClassFieldMetaData {
         Field foundUpdateDateField = null;
         for(Class<?> c = clazz; c != null && c != Object.class; c = c.getSuperclass()) {
             for (Field field : c.getDeclaredFields()) {
+                // Skip static fields — they don't belong to any document / 跳过 static 字段——它们不属于文档数据
+                if (Modifier.isStatic(field.getModifiers())) {
+                    continue;
+                }
                 field.setAccessible(true);
                 //确定该字段在MongoDB当中对应的字段名
                 //优先使用@CollectionField注解作为指定的名称，否则使用Java字段名

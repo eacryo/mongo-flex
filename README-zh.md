@@ -147,6 +147,18 @@ wrapper.or(w -> w.eq(Character::getArea, "Liyue")
 List<Character> orResult = repo.findList(wrapper);
 ```
 
+#### Lambda 方法引用 → 字段名解析规则
+
+Lambda 查询包装器通过方法引用提取字段名，解析规则遵循 **MyBatis `PropertyNamer` 规范**（即 JavaBeans 标准）：
+
+| 方法引用 | 解析出的字段 | 规则 |
+|---|---|---|
+| `Entity::getName` | `name` | 去除 `get` 前缀，首字母小写 |
+| `Entity::isActive` | `active` | 去除 `is` 前缀，首字母小写 |
+| `Entity::getURL` | `URL` | 首字母缩写：第二个字母大写 → 保留首字母大写 |
+
+> **已知限制：** `isActive()` 这样的方法具有天然歧义——它可能是 `boolean active` 的 getter，也可能是 `boolean isActive` 的 getter。解析器始终按 JavaBeans 约定采用前一种解释。如果你的字段确实叫 `isActive`，请使用 `@CollectionField("is_active")` 覆盖 MongoDB 字段映射，或将 Java 字段重命名为 `active`。
+
 ### 5. 实体继承
 
 Mongo-flex 采用 **MyBatis-Plus 风格**的显式类型绑定：`Repository<T>` 只处理 `T` 的字段，不多不少。

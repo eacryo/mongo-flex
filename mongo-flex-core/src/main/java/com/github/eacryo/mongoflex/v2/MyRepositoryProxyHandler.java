@@ -39,6 +39,15 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        try {
+            return doInvoke(proxy, method, args);
+        } catch (InvocationTargetException e) {
+            // Unwrap so the caller sees the original exception, not UndeclaredThrowableException / 解包使调用方能捕获原始异常，而非 UndeclaredThrowableException
+            throw e.getCause();
+        }
+    }
+
+    private Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable {
         Type genericReturnType = method.getGenericReturnType();
         if (method.isAnnotationPresent(Mql.class)) {
             Mql myQuery = method.getAnnotation(Mql.class);
@@ -46,31 +55,28 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             //TODO
             Parameter[] parameters = method.getParameters();
             shellCommand = replaceShellCommand(shellCommand, parameters, args);
-            // 解析 MongoDB Shell 语句
+            // Parse MongoDB shell command / 解析 MongoDB Shell 语句
             QueryParser.QueryCommand parsedCommand = queryParser.parse(shellCommand);
 
-            // TODO：下面这考虑挪到QueryParser里面
+            // TODO: consider moving this into QueryParser / 下面这考虑挪到QueryParser里面
             MongoCollection<Document> collection = databaseSupplier.get().getCollection(parsedCommand.collectionName);
 
-            // 根据解析出的命令执行相应的操作
+            // Execute based on parsed command / 根据解析出的命令执行相应的操作
             return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.arguments,
                     parsedCommand.skip, parsedCommand.limit, method, args);
         } else if (isMethodFromTargetInterface(method, targetInterface)) {
             log.info("Method {} inherit from parent interface", method.getName());
-            Object invoked = method.invoke(baseRepository, args);
-            return invoked;
+            return method.invoke(baseRepository, args);
         } else if (isMethodFromTargetInterface(method, Object.class)) {
             if ("toString".equals(method.getName())) {
                 return "Repository proxy for " + repositoryInterface.getName();
             }
             return method.invoke(baseRepository, args);
         } else {
-            // 不是 @Mql 方法，也不是继承自 MongoRepository 的方法
+            // Neither @Mql nor inherited from MongoRepository / 不是 @Mql 方法，也不是继承自 MongoRepository 的方法
             throw new UnsupportedOperationException("Method " + method.getName() +
                     " is neither annotated with @Mql nor inherited from MongoRepository.");
-
         }
-
     }
 
     private String replaceShellCommand(String shellCommand, Parameter[] parameters, Object[] args) {
