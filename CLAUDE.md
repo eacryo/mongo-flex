@@ -83,8 +83,8 @@ mongo-flex-test-spring-boot2/  ← legacy SB2 tests
 ### Key Design Decisions
 
 - **Entity mapping**: `@CollectionId` (maps to `_id`), `@CollectionField("mongo_name")`, implicit `id`→`_id` mapping. Priority: `@CollectionId` > `@CollectionField` > field name heuristic.
-- **ID generation**: Controlled by `IdType` enum — `NONE` (MongoDB ObjectId, stored as hex String), `ULID` (26-char sortable), `UUID` (v4), `INPUT` (custom `IdGenerator`).
-- **ObjectId conversion**: Only converts String→ObjectId when `IdType.NONE` (MongoDB generates ObjectId but Java stores hex String). Other modes store native String.
+- **ID generation**: Controlled by `IdType` enum — `OBJECT_ID` (MongoDB ObjectId, stored as hex String), `ULID` (26-char sortable), `UUID` (v4), `INPUT` (custom `IdGenerator`).
+- **ObjectId conversion**: Only converts String→ObjectId when `IdType.OBJECT_ID` (MongoDB generates ObjectId but Java stores hex String). Other modes store native String.
 - **Repository proxies**: `@MRepository` interfaces get JDK proxy via `RepositoryFactoryBean`. `@Mql` methods dispatched to executors; `MongoRepository` methods delegated to `SimpleMongoRepository`.
 - **Field name resolution**: `ReflectUtil.getFieldNameFromLambda()` extracts field name from `SFunction` via `SerializedLambda`; `MongoMappingConvertor.resolveMongoFieldName()` maps Java→MongoDB field names using cached `ClassFieldMetaData`.
 

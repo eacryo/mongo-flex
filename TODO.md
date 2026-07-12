@@ -101,7 +101,7 @@ QueryParser 正则已能解析 9 种 MongoDB shell 命令，但仅 4 个有 Exec
 
 ~~当前仅支持单条 `insert(entity)`，无批量插入方法。MongoDB 的 `insertMany` 相比逐条 `insert` 有显著的性能优势。~~
 
-已新增 `insertMany(List<T> entities)` 方法，内部调用 MongoDB 的 `insertMany` 批量插入。支持自动填充 ID（ULID/UUID/自定义）和日期字段（@CreateDate/@UpdateDate），并在 IdType.NONE 模式下回填 MongoDB 生成的 ObjectId。
+已新增 `insertMany(List<T> entities)` 方法，内部调用 MongoDB 的 `insertMany` 批量插入。支持自动填充 ID（ULID/UUID/自定义）和日期字段（@CreateDate/@UpdateDate），并在 IdType.OBJECT_ID 模式下回填 MongoDB 生成的 ObjectId。
 
 **涉及文件:**
 - `mongo-flex-core/.../v2/MongoRepository.java` ✅

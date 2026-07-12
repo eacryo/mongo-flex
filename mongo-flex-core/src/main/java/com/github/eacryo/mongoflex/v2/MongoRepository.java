@@ -136,8 +136,8 @@ public interface MongoRepository<T, ID> {
     <R> long upsert(SFunction<T, R> field, R value, T entity);
 
     /**
-     * 按 LambdaQueryWrapper 条件 upsert，wrapper 和 entity 不可为 null。
-     * wrapper 条件不能为空，全量 upsert 请使用 {@link #upsertAll(Object)}（如果有的话）。
+     * Upsert by LambdaQueryWrapper conditions. wrapper and entity must not be null. / 按 LambdaQueryWrapper 条件 upsert，wrapper 和 entity 不可为 null。
+     * wrapper conditions must not be empty. / wrapper 条件不能为空。
      */
     long upsert(LambdaQueryWrapper<T> wrapper, T entity);
 

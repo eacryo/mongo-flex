@@ -75,10 +75,19 @@
 **问题:** 同 H-1，空实体统计返回集合总文档数。
 **决定:** 同 H-1。
 
-### H-3. IdGenerator<?> 类型不安全
+### H-3. IdGenerator<?> 类型不安全 ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:46`
 **问题:** 无界通配符，ID 生成器产出类型与实体 ID 字段类型不匹配只在运行时报错。
-**修复:** 泛型化：`IdGenerator<ID>`，沿 `SimpleMongoRepository<T, ID>` 传递。
+**修复:** 采用**注解驱动按实体类生成器**方案替代全局泛型化：
+- `@CollectionId` 新增 `generatorClass` 属性，用户在实体上直接声明生成器类
+- `fillId()` 优先从注解读取 `generatorClass` 实例化（带缓存），全局 `IdGenerator<?>` bean 降级为 fallback
+- 解决了原方案"全局泛型化无法区分不同实体 ID 类型"的根本问题
+
+**涉及文件:**
+- `mongo-flex-core/.../annotation/CollectionId.java` — 新增 `generatorClass` 属性
+- `mongo-flex-core/.../config/IdGenerator.java` — 新增 `None` 哨兵、`@FunctionalInterface` 标注
+- `mongo-flex-core/.../v2/SimpleMongoRepository.java` — 新增 `resolvePerEntityGenerator()`、`instantiateGenerator()`，含 `ConcurrentHashMap` 缓存
 
 ### H-4. ~~convertQueryId 未检查的类型转换~~ → 详见 [附录 B: Bug 2](#附录-b-simplemongoRepository-问题)
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:310`
@@ -488,16 +497,16 @@ if (id instanceof String && ObjectId.isValid((String) id)) {
 }
 ```
 
-**修复方案:** 利用框架已有的 `IdType` 元数据做精确判断——仅在 `IdType.NONE` 下才转换，因为此时 MongoDB 生成的是 ObjectId，Java 侧以 hex String 存储，查询时必须转回。
+**修复方案:** 利用框架已有的 `IdType` 元数据做精确判断——仅在 `IdType.OBJECT_ID` 下才转换，因为此时 MongoDB 生成的是 ObjectId，Java 侧以 hex String 存储，查询时必须转回。
 
 | IdType | 存储的实际类型 | 是否需要 String→ObjectId |
 |--------|-------------|------------------------|
-| `NONE` | ObjectId（MongoDB 生成） | ✅ 是 |
+| `OBJECT_ID` | ObjectId（MongoDB 生成） | ✅ 是 |
 | `ULID` | String | ❌ 否 |
 | `UUID` | String | ❌ 否 |
 | `INPUT` | 取决于生成器 | ❌ 否 |
 
-**测试验证:** `ObjectIdConversionTest` — 4 个测试覆盖 `IdType.NONE` 转换和 `IdType.ULID` 不转换两个方向。
+**测试验证:** `ObjectIdConversionTest` — 4 个测试覆盖 `IdType.OBJECT_ID` 转换和 `IdType.ULID` 不转换两个方向。
 
 ---
 

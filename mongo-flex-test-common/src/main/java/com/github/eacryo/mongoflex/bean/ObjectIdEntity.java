@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.ToString;
 
 /**
- * 用于验证 {@code IdType.NONE} 下 String 到 ObjectId 的转换逻辑。
+ * 用于验证 {@code IdType.OBJECT_ID} 下 String 到 ObjectId 的转换逻辑。
  * MongoDB 生成的 ObjectId 在 Java 侧映射为 hex String 字段，查询时需转回 ObjectId。
  */
 @CollectionName(Constant.COLLECTION_NAME)
@@ -16,7 +16,7 @@ import lombok.ToString;
 @ToString
 public class ObjectIdEntity {
 
-    @CollectionId(IdType.NONE)
+    @CollectionId(IdType.OBJECT_ID)
     private String id;
 
     private String name;

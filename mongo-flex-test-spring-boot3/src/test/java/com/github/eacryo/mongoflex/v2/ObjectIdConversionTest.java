@@ -15,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 验证 ID 类型转换逻辑仅对 {@code IdType.NONE} 生效，
+ * 验证 ID 类型转换逻辑仅对 {@code IdType.OBJECT_ID} 生效，
  * ULID / UUID / INPUT 类型的 String ID 不会被误转为 ObjectId。
  */
 @SpringBootTest(classes = {TestApplication.class})
@@ -31,7 +31,7 @@ public class ObjectIdConversionTest {
 
     private static String noneId;
 
-    // ──── IdType.NONE: 应该转换 ────
+    // ──── IdType.OBJECT_ID: 应该转换 ────
 
     @Test
     @Order(1)
@@ -47,7 +47,7 @@ public class ObjectIdConversionTest {
         assertThat(ObjectId.isValid(entity.getId())).isTrue();
 
         noneId = entity.getId();
-        System.out.println("NONE id = " + noneId);
+        System.out.println("OBJECT_ID id = " + noneId);
     }
 
     @Test
