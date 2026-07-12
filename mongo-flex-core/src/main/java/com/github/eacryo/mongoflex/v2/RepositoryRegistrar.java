@@ -18,7 +18,10 @@ import org.springframework.util.ClassUtils;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -45,25 +48,18 @@ public class RepositoryRegistrar implements ImportBeanDefinitionRegistrar {
             repositoryInterfaces = scanRepositoryInterfaces(basePackage);
         }
 
-        // 为每一个找到的接口创建并注册一个 RepositoryFactoryBean
+        // Create and register a RepositoryFactoryBean for each found interface / 为每一个找到的接口创建并注册一个 RepositoryFactoryBean
         for (Class<?> repositoryInterface : repositoryInterfaces) {
-            // 创建一个 RepositoryFactoryBean 的 BeanDefinition
+            // Create a RepositoryFactoryBean BeanDefinition / 创建一个 RepositoryFactoryBean 的 BeanDefinition
             RootBeanDefinition beanDefinition = new RootBeanDefinition(RepositoryFactoryBean.class);
+            // Resolve entity class and ID class from the interface hierarchy / 从接口层级中解析实体类和 ID 类
+            Type[] resolved = resolveMongoRepositoryTypes(repositoryInterface, new HashMap<>());
             Class<?> entityClass = null;
             Class<?> idClass = null;
-            //获取父接口的信息
-            for (Type type : repositoryInterface.getGenericInterfaces()) {
-                if (type instanceof ParameterizedType) {
-                    ParameterizedType pt = (ParameterizedType) type;
-                    Type rawType = pt.getRawType();
-                    if (pt.getRawType().getTypeName().equals(MongoRepository.class.getName())){
-                        Type entityType = pt.getActualTypeArguments()[0];
-                        Type idType = pt.getActualTypeArguments()[1];
-                        entityClass = (Class<?>) entityType;
-                        idClass = (Class<?>) idType;
-                        log.info("Entity type: {}, ID type: {}", entityType.getTypeName(), idType.getTypeName());
-                    }
-                }
+            if (resolved != null) {
+                entityClass = (Class<?>) resolved[0];
+                idClass = (Class<?>) resolved[1];
+                log.info("Entity type: {}, ID type: {}", entityClass.getTypeName(), idClass.getTypeName());
             }
             // 将接口类作为构造函数参数
             beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(repositoryInterface);
@@ -108,5 +104,94 @@ public class RepositoryRegistrar implements ImportBeanDefinitionRegistrar {
             throw new RuntimeException("Error scanning for repository interfaces.", e);
         }
         return repositoryInterfaces;
+    }
+
+    /**
+     * Recursively walk the interface hierarchy to find {@link MongoRepository} and resolve its type arguments. / 递归遍历接口层级，查找 {@link MongoRepository} 并解析其泛型参数。
+     * <p>
+     * Supports multi-level inheritance chains like: / 支持多级继承链，如：
+     * <pre>{@code
+     * interface BaseRepo<T, ID> extends MongoRepository<T, ID> {}
+     * interface UserRepo extends BaseRepo<User, String> {}
+     * }</pre>
+     * <p>
+     * The {@code typeVarMap} maps type variables declared at intermediate interfaces to the actual types
+     * bound by the child interface, e.g. {@code T → User.class, ID → String.class}. / {@code typeVarMap} 将中间接口声明的类型变量映射到子接口绑定的实际类型。
+     *
+     * @param type      the current type to inspect (interface or class) / 当前要检查的类型（接口或类）
+     * @param typeVarMap accumulated type variable → actual type mappings from parent levels / 从父级累积的类型变量 → 实际类型映射
+     * @return resolved [entityType, idType] array, or null if MongoRepository is not found in this branch / 解析出的 [entityType, idType] 数组，如果该分支中未找到 MongoRepository 则返回 null
+     */
+    private static Type[] resolveMongoRepositoryTypes(Type type, Map<TypeVariable<?>, Type> typeVarMap) {
+        Class<?> rawClass = getRawClass(type);
+
+        // Build type variable → actual type mapping at this level / 构建当前层级的类型变量 → 实际类型映射
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) type;
+            TypeVariable<?>[] typeParams = rawClass.getTypeParameters();
+            Type[] actualArgs = pt.getActualTypeArguments();
+            // Copy to avoid polluting parent map, then overlay current level / 复制避免污染父级映射，再覆盖当前层级
+            typeVarMap = new HashMap<>(typeVarMap);
+            for (int i = 0; i < typeParams.length; i++) {
+                typeVarMap.put(typeParams[i], actualArgs[i]);
+            }
+        }
+
+        // Check direct interfaces / 检查直接接口
+        for (Type iface : rawClass.getGenericInterfaces()) {
+            Class<?> ifaceRaw = getRawClass(iface);
+            if (ifaceRaw == MongoRepository.class) {
+                // Found it — resolve type variables using accumulated mapping / 找到了——用累积的映射解析类型变量
+                if (iface instanceof ParameterizedType) {
+                    ParameterizedType pt = (ParameterizedType) iface;
+                    return new Type[]{
+                            resolveTypeVariable(pt.getActualTypeArguments()[0], typeVarMap),
+                            resolveTypeVariable(pt.getActualTypeArguments()[1], typeVarMap)
+                    };
+                }
+                // Raw MongoRepository (no type args) — shouldn't happen but guard it / 原始 MongoRepository（无泛型参数）——不应该出现但做保护
+                return null;
+            }
+            // Recurse into parent interface / 递归进入父接口
+            Type[] result = resolveMongoRepositoryTypes(iface, typeVarMap);
+            if (result != null) {
+                return result;
+            }
+        }
+
+        // Check superclass (for class-based inheritance chains) / 检查父类（支持基于类的继承链）
+        Type superclass = rawClass.getGenericSuperclass();
+        if (superclass != null && superclass != Object.class) {
+            return resolveMongoRepositoryTypes(superclass, typeVarMap);
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the raw Class from a Type. / 从 Type 中获取原始 Class。
+     */
+    private static Class<?> getRawClass(Type type) {
+        if (type instanceof Class) {
+            return (Class<?>) type;
+        }
+        if (type instanceof ParameterizedType) {
+            return (Class<?>) ((ParameterizedType) type).getRawType();
+        }
+        throw new IllegalArgumentException("Cannot resolve raw class from type: " + type
+                + " / 无法从类型中解析原始类: " + type);
+    }
+
+    /**
+     * Resolve a TypeVariable to its actual type using the accumulated mapping. / 使用累积的映射将 TypeVariable 解析为实际类型。
+     * If the type is not a TypeVariable, return it as-is (already resolved). / 如果类型不是 TypeVariable，直接返回（已经解析完毕）。
+     */
+    private static Type resolveTypeVariable(Type type, Map<TypeVariable<?>, Type> typeVarMap) {
+        if (type instanceof TypeVariable) {
+            Type resolved = typeVarMap.get(type);
+            // The resolved type might itself be a TypeVariable (nested generics), recurse / 解析出的类型可能仍是 TypeVariable（嵌套泛型），递归解析
+            return resolved != null ? resolveTypeVariable(resolved, typeVarMap) : type;
+        }
+        return type;
     }
 }

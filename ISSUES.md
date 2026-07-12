@@ -181,10 +181,15 @@
 - 非 getter 风格的方法名抛 `IllegalArgumentException`（明确 fail-fast，而非静默使用原方法名）
 - 在类 Javadoc 中明确记录此已知限制，并说明用 `@CollectionField` 覆盖的方式
 
-### M-10. 泛型解析只检查直接接口，不支持层级接口继承
+### M-10. 泛型解析只检查直接接口，不支持层级接口继承 ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/RepositoryRegistrar.java:43-55`
 **问题:** `interface UserRepo extends BaseRepo<User, String>` 且 `BaseRepo extends MongoRepository` 时泛型解析失败。
-**修复:** 用递归泛型解析遍历接口层级。
+**修复:** 新增 3 个方法实现递归泛型解析：
+- `resolveMongoRepositoryTypes(Type, Map)` — 沿接口和父类层级递归查找 `MongoRepository`，逐层累积 TypeVariable → 实际类型映射
+- `getRawClass(Type)` — 从 Class 或 ParameterizedType 提取原始 Class
+- `resolveTypeVariable(Type, Map)` — 用映射表将 TypeVariable 替换为实际类型
+- `registerBeanDefinitions()` 调用 `resolveMongoRepositoryTypes()` 替代原先的扁平 for 循环
 
 ### M-11. DateValueGenerator 只支持 Date 和 String
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/DateValueGenerator.java:20-28`
