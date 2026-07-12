@@ -217,9 +217,10 @@
 
 ## 低（Low）
 
-### L-1. FillConstant 字段非 final
+### L-1. FillConstant 字段非 final ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/FillConstant.java:4-7`
-**修复:** 加 `final` 修饰。
+**修复:** 字段加 `final` 修饰，加私有构造器禁止实例化，加中英双语文档注释。
 
 ### L-2. ~~DynamicMongoClient 多余分号~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/DynamicMongoClient.java`
@@ -244,9 +245,10 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/MongoFlexConstant.java`
 **修复:** 加 `private` 构造器。
 
-### L-8. FillConstant 允许实例化
+### L-8. FillConstant 允许实例化 ✅ 已修复
+
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/FillConstant.java`
-**修复:** 加 `private` 构造器。
+**修复:** 加 `private` 构造器（与 L-1 同批次修复）。
 
 ### L-9. PageDTO 用装箱 Long，可为 null
 **文件:** `src/main/java/com/github/eacryo/mongoflex/entity/PageDTO.java:12-15`

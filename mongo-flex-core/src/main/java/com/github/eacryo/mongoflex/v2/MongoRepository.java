@@ -71,7 +71,7 @@ public interface MongoRepository<T, ID> {
 
     /**
      * 按 LambdaQueryWrapper 条件分页查询。
-     * 回填 pageDTO 的 total/totalPage/records 后返回同一对象。
+     * 回填 pageDTO 的 total/records（totalPage 为计算属性，自动同步）后返回同一对象。
      * wrapper 不可为 null，空条件视为无条件分页。
      */
     PageDTO<T> findPage(LambdaQueryWrapper<T> wrapper, PageDTO<T> pageDTO);

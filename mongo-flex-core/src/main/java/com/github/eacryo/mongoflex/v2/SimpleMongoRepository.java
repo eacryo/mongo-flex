@@ -226,13 +226,12 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     private PageDTO<T> doFindPage(Bson filter, LambdaQueryWrapper<T> wrapper, PageDTO<T> pageDTO) {
-        long currentPage = pageDTO.getCurrentPage() != null ? pageDTO.getCurrentPage() : 1L;
-        long pageSize = pageDTO.getPageSize() != null ? pageDTO.getPageSize() : 10L;
+        long currentPage = pageDTO.getCurrentPage();
+        long pageSize = pageDTO.getPageSize();
 
-        // 1. 查总数
+        // 1. count total / 查总数
         long total = databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
         pageDTO.setTotal(total);
-        pageDTO.setTotalPage(total == 0 ? 0 : (total + pageSize - 1) / pageSize);
 
         // 2. skip + limit
         int skip = (int) ((currentPage - 1) * pageSize);
