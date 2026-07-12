@@ -80,6 +80,50 @@ public class CharacterRepositoryTests {
     }
 
     @Test
+    public void testInsertMany() {
+        // Create multiple entities / 创建多个实体
+        Character c1 = new Character();
+        String id1 = UlidCreator.getUlid().toString();
+        c1.setId(id1);
+        c1.setName("InsertManyTest-" + id1);
+        c1.setAddress("InsertManyAddress1");
+        c1.setBirthday(new Date());
+
+        Character c2 = new Character();
+        String id2 = UlidCreator.getUlid().toString();
+        c2.setId(id2);
+        c2.setName("InsertManyTest-" + id2);
+        c2.setAddress("InsertManyAddress2");
+        c2.setBirthday(new Date());
+
+        Character c3 = new Character();
+        String id3 = UlidCreator.getUlid().toString();
+        c3.setId(id3);
+        c3.setName("InsertManyTest-" + id3);
+        c3.setAddress("InsertManyAddress3");
+        c3.setBirthday(new Date());
+
+        // Batch insert / 批量插入
+        List<Character> inserted = characterRepositoryV2.insertMany(Arrays.asList(c1, c2, c3));
+        System.out.println("insertMany count: " + (inserted == null ? 0 : inserted.size()));
+        for (Character c : inserted) {
+            System.out.println("  inserted: id=" + c.getId() + ", name=" + c.getName());
+        }
+
+        // Verify each inserted entity can be found / 验证每个插入的实体都能查到
+        for (Character c : inserted) {
+            Character fetched = characterRepositoryV2.findById(c.getId());
+            assert fetched != null : "Should find inserted entity / 应该能查到插入的实体: " + c.getId();
+            assert c.getName().equals(fetched.getName()) : "Name should match / 名称应该匹配";
+        }
+
+        // Cleanup / 清理
+        for (Character c : inserted) {
+            characterRepositoryV2.deleteById(c.getId());
+        }
+    }
+
+    @Test
     public void testFindById() {
         Character c = new Character();
         String id = UlidCreator.getUlid().toString();

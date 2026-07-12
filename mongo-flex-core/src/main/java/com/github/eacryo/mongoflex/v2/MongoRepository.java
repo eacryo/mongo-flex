@@ -20,9 +20,17 @@ import java.util.List;
 public interface MongoRepository<T, ID> {
 
     /**
-     * 插入一条文档，entity 不可为 null。
+     * Insert a single document, entity must not be null. / 插入一条文档，entity 不可为 null。
      */
     T insert(T entity);
+
+    /**
+     * Batch insert multiple documents, entities must not be null or empty. / 批量插入多条文档，entities 不可为 null 或空列表。
+     *
+     * @param entities non-null, non-empty list of entities to insert / 要插入的实体列表，不可为 null 或空列表
+     * @return the inserted entities with IDs back-filled (if applicable) / 返回已回填 ID 的实体列表（如适用）
+     */
+    List<T> insertMany(List<T> entities);
 
     /**
      * 按 ID 查询，id 不可为 null。

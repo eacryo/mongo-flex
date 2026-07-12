@@ -33,6 +33,18 @@ The project targets **Java 8 bytecode** (`<java.version>1.8</java.version>`). Do
 - ❌ `java.time.*` (unless the dependency already brings it in)
 - ❌ Streams `.toList()` (Java 16) — use `.collect(Collectors.toList())`
 
+## Code Comments — 代码注释规范
+
+**All code comments MUST be written in both Chinese and English (中英双语).** Format:
+
+```java
+// English description / 中文描述
+```
+
+- Javadoc, line comments, and block comments all follow this rule.
+- English first, then a space + `/` + space, then Chinese.
+- Example: `// Find user by email / 根据邮箱查找用户`
+
 ## Commit Message Convention
 
 Use **Conventional Commits** format:
