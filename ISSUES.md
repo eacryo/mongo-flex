@@ -250,13 +250,13 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/FillConstant.java`
 **修复:** 加 `private` 构造器（与 L-1 同批次修复）。
 
-### L-9. PageDTO 用装箱 Long，可为 null
+### L-9. ~~PageDTO 用装箱 Long，可为 null~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/entity/PageDTO.java:12-15`
-**修复:** 改用 `long` 基础类型 + 默认值。
+**修复:** 改用 `long` 基础类型 + 默认值，`totalPage` 改为计算 getter（与 MyBatis-Plus `IPage.getPages()` 一致）。
 
-### L-10. PageDTO.orderBy 不支持逐字段升降序
+### L-10. ~~PageDTO.orderBy 不支持逐字段升降序~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/entity/PageDTO.java:16`
-**修复:** 用 `List<SortOrder>`（含 field + ascending 标志）。
+**修复:** 新增 `PageDTO.SortOrder` 内部类（`field` + `ascending`），替换 `List<String> orderBy + boolean orderByAsc` 组合。每个字段可独立指定升降序，与 MyBatis-Plus `OrderItem` 设计一致。
 
 ### L-11. DeleteOneExecutor 导入了未使用的内部 API
 **文件:** `src/main/java/com/github/eacryo/mongoflex/strategy/DeleteOneExecutor.java:6`
@@ -268,22 +268,22 @@
 
 ### L-13. ~~DynamicMongoClient 未使用的 Logger/LoggerFactory import~~ ✅ 已解决
 
-### L-14. MongoBsonRenderer ELEM_MATCH 使用了原始类型强转
+### L-14. ~~MongoBsonRenderer ELEM_MATCH 使用了原始类型强转~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/lambda/MongoBsonRenderer.java:81`
-**修复:** 加 `@SuppressWarnings("unchecked")` 或声明正确泛型变量。
+**修复:** `renderGroup()` 方法加 `@SuppressWarnings({"unchecked", "rawtypes"})` + 注释说明语义安全性。ELEM_MATCH 使用字段声明的泛型元素类型，NOT 复用外层 wrapper 的 entityClass，两处强转均语义安全，仅因 Java 通配符 capture 限制无法用泛型正确表达。
 
 ### L-15. 各 Executor 注入 ExecutorProxy 仅用于注册
 **文件:** FindExecutor、FindOneExecutor、CountExecutor、DeleteOneExecutor
 **修复:** 改为 ExecutorProxy 通过 `List<CommandExecutor>` 自动发现并注册。
 **暂缓原因:** 当前 push 模式（Executor 自我注册）功能正确，M-1 已通过去掉 `static` 解决了跨 Context 污染问题，剩余价值仅为减少样板代码，是纯风格改进而非 bug。若要改为 pull 模式，需给 `CommandExecutor` 接口新增方法（如 `String getOperation()`）以识别每个 Executor 处理的操作类型，改动面扩大。建议在未来新增 Executor（insertOne、updateOne 等）时一次性重构，届时样板代码增多，收益更大。
 
-### L-16. AutoConfiguration.imports 列入了非 AutoConfiguration 类
+### L-16. ~~AutoConfiguration.imports 列入了非 AutoConfiguration 类~~ ✅ 已解决
 **文件:** `src/main/resources/META-INF/spring/...AutoConfiguration.imports`
-**修复:** 移除 MongoFlexProperties 和 CollectionNameUtil，仅保留 MyOrmAutoConfiguration。
+**修复:** 已移除 `MongoFlexProperties`（`@ConfigurationProperties`）和 `CollectionNameUtil`（工具类），仅保留 `MongoFlexAutoConfiguration`（`@Configuration`）。Spring Boot 启动时会将此文件中所有类当作自动配置类处理，非配置类会导致不必要实例化或启动报错。
 
-### L-17. Condition record 不做 null 校验
+### L-17. ~~Condition record 不做 null 校验~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/lambda/Condition.java:4-8`
-**修复:** 紧凑构造器中加 `requireNonNull`。
+**修复:** public 构造器中 `field` 和 `operator` 加 `Objects.requireNonNull`，fail-fast 提早暴露问题。无参构造器（package-private，OR 分割哨兵用）保持不变。
 
 ### L-18. pom.xml parent POM 被注释
 **文件:** `pom.xml:5-10`
@@ -293,9 +293,9 @@
 **文件:** `pom.xml:41-56`
 **修复:** 填写 url、licenses、developers、scm 或移除。
 
-### L-20. MongoFlexProperties.getDatabaseFromUri 每次 new ConnectionString
+### L-20. ~~MongoFlexProperties.getDatabaseFromUri 每次 new ConnectionString~~ ✅ 已解决
 **文件:** `src/main/java/com/github/eacryo/mongoflex/config/MongoFlexProperties.java:24-39`
-**修复:** 非多租户模式缓存结果。
+**修复:** 单租户模式首次调用后缓存数据库名（`volatile` + DCL），多租户模式按租户 URI 缓存在 `ConcurrentHashMap` 中（`computeIfAbsent`）。`new ConnectionString(uri)` 不是简单字符串分割——它会做 DNS SRV 解析（阻塞 I/O）、多轮 option 遍历、URL 解码和大量对象分配，每次数据库操作都重复这些工作是显著浪费。顺手改进了"Tenant not found"错误信息，列出可用租户列表。
 
 ---
 

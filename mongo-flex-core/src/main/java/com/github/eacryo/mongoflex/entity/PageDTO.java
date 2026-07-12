@@ -24,12 +24,10 @@ public class PageDTO<T> {
     private long pageSize = 10L;
     /** Total record count / 总记录数 */
     private long total;
-    /** Sort fields (frontend-passed field names) / 排序字段，前端传递的字段名 */
-    private List<String> orderBy;
+    /** Sort orders (field name + direction) / 排序规则列表（字段名 + 方向） */
+    private List<SortOrder<T>> orderBy;
     /** Current page records / 当前页的记录列表 */
     private List<T> records;
-    /** Sort ascending flag / 是否升序排序 */
-    private boolean orderByAsc = true;
 
     /**
      * Compute total pages from total and pageSize / 根据总记录数和每页大小计算总页数
@@ -49,4 +47,5 @@ public class PageDTO<T> {
         }
         return pages;
     }
+
 }

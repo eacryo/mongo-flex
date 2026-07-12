@@ -9,9 +9,17 @@ public final class Condition {
     private final Object value;
     private final Class<?> implClass;
 
+    /**
+     * Create a normal condition (non-OR-separator) / 创建普通条件（非 OR 分割符）
+     *
+     * @param field     Java field name, must not be null / Java 字段名，不可为 null
+     * @param operator  query operator, must not be null / 查询操作符，不可为 null
+     * @param value     condition value (may be null for IS_NULL/IS_NOT_NULL) / 条件值（IS_NULL/IS_NOT_NULL 可为 null）
+     * @param implClass field declaring class, may be null for string-based queries / 字段声明类，字符串查询可为 null
+     */
     public Condition(String field, Operator operator, Object value, Class<?> implClass) {
-        this.field = field;
-        this.operator = operator;
+        this.field = Objects.requireNonNull(field, "field must not be null");
+        this.operator = Objects.requireNonNull(operator, "operator must not be null");
         this.value = value;
         this.implClass = implClass;
     }

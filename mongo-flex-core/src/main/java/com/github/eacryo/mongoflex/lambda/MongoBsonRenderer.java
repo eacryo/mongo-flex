@@ -58,6 +58,15 @@ public class MongoBsonRenderer {
         return Filters.or(orFilters);
     }
 
+    /**
+     * Render a group of conditions (AND-connected) to a Bson filter.
+     * <p>
+     * Raw type casts for sub-wrapper entityClass assignment (ELEM_MATCH, NOT) are
+     * semantically safe: ELEM_MATCH uses the field's declared generic element type,
+     * NOT reuses the outer wrapper's entityClass. Java wildcard capture prevents
+     * calling {@code setEntityClass(Class<?>)} on {@code LambdaQueryWrapper<?>}.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static Bson renderGroup(List<Condition> conditions, Class<?> entityClass, MongoMappingConvertor convertor) {
         List<Bson> filters = new ArrayList<>();
 

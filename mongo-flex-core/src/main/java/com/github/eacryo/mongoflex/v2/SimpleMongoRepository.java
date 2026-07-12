@@ -8,6 +8,7 @@ import com.github.eacryo.mongoflex.config.IdGenerator;
 import com.github.eacryo.mongoflex.constant.IdType;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.github.eacryo.mongoflex.entity.PageDTO;
+import com.github.eacryo.mongoflex.entity.SortOrder;
 import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.lambda.MongoBsonRenderer;
 import com.github.eacryo.mongoflex.util.DateValueGenerator;
@@ -272,12 +273,16 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
             }
             return sort;
         }
-        // Fallback：PageDTO 字符串排序
+        // Fallback：PageDTO SortOrder 排序
         if (pageDTO.getOrderBy() != null && !pageDTO.getOrderBy().isEmpty()) {
             Document sort = new Document();
-            for (String field : pageDTO.getOrderBy()) {
-                String mongoField = mongoMappingConvertor.resolveMongoFieldName(entityClass, field);
-                sort.append(mongoField, pageDTO.isOrderByAsc() ? 1 : -1);
+            for (SortOrder<T> so : pageDTO.getOrderBy()) {
+                // Lambda-based SortOrder carries implClass for correct @CollectionField resolution;
+                // string-based SortOrder falls back to entityClass / 基于 Lambda 的 SortOrder 携带 implClass 以正确解析 @CollectionField
+                Class<?> resolveClass = so.getImplClass() != null ? so.getImplClass() : entityClass;
+                String javaField = so.getJavaFieldName() != null ? so.getJavaFieldName() : so.getField();
+                String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, javaField);
+                sort.append(mongoField, so.isAscending() ? 1 : -1);
             }
             return sort;
         }

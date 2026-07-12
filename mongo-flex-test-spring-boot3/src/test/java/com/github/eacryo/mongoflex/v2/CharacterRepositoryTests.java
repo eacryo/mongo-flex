@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.github.eacryo.mongoflex.entity.PageDTO;
+import com.github.eacryo.mongoflex.entity.SortOrder;
 import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
 
 import java.util.Arrays;
@@ -199,8 +200,7 @@ public class CharacterRepositoryTests {
         PageDTO<Character> pageDTO = new PageDTO<>();
         pageDTO.setCurrentPage(1L);
         pageDTO.setPageSize(2L);
-        pageDTO.setOrderBy(Arrays.asList("address"));
-        pageDTO.setOrderByAsc(true);
+        pageDTO.setOrderBy(Arrays.asList(new SortOrder<>("address", true)));
 
         PageDTO<Character> result = characterRepositoryV2.findPageByEntity(query, pageDTO);
         System.out.println("findPageByEntity: total=" + result.getTotal()
