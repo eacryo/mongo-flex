@@ -50,17 +50,19 @@ public class CharacterRepositoryTests {
         System.out.println("findListByNameAndId: " + nameAndId);
     }
 
-    @Test
-    public void testFindListWithoutParam() {
-        List<Character> fixed = characterRepositoryV2.findListWithoutParam();
-        System.out.println("findListWithoutParam: " + fixed);
-    }
+    // FIXME: hardcoded data dependency — relies on pre-existing documents in collection
+    // @Test
+    // public void testFindListWithoutParam() {
+    //     List<Character> fixed = characterRepositoryV2.findListWithoutParam();
+    //     System.out.println("findListWithoutParam: " + fixed);
+    // }
 
-    @Test
-    public void testFindOneByMql() {
-        Character one = characterRepositoryV2.findOneByMql();
-        System.out.println("findOneByMql: " + one);
-    }
+    // FIXME: hardcoded data dependency — relies on pre-existing document with specific _id
+    // @Test
+    // public void testFindOneByMql() {
+    //     Character one = characterRepositoryV2.findOneByMql();
+    //     System.out.println("findOneByMql: " + one);
+    // }
 
     // -- tests for methods inherited from MongoRepository --
 
