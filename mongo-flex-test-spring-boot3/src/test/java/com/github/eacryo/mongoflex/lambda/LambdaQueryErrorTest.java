@@ -65,7 +65,7 @@ public class LambdaQueryErrorTest {
     void testNullWrapperForDelete() {
         log.info("=== test null wrapper delete -> NPE ===");
         assertThrows(NullPointerException.class, () ->
-                repo.delete(null));
+                repo.deleteMany(null));
         log.info("correctly threw NullPointerException");
     }
 
@@ -121,7 +121,7 @@ public class LambdaQueryErrorTest {
     void testNullIdForDeleteById() {
         log.info("=== test null id deleteById -> NPE ===");
         assertThrows(NullPointerException.class, () ->
-                repo.deleteById(null));
+                repo.deleteOneById(null));
         log.info("correctly threw NullPointerException");
     }
 
@@ -130,7 +130,7 @@ public class LambdaQueryErrorTest {
         log.info("=== test empty wrapper delete -> should throw ===");
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                repo.delete(wrapper));
+                repo.deleteMany(wrapper));
         log.info("correctly threw IllegalArgumentException: {}", ex.getMessage());
         assertTrue(ex.getMessage().contains("deleteAll"));
     }

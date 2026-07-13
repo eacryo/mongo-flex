@@ -79,7 +79,7 @@ public class CharacterRepositoryTests {
         System.out.println("inserted: " + inserted);
 
         // cleanup
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -93,7 +93,7 @@ public class CharacterRepositoryTests {
         Character fetched = characterRepositoryV2.findById(id);
         System.out.println("fetched by id: " + fetched);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -109,7 +109,7 @@ public class CharacterRepositoryTests {
         Character one = characterRepositoryV2.findOneByEntity(query);
         System.out.println("findOneByEntity: " + one);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -136,8 +136,8 @@ public class CharacterRepositoryTests {
         System.out.println("findListByEntity: " + list);
 
         // cleanup
-        characterRepositoryV2.deleteById(c1.getId());
-        characterRepositoryV2.deleteById(c2.getId());
+        characterRepositoryV2.deleteOneById(c1.getId());
+        characterRepositoryV2.deleteOneById(c2.getId());
     }
 
     @Test
@@ -166,7 +166,7 @@ public class CharacterRepositoryTests {
                 + ", records.size=" + (result.getRecords() != null ? result.getRecords().size() : 0));
 
         // cleanup：按 name 批量删
-        characterRepositoryV2.delete(Character::getName, commonName);
+        characterRepositoryV2.deleteMany(Character::getName, commonName);
     }
 
     @Test
@@ -193,7 +193,7 @@ public class CharacterRepositoryTests {
                 + ", totalPage=" + result.getTotalPage()
                 + ", records.size=" + (result.getRecords() != null ? result.getRecords().size() : 0));
 
-        characterRepositoryV2.delete(Character::getName, commonName);
+        characterRepositoryV2.deleteMany(Character::getName, commonName);
     }
 
     @Test
@@ -207,7 +207,7 @@ public class CharacterRepositoryTests {
         Character one = characterRepositoryV2.findOne(Character::getName, c.getName());
         System.out.println("findOne(field): " + one);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -242,7 +242,7 @@ public class CharacterRepositoryTests {
         Character fetched = characterRepositoryV2.findById(id);
         System.out.println("post-update fetched: " + fetched);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -257,7 +257,7 @@ public class CharacterRepositoryTests {
         long updated = characterRepositoryV2.updateMany(Character::getName, c.getName(), c);
         System.out.println("update(field) result: " + updated);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -268,7 +268,7 @@ public class CharacterRepositoryTests {
         c.setName("DeleteByIdTest-" + id);
         characterRepositoryV2.insert(c);
 
-        long del = characterRepositoryV2.deleteById(id);
+        long del = characterRepositoryV2.deleteOneById(id);
         System.out.println("deleteById result: " + del);
     }
 
@@ -292,7 +292,7 @@ public class CharacterRepositoryTests {
         c.setName("DeleteByFieldTest-" + id);
         characterRepositoryV2.insert(c);
 
-        long del = characterRepositoryV2.delete(Character::getName, c.getName());
+        long del = characterRepositoryV2.deleteMany(Character::getName, c.getName());
         System.out.println("delete(field) result: " + del);
     }
 }

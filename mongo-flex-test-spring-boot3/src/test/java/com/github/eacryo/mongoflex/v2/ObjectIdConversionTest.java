@@ -66,7 +66,7 @@ public class ObjectIdConversionTest {
     void testNoneDeleteById() {
         assertThat(noneId).isNotNull();
 
-        long deleted = noneRepo.deleteById(noneId);
+        long deleted = noneRepo.deleteOneById(noneId);
         assertThat(deleted).isEqualTo(1);
 
         assertThat(noneRepo.findById(noneId)).isNull();
@@ -91,6 +91,6 @@ public class ObjectIdConversionTest {
         assertThat(found.getName()).isEqualTo("test-ulid-no-convert");
 
         // 清理
-        characterRepository.deleteById(character.getId());
+        characterRepository.deleteOneById(character.getId());
     }
 }

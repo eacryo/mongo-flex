@@ -49,8 +49,8 @@ public class LambdaQueryBasicTest {
 
     @AfterEach
     void tearDown() {
-        repo.deleteById(id1);
-        repo.deleteById(id2);
+        repo.deleteOneById(id1);
+        repo.deleteOneById(id2);
         log.info("cleaned up: id1={}, id2={}", id1, id2);
     }
 

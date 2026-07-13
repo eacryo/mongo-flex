@@ -134,31 +134,27 @@ public interface MongoRepository<T, ID> {
     long updateMany(LambdaQueryWrapper<T> wrapper, T entity, boolean upsert);
 
 
-    /**
-     * 按 ID 删除，id 不可为 null。
-     */
-    long deleteById(ID id);
+    // ──── deleteOne / 删除单条 ────
 
-    /**
-     * 按实体中的非空字段作为条件删除，entity 不可为 null。
-     * null 字段会被忽略。如果所有字段都为 null 请使用 {@link #deleteAll()}。
-     */
+    /** 按 ID 删除单条，id 不可为 null。 */
+    long deleteOneById(ID id);
+    /** 按字段值删除第一条匹配文档，field 不可为 null。 */
+    <R> long deleteOne(SFunction<T, R> field, R value);
+    /** 按 LambdaQueryWrapper 条件删除第一条匹配文档，wrapper 不可为 null。 */
+    long deleteOne(LambdaQueryWrapper<T> wrapper);
+
+    // ──── deleteMany / 删除多条 ────
+
+    /** 按实体中的非空字段作为条件删除，entity 不可为 null。null 字段会被忽略。 */
     long deleteByEntity(T entity);
+    /** 按字段值删除所有匹配文档，field 不可为 null。 */
+    <R> long deleteMany(SFunction<T, R> field, R value);
+    /** 按 LambdaQueryWrapper 条件删除所有匹配文档，wrapper 不可为 null。 */
+    long deleteMany(LambdaQueryWrapper<T> wrapper);
 
-    /**
-     * 按单个字段的值删除，field 不可为 null。
-     */
-    <R> long delete(SFunction<T, R> field, R value);
+    // ──── deleteAll / 全量删除 ────
 
-    /**
-     * 按 LambdaQueryWrapper 条件删除，wrapper 不可为 null。
-     * wrapper 条件不能为空，全量删除请使用 {@link #deleteAll()}。
-     */
-    long delete(LambdaQueryWrapper<T> wrapper);
-
-    /**
-     * 删除全集合所有文档。
-     */
+    /** 删除全集合所有文档。 */
     long deleteAll();
 }
 

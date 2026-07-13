@@ -78,7 +78,7 @@ public class V2AnnotationQueryTests {
         character.setBirthday(new Date());
         characterRepositoryV2.insert(character);
         // cleanup / 清理
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test

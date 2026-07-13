@@ -66,7 +66,7 @@ public class MqlCountDeleteTest {
     void testDeleteByIdAfterMqlCount() {
         log.info("=== test deleteById after @Count ===");
         Assertions.assertNotNull(id);
-        long deleted = repo.deleteById(id);
+        long deleted = repo.deleteOneById(id);
         log.info("deleteById result: {}", deleted);
         Assertions.assertEquals(1, deleted);
 

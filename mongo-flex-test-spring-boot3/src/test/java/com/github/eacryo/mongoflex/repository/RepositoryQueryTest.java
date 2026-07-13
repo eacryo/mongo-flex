@@ -51,8 +51,8 @@ public class RepositoryQueryTest {
 
     @AfterAll
     void cleanup() {
-        repo.deleteById(id1);
-        repo.deleteById(id2);
+        repo.deleteOneById(id1);
+        repo.deleteOneById(id2);
         log.info("cleaned up");
     }
 

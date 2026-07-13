@@ -4,7 +4,7 @@
 
 ## 这是什么？
 
-Mongo-flex 是一个轻量级 MongoDB 工具库，提供 Repository 抽象、Lambda 查询构造器和 `@Mql` 注解来简化 MongoDB 开发。
+Mongo-flex 是一个轻量级 MongoDB 工具库，提供 Repository 抽象、Lambda 查询构造器和 `@Find`/`@Count`/`@Delete` 注解来简化 MongoDB 开发。
 
 ## 版本兼容性
 
@@ -78,10 +78,10 @@ public class Character {
 @MRepository
 public interface CharacterRepository extends MongoRepository<Character, String> {
 
-    @Mql("db.getCollection('character').find({'name':'#{name}'})")
+    @Find("{name: #{name}}")
     List<Character> findByName(@Param("name") String name);
 
-    @Mql("db.getCollection('character').count({})")
+    @Count("{}")
     long countAll();
 }
 ```
@@ -133,13 +133,22 @@ PageDTO<Character> result = repo.findPage(wrapper, page);
 result.getRecords();   // 当前页数据
 result.getTotal();     // 匹配文档总数
 
-// upsert：存在则更新，不存在则插入
+// 更新单条（updateOne）
 Character ganyu = new Character();
 ganyu.setId("some-id");
-ganyu.setName("Ganyu");
 ganyu.setArea("Liyue");
-repo.upsertById(ganyu);  // 按 _id upsert
-repo.upsert(Character::getName, "Ganyu", ganyu);  // 按字段 upsert
+repo.updateOneById(ganyu);  // 按 _id 更新单条
+
+// 更新多条（updateMany）
+repo.updateMany(Character::getName, "Ganyu", ganyu);  // 按字段更新所有匹配文档
+
+// upsert：存在则更新，不存在则插入（传入 upsert=true）
+repo.updateOneById(ganyu, true);  // 按 _id upsert
+repo.updateMany(Character::getName, "Ganyu", ganyu, true);  // 按字段 upsert
+
+// 删除
+repo.deleteOneById("some-id");  // 按 _id 删除单条
+repo.deleteMany(Character::getName, "Ganyu");  // 按字段删除所有匹配
 
 // OR 查询
 wrapper.or(w -> w.eq(Character::getArea, "Liyue")

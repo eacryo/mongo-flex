@@ -39,7 +39,7 @@ public class MqlParamTest {
 
     @AfterAll
     void cleanup() {
-        repo.deleteById(id);
+        repo.deleteOneById(id);
     }
 
     @Test

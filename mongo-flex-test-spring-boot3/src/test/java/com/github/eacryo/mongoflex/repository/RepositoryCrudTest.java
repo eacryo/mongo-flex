@@ -45,7 +45,7 @@ public class RepositoryCrudTest {
             Assertions.assertEquals("CrudTest-" + id, found.getName());
             Assertions.assertEquals("Fontaine", found.getAddress());
         } finally {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
             log.info("cleaned up: {}", id);
         }
     }
@@ -73,7 +73,7 @@ public class RepositoryCrudTest {
             log.info("after update: {}", found);
             Assertions.assertEquals("After", found.getAddress());
         } finally {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
         }
     }
 
@@ -92,7 +92,7 @@ public class RepositoryCrudTest {
         Character beforeDelete = repo.findById(id);
         Assertions.assertNotNull(beforeDelete);
 
-        long deleted = repo.deleteById(id);
+        long deleted = repo.deleteOneById(id);
         log.info("deleteById result: {}", deleted);
         Assertions.assertEquals(1, deleted);
 
@@ -123,7 +123,7 @@ public class RepositoryCrudTest {
             Assertions.assertNotNull(found);
             Assertions.assertEquals(name, found.getName());
         } finally {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
         }
     }
 
@@ -176,7 +176,7 @@ public class RepositoryCrudTest {
             Assertions.assertNotNull(all);
             Assertions.assertFalse(all.isEmpty());
         } finally {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
         }
     }
 

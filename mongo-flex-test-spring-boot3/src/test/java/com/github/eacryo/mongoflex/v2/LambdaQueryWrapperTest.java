@@ -37,7 +37,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertEquals(c.getName(), result.getName());
         System.out.println("findOne(wrapper): " + result);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -66,8 +66,8 @@ public class LambdaQueryWrapperTest {
         Assertions.assertFalse(list.isEmpty());
         System.out.println("findList(wrapper) size: " + list.size());
 
-        characterRepositoryV2.deleteById(id1);
-        characterRepositoryV2.deleteById(id2);
+        characterRepositoryV2.deleteOneById(id1);
+        characterRepositoryV2.deleteOneById(id2);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertTrue(count >= 1);
         System.out.println("count(wrapper): " + count);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -106,7 +106,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertTrue(updated > 0);
         System.out.println("update(wrapper) result: " + updated);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -121,7 +121,7 @@ public class LambdaQueryWrapperTest {
 
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Character::getName, c.getName());
-        long deleted = characterRepositoryV2.delete(wrapper);
+        long deleted = characterRepositoryV2.deleteMany(wrapper);
         Assertions.assertTrue(deleted > 0);
         System.out.println("delete(wrapper) result: " + deleted);
     }
@@ -151,8 +151,8 @@ public class LambdaQueryWrapperTest {
         Assertions.assertTrue(list.size() >= 2);
         System.out.println("orSimple size: " + list.size());
 
-        characterRepositoryV2.deleteById(id1);
-        characterRepositoryV2.deleteById(id2);
+        characterRepositoryV2.deleteOneById(id1);
+        characterRepositoryV2.deleteOneById(id2);
     }
 
     @Test
@@ -184,8 +184,8 @@ public class LambdaQueryWrapperTest {
         Assertions.assertTrue(list.size() >= 1);
         System.out.println("orChained: found " + list.size() + " matching either group");
 
-        characterRepositoryV2.deleteById(id1);
-        characterRepositoryV2.deleteById(id2);
+        characterRepositoryV2.deleteOneById(id1);
+        characterRepositoryV2.deleteOneById(id2);
     }
 
     @Test
@@ -219,8 +219,8 @@ public class LambdaQueryWrapperTest {
         Assertions.assertTrue(list.size() >= 1);
         System.out.println("orNestedWrapper: found " + list.size());
 
-        characterRepositoryV2.deleteById(idA);
-        characterRepositoryV2.deleteById(idB);
+        characterRepositoryV2.deleteOneById(idA);
+        characterRepositoryV2.deleteOneById(idB);
     }
 
     @Test
@@ -241,7 +241,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertEquals(1, list.size());
         System.out.println("pureAnd: " + list.get(0).getName());
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -278,7 +278,7 @@ public class LambdaQueryWrapperTest {
         // _id is returned by default per MongoDB behavior
         Assertions.assertEquals(id, result.getId());
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -308,7 +308,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertNull(result.getDescription()); // not included
         Assertions.assertNull(result.getArea());         // not included
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -346,7 +346,7 @@ public class LambdaQueryWrapperTest {
             Assertions.assertEquals("Sumeru", ch.getArea());
         }
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -395,8 +395,8 @@ public class LambdaQueryWrapperTest {
             Assertions.assertNull(ch.getDescription()); // not included
         }
 
-        characterRepositoryV2.deleteById(id1);
-        characterRepositoryV2.deleteById(id2);
+        characterRepositoryV2.deleteOneById(id1);
+        characterRepositoryV2.deleteOneById(id2);
     }
 
     @Test
@@ -447,8 +447,8 @@ public class LambdaQueryWrapperTest {
             Assertions.assertNull(ch.getDescription()); // not included
         }
 
-        characterRepositoryV2.deleteById(id1);
-        characterRepositoryV2.deleteById(id2);
+        characterRepositoryV2.deleteOneById(id1);
+        characterRepositoryV2.deleteOneById(id2);
     }
 
     @Test
@@ -486,7 +486,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertNull(result.getDescription());
         Assertions.assertNull(result.getBirthday());
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -515,7 +515,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertNull(result.getDescription()); // excluded
         Assertions.assertNull(result.getArea());         // excluded
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -553,7 +553,7 @@ public class LambdaQueryWrapperTest {
         // non-included fields should be null
         Assertions.assertNull(result.getDescription());
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -606,7 +606,7 @@ public class LambdaQueryWrapperTest {
             Assertions.assertNull(ch.getBirthday());    // excluded
         }
 
-        characterRepositoryV2.deleteById(id1);
-        characterRepositoryV2.deleteById(id2);
+        characterRepositoryV2.deleteOneById(id1);
+        characterRepositoryV2.deleteOneById(id2);
     }
 }

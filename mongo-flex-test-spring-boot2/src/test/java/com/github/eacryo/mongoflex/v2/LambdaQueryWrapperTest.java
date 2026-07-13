@@ -37,7 +37,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertEquals(c.getName(), result.getName());
         System.out.println("findOne(wrapper): " + result);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -66,8 +66,8 @@ public class LambdaQueryWrapperTest {
         Assertions.assertFalse(list.isEmpty());
         System.out.println("findList(wrapper) size: " + list.size());
 
-        characterRepositoryV2.deleteById(id1);
-        characterRepositoryV2.deleteById(id2);
+        characterRepositoryV2.deleteOneById(id1);
+        characterRepositoryV2.deleteOneById(id2);
     }
 
     @Test
@@ -86,7 +86,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertTrue(count >= 1);
         System.out.println("count(wrapper): " + count);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -106,7 +106,7 @@ public class LambdaQueryWrapperTest {
         Assertions.assertTrue(updated > 0);
         System.out.println("update(wrapper) result: " + updated);
 
-        characterRepositoryV2.deleteById(id);
+        characterRepositoryV2.deleteOneById(id);
     }
 
     @Test
@@ -121,7 +121,7 @@ public class LambdaQueryWrapperTest {
 
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Character::getName, c.getName());
-        long deleted = characterRepositoryV2.delete(wrapper);
+        long deleted = characterRepositoryV2.deleteMany(wrapper);
         Assertions.assertTrue(deleted > 0);
         System.out.println("delete(wrapper) result: " + deleted);
     }

@@ -45,7 +45,7 @@ public class MqlFindTest {
     @AfterAll
     void cleanup() {
         for (String id : ids) {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
         }
         log.info("cleaned up {} documents", ids.size());
     }

@@ -4,7 +4,7 @@
 
 ## What is it?
 
-Mongo-flex is a lightweight MongoDB toolkit for simplifying development. It provides a repository abstraction, lambda-based query builder, and `@Mql` annotation for raw MongoDB shell queries.
+Mongo-flex is a lightweight MongoDB toolkit for simplifying development. It provides a repository abstraction, lambda-based query builder, and `@Find`/`@Count`/`@Delete` annotations for JSON-based queries.
 
 ## Compatibility
 
@@ -78,10 +78,10 @@ public class Character {
 @MRepository
 public interface CharacterRepository extends MongoRepository<Character, String> {
 
-    @Mql("db.getCollection('character').find({'name':'#{name}'})")
+    @Find("{name: #{name}}")
     List<Character> findByName(@Param("name") String name);
 
-    @Mql("db.getCollection('character').count({})")
+    @Count("{}")
     long countAll();
 }
 ```
@@ -133,13 +133,22 @@ PageDTO<Character> result = repo.findPage(wrapper, page);
 result.getRecords();   // current page data
 result.getTotal();     // total matching documents
 
-// upsert: update if exists, insert if not
+// updateOne — update first match
 Character ganyu = new Character();
 ganyu.setId("some-id");
-ganyu.setName("Ganyu");
 ganyu.setArea("Liyue");
-repo.upsertById(ganyu);  // upsert by _id
-repo.upsert(Character::getName, "Ganyu", ganyu);  // upsert by field
+repo.updateOneById(ganyu);  // update by _id
+
+// updateMany — update all matches
+repo.updateMany(Character::getName, "Ganyu", ganyu);  // update by field
+
+// upsert — update if exists, insert if not (pass upsert=true)
+repo.updateOneById(ganyu, true);  // upsert by _id
+repo.updateMany(Character::getName, "Ganyu", ganyu, true);  // upsert by field
+
+// delete
+repo.deleteOneById("some-id");  // delete one by _id
+repo.deleteMany(Character::getName, "Ganyu");  // delete all matches by field
 
 // OR queries
 wrapper.or(w -> w.eq(Character::getArea, "Liyue")

@@ -430,11 +430,29 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     // ---- delete ----
 
     @Override
-    public long deleteById(ID id) {
+    public long deleteOneById(ID id) {
         Objects.requireNonNull(id, "id must not be null");
         Object queryId = convertIdIfNecessary(id);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName)
                 .deleteOne(Filters.eq("_id", queryId));
+        return result.getDeletedCount();
+    }
+
+    @Override
+    public <R> long deleteOne(SFunction<T, R> field, R value) {
+        Objects.requireNonNull(field, "field must not be null");
+        Document filter = buildFilterFromLambda(field, value);
+        DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteOne(filter);
+        return result.getDeletedCount();
+    }
+
+    @Override
+    public long deleteOne(LambdaQueryWrapper<T> wrapper) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
+        requireNonEmptyWrapper(wrapper, "deleteOne");
+        ensureEntityClass(wrapper);
+        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
+        DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteOne(filter);
         return result.getDeletedCount();
     }
 
@@ -448,7 +466,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     @Override
-    public <R> long delete(SFunction<T, R> field, R value) {
+    public <R> long deleteMany(SFunction<T, R> field, R value) {
         Objects.requireNonNull(field, "field must not be null");
         Document filter = buildFilterFromLambda(field, value);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
@@ -456,9 +474,9 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     @Override
-    public long delete(LambdaQueryWrapper<T> wrapper) {
+    public long deleteMany(LambdaQueryWrapper<T> wrapper) {
         Objects.requireNonNull(wrapper, "wrapper must not be null");
-        requireNonEmptyWrapper(wrapper, "delete");
+        requireNonEmptyWrapper(wrapper, "deleteMany");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);

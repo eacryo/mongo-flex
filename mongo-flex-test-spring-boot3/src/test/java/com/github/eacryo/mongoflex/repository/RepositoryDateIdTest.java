@@ -38,7 +38,7 @@ public class RepositoryDateIdTest {
         log.info("inserted: createAt={}, updateAt={}", inserted.getCreateAt(), inserted.getUpdateAt());
         Assertions.assertNotNull(inserted.getCreateAt());
         // cleanup / 清理
-        repo.deleteById(id);
+        repo.deleteOneById(id);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class RepositoryDateIdTest {
         log.info("inserted: updateAt={}", inserted.getUpdateAt());
         Assertions.assertNotNull(inserted.getUpdateAt());
         // cleanup / 清理
-        repo.deleteById(id);
+        repo.deleteOneById(id);
     }
 
     @Test
@@ -81,7 +81,7 @@ public class RepositoryDateIdTest {
             Assertions.assertEquals(originalCreateAt, afterUpdate.getCreateAt());
             Assertions.assertNotEquals(originalUpdateAt, afterUpdate.getUpdateAt());
         } finally {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
         }
     }
 
@@ -99,7 +99,7 @@ public class RepositoryDateIdTest {
         Assertions.assertNotNull(inserted.getId());
         Assertions.assertEquals(26, inserted.getId().length());
         // cleanup / 清理
-        repo.deleteById(id);
+        repo.deleteOneById(id);
     }
 
     @Test
@@ -115,7 +115,7 @@ public class RepositoryDateIdTest {
         Assertions.assertEquals(id, inserted.getId());
         log.info("id preserved: {}", id);
         // cleanup / 清理
-        repo.deleteById(id);
+        repo.deleteOneById(id);
     }
 
     @Test
@@ -140,7 +140,7 @@ public class RepositoryDateIdTest {
             log.info("after update createAt: {}", afterUpdate.getCreateAt());
             Assertions.assertEquals(originalCreateAt, afterUpdate.getCreateAt());
         } finally {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
         }
     }
 

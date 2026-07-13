@@ -66,7 +66,7 @@ public class RepositoryWriteGuardTest {
         log.info("=== test delete(empty wrapper) ===");
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                repo.delete(wrapper));
+                repo.deleteMany(wrapper));
         log.info("correctly threw IllegalArgumentException: {}", ex.getMessage());
         assertTrue(ex.getMessage().contains("deleteAll"));
     }
@@ -103,11 +103,11 @@ public class RepositoryWriteGuardTest {
 
             LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
             wrapper.eq(Character::getName, "WriteGuard-" + id);
-            long deleted = repo.delete(wrapper);
+            long deleted = repo.deleteMany(wrapper);
             log.info("delete result: {}", deleted);
             assertEquals(1, deleted);
         } finally {
-            repo.deleteById(id);
+            repo.deleteOneById(id);
         }
     }
 
