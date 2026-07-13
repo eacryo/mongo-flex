@@ -301,7 +301,7 @@ public class CharacterRepositoryTests {
         characterRepositoryV2.insert(c);
 
         c.setAddress("After");
-        long updated = characterRepositoryV2.updateById(c);
+        long updated = characterRepositoryV2.updateOneById(c);
         System.out.println("updateById result: " + updated);
 
         Character fetched = characterRepositoryV2.findById(id);
@@ -319,7 +319,7 @@ public class CharacterRepositoryTests {
         c.setAddress("Addr");
         characterRepositoryV2.insert(c);
 
-        long updated = characterRepositoryV2.update(Character::getName, c.getName(), c);
+        long updated = characterRepositoryV2.updateMany(Character::getName, c.getName(), c);
         System.out.println("update(field) result: " + updated);
 
         characterRepositoryV2.deleteById(id);
@@ -337,7 +337,7 @@ public class CharacterRepositoryTests {
         c.setId(id);
         c.setName("UpsertTest-" + id);
         c.setAddress("Upserted");
-        long result1 = characterRepositoryV2.upsertById(c);
+        long result1 = characterRepositoryV2.updateOneById(c, true);
         System.out.println("upsertById (insert) result: " + result1);
 
         // 验证已插入
@@ -346,7 +346,7 @@ public class CharacterRepositoryTests {
 
         // 再次 upsert 同 _id：应更新
         c.setAddress("Upserted-Updated");
-        long result2 = characterRepositoryV2.upsertById(c);
+        long result2 = characterRepositoryV2.updateOneById(c, true);
         System.out.println("upsertById (update) result: " + result2);
 
         Character afterUpdate = characterRepositoryV2.findById(id);

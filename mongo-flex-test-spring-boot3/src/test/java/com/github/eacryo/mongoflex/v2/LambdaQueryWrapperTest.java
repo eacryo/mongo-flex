@@ -102,7 +102,7 @@ public class LambdaQueryWrapperTest {
         c.setAddress("Snezhnaya");
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Character::getName, c.getName());
-        long updated = characterRepositoryV2.update(wrapper, c);
+        long updated = characterRepositoryV2.updateMany(wrapper, c);
         Assertions.assertTrue(updated > 0);
         System.out.println("update(wrapper) result: " + updated);
 

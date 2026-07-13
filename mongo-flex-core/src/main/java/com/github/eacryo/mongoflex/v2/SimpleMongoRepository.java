@@ -318,112 +318,113 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
     }
 
-    // ---- update ----
+    // ---- update / upsert ----
 
     @Override
-    public long updateById(T entity) {
+    public long updateOneById(T entity) {
+        return doUpdateOneById(entity, false);
+    }
+
+    @Override
+    public long updateOneById(T entity, boolean upsert) {
+        return doUpdateOneById(entity, upsert);
+    }
+
+    private long doUpdateOneById(T entity, boolean upsert) {
         Objects.requireNonNull(entity, "entity must not be null");
-        fillDate(entity, false);
+        fillDate(entity, upsert);
         Document doc = mongoMappingConvertor.write(entity);
         Object id = doc.remove("_id");
         if (id == null) {
-            throw new IllegalArgumentException("Entity must have an non-null id for updateById");
+            throw new IllegalArgumentException("Entity must have a non-null id for updateOneById");
         }
         Object queryId = (id instanceof String && ObjectId.isValid((String) id)) ? new ObjectId((String) id) : id;
         Document updateDoc = new Document("$set", doc);
-        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
-                .updateOne(Filters.eq("_id", queryId), updateDoc);
-        return updateResult.getModifiedCount();
+        UpdateOptions options = upsert ? new UpdateOptions().upsert(true) : new UpdateOptions();
+        UpdateResult result = databaseSupplier.get().getCollection(collectionName)
+                .updateOne(Filters.eq("_id", queryId), updateDoc, options);
+        return result.getModifiedCount();
+    }
+
+    // ── updateOne by field ──
+
+    @Override
+    public <R> long updateOne(SFunction<T, R> field, R value, T entity) {
+        return doExecuteUpdate(field, value, entity, false, false);
     }
 
     @Override
-    public <R> long update(SFunction<T, R> field, R value, T entity) {
+    public <R> long updateOne(SFunction<T, R> field, R value, T entity, boolean upsert) {
+        return doExecuteUpdate(field, value, entity, false, upsert);
+    }
+
+    // ── updateOne by wrapper ──
+
+    @Override
+    public long updateOne(LambdaQueryWrapper<T> wrapper, T entity) {
+        return doExecuteUpdate(wrapper, entity, false, false);
+    }
+
+    @Override
+    public long updateOne(LambdaQueryWrapper<T> wrapper, T entity, boolean upsert) {
+        return doExecuteUpdate(wrapper, entity, false, upsert);
+    }
+
+    // ── updateMany by field ──
+
+    @Override
+    public <R> long updateMany(SFunction<T, R> field, R value, T entity) {
+        return doExecuteUpdate(field, value, entity, true, false);
+    }
+
+    @Override
+    public <R> long updateMany(SFunction<T, R> field, R value, T entity, boolean upsert) {
+        return doExecuteUpdate(field, value, entity, true, upsert);
+    }
+
+    // ── updateMany by wrapper ──
+
+    @Override
+    public long updateMany(LambdaQueryWrapper<T> wrapper, T entity) {
+        return doExecuteUpdate(wrapper, entity, true, false);
+    }
+
+    @Override
+    public long updateMany(LambdaQueryWrapper<T> wrapper, T entity, boolean upsert) {
+        return doExecuteUpdate(wrapper, entity, true, upsert);
+    }
+
+    // ── internal helpers ──
+
+    private <R> long doExecuteUpdate(SFunction<T, R> field, R value, T entity, boolean many, boolean upsert) {
         Objects.requireNonNull(field, "field must not be null");
         Objects.requireNonNull(entity, "entity must not be null");
         Document filter = buildFilterFromLambda(field, value);
-        fillDate(entity, false);
-        Document doc = mongoMappingConvertor.write(entity);
-        doc.remove("_id");
-        Document updateDoc = new Document("$set", doc);
-        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
-                .updateMany(filter, updateDoc);
-        return updateResult.getModifiedCount();
+        return executeUpdate(filter, entity, many, upsert);
     }
 
-    @Override
-    public long update(LambdaQueryWrapper<T> wrapper, T entity) {
+    private long doExecuteUpdate(LambdaQueryWrapper<T> wrapper, T entity, boolean many, boolean upsert) {
         Objects.requireNonNull(wrapper, "wrapper must not be null");
         Objects.requireNonNull(entity, "entity must not be null");
-        requireNonEmptyWrapper(wrapper, "update");
+        requireNonEmptyWrapper(wrapper, many ? "updateMany" : "updateOne");
         ensureEntityClass(wrapper);
         Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
-        fillDate(entity, false);
+        return executeUpdate(filter, entity, many, upsert);
+    }
+
+    private long executeUpdate(Bson filter, T entity, boolean many, boolean upsert) {
+        fillDate(entity, upsert);
         Document doc = mongoMappingConvertor.write(entity);
         doc.remove("_id");
         Document updateDoc = new Document("$set", doc);
-        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
-                .updateMany(filter, updateDoc);
-        return updateResult.getModifiedCount();
-    }
-
-    @Override
-    public long updateAll(T entity) {
-        Objects.requireNonNull(entity, "entity must not be null");
-        fillDate(entity, false);
-        Document doc = mongoMappingConvertor.write(entity);
-        doc.remove("_id");
-        Document updateDoc = new Document("$set", doc);
-        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
-                .updateMany(new Document(), updateDoc);
-        return updateResult.getModifiedCount();
-    }
-
-    // ---- upsert ----
-
-    @Override
-    public long upsertById(T entity) {
-        Objects.requireNonNull(entity, "entity must not be null");
-        fillDate(entity, true);
-        Document doc = mongoMappingConvertor.write(entity);
-        Object id = doc.remove("_id");
-        if (id == null) {
-            throw new IllegalArgumentException("Entity must have an non-null id for upsertById");
+        UpdateOptions options = upsert ? new UpdateOptions().upsert(true) : new UpdateOptions();
+        UpdateResult result;
+        if (many) {
+            result = databaseSupplier.get().getCollection(collectionName).updateMany(filter, updateDoc, options);
+        } else {
+            result = databaseSupplier.get().getCollection(collectionName).updateOne(filter, updateDoc, options);
         }
-        Object queryId = (id instanceof String && ObjectId.isValid((String) id)) ? new ObjectId((String) id) : id;
-        Document updateDoc = new Document("$set", doc);
-        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
-                .updateOne(Filters.eq("_id", queryId), updateDoc, new UpdateOptions().upsert(true));
-        return updateResult.getModifiedCount();
-    }
-
-    @Override
-    public <R> long upsert(SFunction<T, R> field, R value, T entity) {
-        Objects.requireNonNull(field, "field must not be null");
-        Objects.requireNonNull(entity, "entity must not be null");
-        Document filter = buildFilterFromLambda(field, value);
-        fillDate(entity, true);
-        Document doc = mongoMappingConvertor.write(entity);
-        doc.remove("_id");
-        Document updateDoc = new Document("$set", doc);
-        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
-                .updateMany(filter, updateDoc, new UpdateOptions().upsert(true));
-        return updateResult.getModifiedCount();
-    }
-
-    @Override
-    public long upsert(LambdaQueryWrapper<T> wrapper, T entity) {
-        Objects.requireNonNull(wrapper, "wrapper must not be null");
-        Objects.requireNonNull(entity, "entity must not be null");
-        requireNonEmptyWrapper(wrapper, "upsert");
-        ensureEntityClass(wrapper);
-        Bson filter = MongoBsonRenderer.render(wrapper, mongoMappingConvertor);
-        fillDate(entity, true);
-        Document doc = mongoMappingConvertor.write(entity);
-        doc.remove("_id");
-        Document updateDoc = new Document("$set", doc);
-        UpdateResult updateResult = databaseSupplier.get().getCollection(collectionName)
-                .updateMany(filter, updateDoc, new UpdateOptions().upsert(true));
-        return updateResult.getModifiedCount();
+        return result.getModifiedCount();
     }
 
     // ---- delete ----
@@ -522,8 +523,9 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     private void requireNonEmptyWrapper(LambdaQueryWrapper<T> wrapper, String operation) {
         if (wrapper.getConditions().isEmpty()) {
+            String hint = operation.startsWith("delete") ? "deleteAll" : "";
             throw new IllegalArgumentException(
-                    operation + " requires at least one condition. Use " + operation + "All() to operate on all documents.");
+                    operation + " requires at least one condition." + (hint.isEmpty() ? "" : " Use " + hint + "() to operate on all documents."));
         }
     }
 

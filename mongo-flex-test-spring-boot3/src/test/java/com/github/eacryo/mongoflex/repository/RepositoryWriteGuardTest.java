@@ -40,7 +40,7 @@ public class RepositoryWriteGuardTest {
     @Test
     void testUpdateByIdNullEntity() {
         log.info("=== test updateById(null) ===");
-        assertThrows(NullPointerException.class, () -> repo.updateById(null));
+        assertThrows(NullPointerException.class, () -> repo.updateOneById(null));
         log.info("correctly threw NullPointerException");
     }
 
@@ -76,9 +76,9 @@ public class RepositoryWriteGuardTest {
         log.info("=== test update(empty wrapper, entity) ===");
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                repo.update(wrapper, new Character()));
+                repo.updateMany(wrapper, new Character()));
         log.info("correctly threw IllegalArgumentException: {}", ex.getMessage());
-        assertTrue(ex.getMessage().contains("updateAll"));
+        assertTrue(ex.getMessage().contains("requires at least one condition"));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class RepositoryWriteGuardTest {
         log.info("=== test update(wrapper, null entity) ===");
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
         wrapper.eq(Character::getName, "test");
-        assertThrows(NullPointerException.class, () -> repo.update(wrapper, null));
+        assertThrows(NullPointerException.class, () -> repo.updateMany(wrapper, null));
         log.info("correctly threw NullPointerException");
     }
 

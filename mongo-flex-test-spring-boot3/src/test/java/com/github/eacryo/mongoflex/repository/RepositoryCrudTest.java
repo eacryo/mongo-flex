@@ -65,7 +65,7 @@ public class RepositoryCrudTest {
             log.info("inserted: {}", c);
 
             c.setAddress("After");
-            long updated = repo.updateById(c);
+            long updated = repo.updateOneById(c);
             log.info("updateById result: {}", updated);
             Assertions.assertEquals(1, updated);
 

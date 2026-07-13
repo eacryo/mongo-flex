@@ -161,7 +161,7 @@ public class CustomGeneratorTest {
         entity.setName("batch-1-updated");
         entity.setAge(99);
 
-        long modified = repository.updateById(entity);
+        long modified = repository.updateOneById(entity);
         assertThat(modified).isEqualTo(1);
 
         CustomGeneratorEntity found = repository.findById(id);

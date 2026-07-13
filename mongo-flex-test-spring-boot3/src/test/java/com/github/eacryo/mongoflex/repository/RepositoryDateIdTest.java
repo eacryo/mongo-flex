@@ -74,7 +74,7 @@ public class RepositoryDateIdTest {
 
             Thread.sleep(1000);
             inserted.setAddress("Updated");
-            repo.updateById(inserted);
+            repo.updateOneById(inserted);
 
             Character afterUpdate = repo.findById(id);
             log.info("after update: createAt={}, updateAt={}", afterUpdate.getCreateAt(), afterUpdate.getUpdateAt());
@@ -134,7 +134,7 @@ public class RepositoryDateIdTest {
 
             Thread.sleep(1000);
             inserted.setAddress("Changed");
-            repo.updateById(inserted);
+            repo.updateOneById(inserted);
 
             Character afterUpdate = repo.findById(id);
             log.info("after update createAt: {}", afterUpdate.getCreateAt());

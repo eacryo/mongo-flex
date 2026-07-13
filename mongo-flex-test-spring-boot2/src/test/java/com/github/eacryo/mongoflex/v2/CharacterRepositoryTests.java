@@ -236,7 +236,7 @@ public class CharacterRepositoryTests {
         characterRepositoryV2.insert(c);
 
         c.setAddress("After");
-        long updated = characterRepositoryV2.updateById(c);
+        long updated = characterRepositoryV2.updateOneById(c);
         System.out.println("updateById result: " + updated);
 
         Character fetched = characterRepositoryV2.findById(id);
@@ -254,7 +254,7 @@ public class CharacterRepositoryTests {
         c.setAddress("Addr");
         characterRepositoryV2.insert(c);
 
-        long updated = characterRepositoryV2.update(Character::getName, c.getName(), c);
+        long updated = characterRepositoryV2.updateMany(Character::getName, c.getName(), c);
         System.out.println("update(field) result: " + updated);
 
         characterRepositoryV2.deleteById(id);

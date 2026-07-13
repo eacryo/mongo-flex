@@ -57,7 +57,7 @@ public class LambdaQueryErrorTest {
     void testNullWrapperForUpdate() {
         log.info("=== test null wrapper update -> NPE ===");
         assertThrows(NullPointerException.class, () ->
-                repo.update(null, new Character()));
+                repo.updateMany(null, new Character()));
         log.info("correctly threw NullPointerException");
     }
 
@@ -105,15 +105,7 @@ public class LambdaQueryErrorTest {
     void testNullEntityForUpdateById() {
         log.info("=== test null entity updateById -> NPE ===");
         assertThrows(NullPointerException.class, () ->
-                repo.updateById(null));
-        log.info("correctly threw NullPointerException");
-    }
-
-    @Test
-    void testNullEntityForUpdateAll() {
-        log.info("=== test null entity updateAll -> NPE ===");
-        assertThrows(NullPointerException.class, () ->
-                repo.updateAll(null));
+                repo.updateOneById(null));
         log.info("correctly threw NullPointerException");
     }
 
@@ -148,9 +140,9 @@ public class LambdaQueryErrorTest {
         log.info("=== test empty wrapper update -> should throw ===");
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
-                repo.update(wrapper, new Character()));
+                repo.updateMany(wrapper, new Character()));
         log.info("correctly threw IllegalArgumentException: {}", ex.getMessage());
-        assertTrue(ex.getMessage().contains("updateAll"));
+        assertTrue(ex.getMessage().contains("requires at least one condition"));
     }
 
 }

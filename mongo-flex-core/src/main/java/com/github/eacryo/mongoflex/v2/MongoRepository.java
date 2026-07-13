@@ -104,42 +104,35 @@ public interface MongoRepository<T, ID> {
      */
     <R> long count(SFunction<T, R> field, R value);
 
-    /**
-     * 按 ID 更新，entity 不可为 null，且必须包含非 null 的 _id。
-     */
-    long updateById(T entity);
+    // ──── updateOne / 更新单条 ────
 
-    /**
-     * 按单个字段的值作为条件更新，field 和 entity 不可为 null。
-     */
-    <R> long update(SFunction<T, R> field, R value, T entity);
+    /** 按 ID 更新单条，entity 不可为 null 且必须包含非 null 的 _id。 */
+    long updateOneById(T entity);
+    /** 按 ID 更新单条，可选 upsert（匹配不到时插入）。 */
+    long updateOneById(T entity, boolean upsert);
 
-    /**
-     * 按 LambdaQueryWrapper 条件更新，wrapper 和 entity 不可为 null。
-     * wrapper 条件不能为空，全量更新请使用 {@link #updateAll(Object)}。
-     */
-    long update(LambdaQueryWrapper<T> wrapper, T entity);
+    /** 按字段值更新第一条匹配文档，field 和 entity 不可为 null。 */
+    <R> long updateOne(SFunction<T, R> field, R value, T entity);
+    /** 按字段值更新第一条匹配文档，可选 upsert。 */
+    <R> long updateOne(SFunction<T, R> field, R value, T entity, boolean upsert);
 
-    /**
-     * 更新全集合所有文档，entity 不可为 null。
-     */
-    long updateAll(T entity);
+    /** 按 LambdaQueryWrapper 条件更新第一条匹配文档，wrapper 和 entity 不可为 null。 */
+    long updateOne(LambdaQueryWrapper<T> wrapper, T entity);
+    /** 按 LambdaQueryWrapper 条件更新第一条匹配文档，可选 upsert。 */
+    long updateOne(LambdaQueryWrapper<T> wrapper, T entity, boolean upsert);
 
-    /**
-     * 按 ID upsert：如果 _id 匹配则更新，否则插入一条新文档。entity 不可为 null，且必须包含非 null 的 _id。
-     */
-    long upsertById(T entity);
+    // ──── updateMany / 更新多条 ────
 
-    /**
-     * 按单个字段的值作为条件 upsert，field 和 entity 不可为 null。
-     */
-    <R> long upsert(SFunction<T, R> field, R value, T entity);
+    /** 按字段值更新所有匹配文档，field 和 entity 不可为 null。 */
+    <R> long updateMany(SFunction<T, R> field, R value, T entity);
+    /** 按字段值更新所有匹配文档，可选 upsert。 */
+    <R> long updateMany(SFunction<T, R> field, R value, T entity, boolean upsert);
 
-    /**
-     * Upsert by LambdaQueryWrapper conditions. wrapper and entity must not be null. / 按 LambdaQueryWrapper 条件 upsert，wrapper 和 entity 不可为 null。
-     * wrapper conditions must not be empty. / wrapper 条件不能为空。
-     */
-    long upsert(LambdaQueryWrapper<T> wrapper, T entity);
+    /** 按 LambdaQueryWrapper 条件更新所有匹配文档，wrapper 和 entity 不可为 null。 */
+    long updateMany(LambdaQueryWrapper<T> wrapper, T entity);
+    /** 按 LambdaQueryWrapper 条件更新所有匹配文档，可选 upsert。 */
+    long updateMany(LambdaQueryWrapper<T> wrapper, T entity, boolean upsert);
+
 
     /**
      * 按 ID 删除，id 不可为 null。

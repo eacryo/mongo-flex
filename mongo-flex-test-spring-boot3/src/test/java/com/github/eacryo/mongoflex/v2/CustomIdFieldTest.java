@@ -68,7 +68,7 @@ public class CustomIdFieldTest {
         entity.setName("alice-updated");
         entity.setAge(31);
 
-        long modified = repository.updateById(entity);
+        long modified = repository.updateOneById(entity);
 
         assertThat(modified).isEqualTo(1);
 
