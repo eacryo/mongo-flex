@@ -12,14 +12,17 @@ public final class Condition {
     /**
      * Create a normal condition (non-OR-separator) / 创建普通条件（非 OR 分割符）
      *
-     * @param field     Java field name, must not be null / Java 字段名，不可为 null
+     * @param field     Java field name — null only allowed for NOT operator (logical negation of sub-query)
+     *                  has no single-field context) / Java 字段名——仅 NOT 操作符允许为 null（逻辑取反子查询，无单字段上下文）
      * @param operator  query operator, must not be null / 查询操作符，不可为 null
      * @param value     condition value (may be null for IS_NULL/IS_NOT_NULL) / 条件值（IS_NULL/IS_NOT_NULL 可为 null）
      * @param implClass field declaring class, may be null for string-based queries / 字段声明类，字符串查询可为 null
      */
     public Condition(String field, Operator operator, Object value, Class<?> implClass) {
-        this.field = Objects.requireNonNull(field, "field must not be null");
         this.operator = Objects.requireNonNull(operator, "operator must not be null");
+        this.field = (field == null && operator != Operator.NOT)
+                ? Objects.requireNonNull(field, "field must not be null")
+                : field;
         this.value = value;
         this.implClass = implClass;
     }

@@ -48,7 +48,7 @@ import java.util.function.Supplier;
 public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     private final Supplier<MongoDatabase> databaseSupplier;
-    private final String collectionName;
+    final String collectionName;
     private final Class<T> entityClass;
     private final MongoMappingConvertor mongoMappingConvertor;
     private final IdGenerator<?> idGenerator;
@@ -467,6 +467,54 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     @Override
     public long deleteAll() {
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(new Document());
+        return result.getDeletedCount();
+    }
+
+    // ---- annotation-driven query execution / 注解驱动的查询执行 ----
+    // These are called by MyRepositoryProxyHandler for @Find/@Count/@Delete methods.
+    // They bypass the Lambda query wrapper and work directly with Bson filters.
+    // 以下方法供 MyRepositoryProxyHandler 调用，用于 @Find/@Count/@Delete 注解方法，
+    // 绕过 Lambda 查询包装器，直接使用 Bson 过滤器。
+
+    /**
+     * Find list by raw Bson filter with optional pagination / 根据原始 Bson 过滤器查询列表，可选分页
+     */
+    public List<T> findListByFilter(Bson filter, int skip, int limit) {
+        FindIterable<Document> iter = databaseSupplier.get().getCollection(collectionName).find(filter);
+        if (skip > 0) {
+            iter = iter.skip(skip);
+        }
+        if (limit > 0) {
+            iter = iter.limit(limit);
+        }
+        List<Document> docs = iter.into(new ArrayList<>());
+        List<T> result = new ArrayList<>();
+        for (Document d : docs) {
+            result.add(mongoMappingConvertor.read(d, entityClass));
+        }
+        return result;
+    }
+
+    /**
+     * Find one by raw Bson filter / 根据原始 Bson 过滤器查询单条
+     */
+    public T findOneByFilter(Bson filter) {
+        Document document = databaseSupplier.get().getCollection(collectionName).find(filter).first();
+        return mongoMappingConvertor.read(document, entityClass);
+    }
+
+    /**
+     * Count by raw Bson filter / 根据原始 Bson 过滤器统计数量
+     */
+    public long countByFilter(Bson filter) {
+        return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
+    }
+
+    /**
+     * Delete by raw Bson filter / 根据原始 Bson 过滤器删除
+     */
+    public long deleteByFilter(Bson filter) {
+        DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
         return result.getDeletedCount();
     }
 

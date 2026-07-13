@@ -6,6 +6,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.bson.Document;
 
+/**
+ * MongoDB Shell command parser — <b>deprecated</b>, use {@link JsonTemplateParser} instead.
+ * <p>
+ * MongoDB Shell 命令解析器——<b>已废弃</b>，请使用 {@link JsonTemplateParser} 替代。
+ *
+ * @deprecated since 2.0 — replaced by {@link JsonTemplateParser} which works with pure JSON filter
+ *             templates and {@link Find}/{@link Count}/{@link Delete} annotations.
+ */
+@Deprecated
 public class QueryParser {
     //这里只解析单引号'不解析双引号"
     private final Pattern commandPattern = Pattern.compile("^db\\.getCollection\\('(.*?)'\\)\\." +

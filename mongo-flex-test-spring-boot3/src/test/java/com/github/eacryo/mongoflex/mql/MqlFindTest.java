@@ -24,24 +24,30 @@ public class MqlFindTest {
     @Autowired
     private CharacterRepository repo;
 
-    private String id;
+    private final List<String> ids = new java.util.ArrayList<>();
 
     @BeforeAll
     void insertData() {
-        id = UlidCreator.getUlid().toString();
-        Character c = new Character();
-        c.setId(id);
-        c.setName("MqlFindTest-" + id);
-        c.setAddress("Natlan");
-        c.setBirthday(new Date());
-        repo.insert(c);
-        log.info("inserted: id={}, name={}", id, c.getName());
+        // Insert 12 documents for skip/limit pagination tests / 插入12条数据用于分页测试
+        for (int i = 0; i < 12; i++) {
+            String id = UlidCreator.getUlid().toString();
+            Character c = new Character();
+            c.setId(id);
+            c.setName("MqlFindTest-" + i + "-" + id);
+            c.setAddress("Natlan");
+            c.setBirthday(new Date());
+            repo.insert(c);
+            ids.add(id);
+        }
+        log.info("inserted {} documents for pagination tests", ids.size());
     }
 
     @AfterAll
     void cleanup() {
-        repo.deleteById(id);
-        log.info("cleaned up");
+        for (String id : ids) {
+            repo.deleteById(id);
+        }
+        log.info("cleaned up {} documents", ids.size());
     }
 
     @Test
@@ -74,21 +80,23 @@ public class MqlFindTest {
     @Test
     @Order(3)
     void testFindByCriteria() {
-        log.info("=== test @Mql findListByCriteria ===");
-        List<Character> result = repo.findListByCriteria("MqlFindTest-" + id);
+        log.info("=== test @Find findListByCriteria ===");
+        String firstName = "MqlFindTest-0-" + ids.get(0);
+        List<Character> result = repo.findListByCriteria(firstName);
         log.info("findListByCriteria size: {}", result.size());
         Assertions.assertFalse(result.isEmpty());
-        Assertions.assertEquals("MqlFindTest-" + id, result.get(0).getName());
+        Assertions.assertEquals(firstName, result.get(0).getName());
     }
 
     @Test
     @Order(4)
     void testFindOneByName() {
-        log.info("=== test @Mql findOneByName ===");
-        Character result = repo.findOneByName("MqlFindTest-" + id);
+        log.info("=== test @Find findOneByName ===");
+        String firstName = "MqlFindTest-0-" + ids.get(0);
+        Character result = repo.findOneByName(firstName);
         log.info("findOneByName: {}", result);
         Assertions.assertNotNull(result);
-        Assertions.assertEquals("MqlFindTest-" + id, result.getName());
+        Assertions.assertEquals(firstName, result.getName());
     }
 
     @Test

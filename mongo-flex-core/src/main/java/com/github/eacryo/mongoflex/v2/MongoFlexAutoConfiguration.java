@@ -49,9 +49,10 @@ public class MongoFlexAutoConfiguration {
         return new DynamicMongoClient();
     }
 
-    // ──── @Mql 策略组件 ────
+    // ──── @Mql 策略组件（deprecated，保留向后兼容） ────
 
     @Bean
+    @SuppressWarnings("deprecation")
     ExecutorProxy executorProxy() {
         return new ExecutorProxy();
     }
