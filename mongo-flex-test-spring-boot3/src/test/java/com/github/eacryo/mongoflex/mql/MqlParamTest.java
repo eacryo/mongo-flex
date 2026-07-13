@@ -66,7 +66,7 @@ public class MqlParamTest {
     // @Test
     // @Order(3)
     // void testNoParamQuery() {
-    //     log.info("=== test @Mql without @Param ===");
+    //     log.info("=== test @Find without @Param ===");
     //     List<Character> result = repo.findListWithoutParam();
     //     log.info("no param result size: {}", result.size());
     //     Assertions.assertNotNull(result);
@@ -75,7 +75,7 @@ public class MqlParamTest {
     @Test
     @Order(4)
     void testCountWithParam() {
-        log.info("=== test @Mql count with @Param ===");
+        log.info("=== test @Find count with @Param ===");
         long count = repo.countByCriteria("MqlParam-" + id);
         log.info("count with param: {}", count);
         Assertions.assertEquals(1, count);
@@ -84,7 +84,7 @@ public class MqlParamTest {
     @Test
     @Order(5)
     void testFindOneWithParam() {
-        log.info("=== test @Mql findOne with @Param ===");
+        log.info("=== test @Find findOne with @Param ===");
         Character result = repo.findOneByName("MqlParam-" + id);
         log.info("findOne with param: {}", result);
         Assertions.assertNotNull(result);

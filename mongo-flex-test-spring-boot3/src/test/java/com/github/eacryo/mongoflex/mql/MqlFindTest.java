@@ -53,7 +53,7 @@ public class MqlFindTest {
     @Test
     @Order(1)
     void testFindAll() {
-        log.info("=== test @Mql findAll ===");
+        log.info("=== test @Find findAll ===");
         List<Character> result = repo.findAll();
         log.info("findAll size: {}", result.size());
         Assertions.assertNotNull(result);
@@ -63,7 +63,7 @@ public class MqlFindTest {
     @Test
     @Order(2)
     void testFindAllObj() {
-        log.info("=== test @Mql findAllObj ===");
+        log.info("=== test @Find findAllObj ===");
         List<Object> result = repo.findAllObj();
         log.info("findAllObj size: {}", result.size());
         Assertions.assertNotNull(result);
@@ -102,7 +102,7 @@ public class MqlFindTest {
     @Test
     @Order(5)
     void testFindOneNoMatch() {
-        log.info("=== test @Mql findOne (no match) ===");
+        log.info("=== test @Find findOne (no match) ===");
         Character result = repo.findOneByName("NonExistent" + System.currentTimeMillis());
         log.info("findOne no match: {}", result);
         Assertions.assertNull(result);
@@ -112,7 +112,7 @@ public class MqlFindTest {
     // @Test
     // @Order(6)
     // void testFindListWithoutParam() {
-    //     log.info("=== test @Mql findListWithoutParam ===");
+    //     log.info("=== test @Find findListWithoutParam ===");
     //     List<Character> result = repo.findListWithoutParam();
     //     log.info("findListWithoutParam size: {}", result.size());
     //     Assertions.assertNotNull(result);
@@ -137,7 +137,7 @@ public class MqlFindTest {
     @Test
     @Order(8)
     void testFindListWithLimit() {
-        log.info("=== test @Mql find with limit ===");
+        log.info("=== test @Find find with limit ===");
         List<Character> result = repo.findListWithLimit();
         log.info("findListWithLimit size: {}", result.size());
         Assertions.assertNotNull(result);
@@ -147,7 +147,7 @@ public class MqlFindTest {
     @Test
     @Order(9)
     void testFindListWithSkipAndLimit() {
-        log.info("=== test @Mql find with skip and limit ===");
+        log.info("=== test @Find find with skip and limit ===");
         // 先获取全部数据的前10条作为参照
         List<Character> all = repo.findAll();
         log.info("total documents: {}", all.size());

@@ -20,7 +20,7 @@ import java.lang.annotation.Target;
  * @MRepository
  * public interface CharacterRepository extends MongoRepository<Character, String> {
  *
- *     @Mql("db.getCollection('character').find({'name':'#{name}'})")
+ *     @Find("{name: #{name}}")
  *     List<Character> findByName(@Param("name") String name);
  * }
  * }</pre>

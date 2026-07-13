@@ -1,8 +1,6 @@
 package com.github.eacryo.mongoflex.v2;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
-import com.github.eacryo.mongoflex.strategy.ExecutorProxy;
-import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.Document;
@@ -17,7 +15,6 @@ import java.util.function.Supplier;
  * Dispatch logic:
  * <ol>
  *   <li>{@code @Find} / {@code @Count} / {@code @Delete} — JSON template → filter Document → baseRepository</li>
- *   <li>{@code @Mql} (deprecated) — legacy shell-command → ExecutorProxy dispatch</li>
  *   <li>Method inherited from {@link MongoRepository} — delegate to baseRepository</li>
  * </ol>
  */
@@ -27,22 +24,18 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
     private final Class<?> targetInterface = MongoRepository.class;
     private final Class<?> repositoryInterface;
     private final Supplier<MongoDatabase> databaseSupplier;
-    private final QueryParser queryParser = new QueryParser();
     private final JsonTemplateParser jsonTemplateParser = new JsonTemplateParser();
     private final MongoMappingConvertor mongoMappingConvertor;
     private final SimpleMongoRepository<T, ID> baseRepository;
-    private final ExecutorProxy executorProxy;
 
     public MyRepositoryProxyHandler(Class<?> repositoryInterface,
                                     Supplier<MongoDatabase> databaseSupplier,
                                     MongoMappingConvertor mongoMappingConvertor,
-                                    SimpleMongoRepository<T, ID> baseRepository,
-                                    ExecutorProxy executorProxy) {
+                                    SimpleMongoRepository<T, ID> baseRepository) {
         this.repositoryInterface = Objects.requireNonNull(repositoryInterface, "repositoryInterface must not be null");
         this.databaseSupplier = Objects.requireNonNull(databaseSupplier, "databaseSupplier must not be null");
         this.mongoMappingConvertor = Objects.requireNonNull(mongoMappingConvertor, "mongoMappingConvertor must not be null");
         this.baseRepository = Objects.requireNonNull(baseRepository, "baseRepository must not be null");
-        this.executorProxy = Objects.requireNonNull(executorProxy, "executorProxy must not be null");
     }
 
     @Override
@@ -54,9 +47,8 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable {
-        // ── New annotation-driven path / 新注解驱动路径 ──
+        // ── Annotation-driven query path / 注解驱动查询路径 ──
         if (method.isAnnotationPresent(Find.class)) {
             return handleFind(method, args);
         }
@@ -65,11 +57,6 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         }
         if (method.isAnnotationPresent(Delete.class)) {
             return handleDelete(method, args);
-        }
-
-        // ── Legacy @Mql path (deprecated) / 旧 @Mql 路径（已废弃） ──
-        if (method.isAnnotationPresent(Mql.class)) {
-            return handleMql(method, args);
         }
 
         // ── Inherited from MongoRepository / 继承自 MongoRepository ──
@@ -87,7 +74,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         }
 
         throw new UnsupportedOperationException("Method " + method.getName() +
-                " is neither annotated with @Find/@Count/@Delete/@Mql nor inherited from MongoRepository.");
+                " is neither annotated with @Find/@Count/@Delete nor inherited from MongoRepository.");
     }
 
     // ──── @Find handler / @Find 处理器 ────
@@ -162,42 +149,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         return deleted;
     }
 
-    // ──── Legacy @Mql handler (deprecated) / 旧 @Mql 处理器（已废弃） ────
-
-    @SuppressWarnings("deprecation")
-    private Object handleMql(Method method, Object[] args) {
-        Mql myQuery = method.getAnnotation(Mql.class);
-        String shellCommand = myQuery.value();
-        Parameter[] parameters = method.getParameters();
-        shellCommand = replaceShellCommand(shellCommand, parameters, args);
-        QueryParser.QueryCommand parsedCommand = queryParser.parse(shellCommand);
-        MongoCollection<Document> collection = databaseSupplier.get().getCollection(parsedCommand.collectionName);
-        try {
-            return executorProxy.execute(parsedCommand.operation, collection, parsedCommand.arguments,
-                    parsedCommand.skip, parsedCommand.limit, method, args);
-        } catch (Exception e) {
-            if (e instanceof RuntimeException) throw (RuntimeException) e;
-            throw new RuntimeException("Error executing @Mql command", e);
-        }
-    }
-
     // ──── Helpers / 辅助方法 ────
-
-    /**
-     * Replace #{param} placeholders in shell command string / 替换 shell 命令字符串中的 #{param} 占位符
-     * @deprecated legacy @Mql support, will be removed / 旧 @Mql 支持，未来将移除
-     */
-    @Deprecated
-    private String replaceShellCommand(String shellCommand, Parameter[] parameters, Object[] args) {
-        for (int i = 0; i < parameters.length; i++) {
-            Param paramAnnotation = parameters[i].getAnnotation(Param.class);
-            if (paramAnnotation != null) {
-                String paramName = paramAnnotation.value();
-                shellCommand = shellCommand.replace("#{" + paramName + "}", args[i] != null ? args[i].toString() : "null");
-            }
-        }
-        return shellCommand;
-    }
 
     /**
      * Extract the element type from a generic List return type / 从泛型 List 返回类型中提取元素类型

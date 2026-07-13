@@ -47,13 +47,15 @@ The project targets **Java 8 bytecode** (`<java.version>1.8</java.version>`). Do
 
 ## Commit Message Convention
 
-Use **Conventional Commits** format:
+Use **Conventional Commits** format, **single line only** (no body):
 
 ```
 <type>: <description>
+```
 
 type: feat|fix|refactor|test|docs|chore|style|perf
-```
+
+Keep the description concise — one sentence, no bullet points, no body text.
 
 Do **not** run `git commit`. Suggest the message and let the developer commit manually.
 

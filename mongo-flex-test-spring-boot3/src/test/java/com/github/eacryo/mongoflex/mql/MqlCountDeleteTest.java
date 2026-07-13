@@ -27,7 +27,7 @@ public class MqlCountDeleteTest {
     @Test
     @Order(1)
     void testCountByMql() {
-        log.info("=== test @Mql count ===");
+        log.info("=== test @Find count ===");
         long total = repo.countByMql();
         log.info("countByMql: {}", total);
         Assertions.assertTrue(total >= 0);
@@ -36,7 +36,7 @@ public class MqlCountDeleteTest {
     @Test
     @Order(2)
     void testCountByCriteria() {
-        log.info("=== test @Mql count with criteria ===");
+        log.info("=== test @Find count with criteria ===");
         id = UlidCreator.getUlid().toString();
         String name = "MqlCount-" + id;
         Character c = new Character();
@@ -54,7 +54,7 @@ public class MqlCountDeleteTest {
     @Test
     @Order(3)
     void testCountByRepoMql() {
-        log.info("=== test repo count (from @Mql) ===");
+        log.info("=== test repo count (from @Find) ===");
         long total = repo.countByMql();
         long repoCount = repo.count();
         log.info("countByMql={}, count()={}", total, repoCount);
@@ -64,7 +64,7 @@ public class MqlCountDeleteTest {
     @Test
     @Order(4)
     void testDeleteByIdAfterMqlCount() {
-        log.info("=== test deleteById after @Mql count ===");
+        log.info("=== test deleteById after @Count ===");
         Assertions.assertNotNull(id);
         long deleted = repo.deleteById(id);
         log.info("deleteById result: {}", deleted);

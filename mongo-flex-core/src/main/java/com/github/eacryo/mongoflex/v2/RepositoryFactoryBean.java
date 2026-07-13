@@ -6,26 +6,21 @@ import com.github.eacryo.mongoflex.config.DateValueProvider;
 import com.github.eacryo.mongoflex.config.IdGenerator;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
-import com.github.eacryo.mongoflex.strategy.ExecutorProxy;
 import com.mongodb.client.MongoDatabase;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
-
 
 import java.lang.reflect.Proxy;
 import java.util.function.Supplier;
 
 public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
 
-    // 注入 MongoDB 客户端
     @Autowired
     private DynamicMongoClient mongoClient;
     @Autowired
     private MongoMappingConvertor mongoMappingConvertor;
     @Autowired
     private MongoFlexProperties mongoFlexProperties;
-    @Autowired
-    private ExecutorProxy executorProxy;
     @Autowired(required = false)
     private IdGenerator<?> idGenerator;
     @Autowired(required = false)
@@ -44,7 +39,6 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
         this.idClass = idClass;
     }
 
-
     @Override
     @SuppressWarnings({"unchecked", "resource"})
     public T getObject() {
@@ -53,7 +47,6 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
                 this.getCollectionName(entityClass),
                 entityClass, mongoMappingConvertor, idGenerator, dateValueProvider
         );
-        // 使用动态代理为接口生成实现
         return (T) Proxy.newProxyInstance(
                 repositoryInterface.getClassLoader(),
                 new Class<?>[]{repositoryInterface},
@@ -61,8 +54,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
                         repositoryInterface,
                         dbSupplier,
                         mongoMappingConvertor,
-                        baseRepository,
-                        executorProxy)
+                        baseRepository)
         );
     }
 
