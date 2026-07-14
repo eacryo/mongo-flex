@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance when working with code in this repository.
 
 ## Build & Test Commands
 
@@ -70,8 +70,8 @@ When modifying `README.md`, apply the same changes to `README-zh.md` (Chinese tr
 | Path | Mechanism | Use Case |
 |---|---|---|
 | Repository methods | `MongoRepository<T,ID>` interface (v2 package) | CRUD by ID, entity example, simple field=value |
-| Lambda queries | `LambdaQueryWrapper<T>` + 13 operators | Type-safe dynamic queries |
-| Raw MQL | `@Mql` annotation with shell-like syntax | Complex/adhoc queries |
+| Lambda queries | `LambdaQueryWrapper<T>` + operators | Type-safe dynamic queries |
+| Raw JSON | `@Find` / `@Count` / `@Delete` annotations | Complex/adhoc queries |
 
 ### Module Map
 
@@ -86,8 +86,8 @@ mongo-flex-test-spring-boot2/  ← legacy SB2 tests
 
 - **Entity mapping**: `@CollectionId` (maps to `_id`), `@CollectionField("mongo_name")`, implicit `id`→`_id` mapping. Priority: `@CollectionId` > `@CollectionField` > field name heuristic.
 - **ID generation**: Controlled by `IdType` enum — `OBJECT_ID` (MongoDB ObjectId, stored as hex String), `ULID` (26-char sortable), `UUID` (v4), `INPUT` (custom `IdGenerator`).
-- **ObjectId conversion**: Only converts String→ObjectId when `IdType.OBJECT_ID` (MongoDB generates ObjectId but Java stores hex String). Other modes store native String.
-- **Repository proxies**: `@MRepository` interfaces get JDK proxy via `RepositoryFactoryBean`. `@Mql` methods dispatched to executors; `MongoRepository` methods delegated to `SimpleMongoRepository`.
+- **ObjectId conversion**: Only converts String→ObjectId when `IdType.OBJECT_ID` (MongoDB generates ObjectId but Java stores hex String). Other modes store native String. Use `shouldConvertToObjectId()` — never raw `ObjectId.isValid()`.
+- **Repository proxies**: `@MRepository` interfaces get JDK proxy via `RepositoryFactoryBean`. `@Find`/`@Count`/`@Delete` methods use `JsonTemplateParser`; `MongoRepository` methods delegated to `SimpleMongoRepository`.
 - **Field name resolution**: `ReflectUtil.getFieldNameFromLambda()` extracts field name from `SFunction` via `SerializedLambda`; `MongoMappingConvertor.resolveMongoFieldName()` maps Java→MongoDB field names using cached `ClassFieldMetaData`.
 
 ### Lambda Query Operators
@@ -97,3 +97,9 @@ Full operator list in `LambdaQueryWrapper`: `eq`, `ne`, `gt`, `lt`, `gte`, `lte`
 Rendering chain: `LambdaQueryWrapper` → `Condition` list → `MongoBsonRenderer.render()` → MongoDB `Bson` filter. OR groups are split on sentinel `Condition` (field=null, operator=null), rendered independently, joined with `Filters.or()`.
 
 **Important**: `$not` is NOT a valid top-level operator in MongoDB. Use field-level `$not` (for single-field negation like `NOT_LIKE`) or `$nor` (for negating an entire expression like `not(subWrapper)`).
+
+## Additional Project Files
+
+- `ISSUES.md` — known issues and bug tracker
+- `TODO.md` — feature roadmap and code-review bug list (BUG-1 through BUG-26)
+- `ARCHITECTURE_REFACTOR.md` — planned architecture refactoring phases
