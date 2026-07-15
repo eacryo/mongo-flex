@@ -210,37 +210,48 @@
 
 ### M-12. ~~Insert 回填ID 时 ID 字段可能会没有 @CollectionId 注解~~ → 详见 [附录 B: Bug 1](#附录-b-simplemongoRepository-问题)
 
-### M-13. MongoDB Driver 5.x 二进制不兼容 — 3 个 API 会炸 ❌ 待实现
+### M-13. MongoDB Driver 5.x 兼容性 — 已确认兼容 ✅
 
-**文件:** `mongo-flex-core/pom.xml`（依赖声明）、`SimpleMongoRepository.java`（2 处）、`MongoFlexProperties.java`（1 处）
+**验证方式:** SB3 测试模块（Spring Boot 3.5.4）通过 BOM 间接依赖 `mongodb-driver-sync:5.5.1`，全部测试通过。
 
-**问题:** 用户在自己的项目中声明 MongoDB Driver 5.x 后，Maven "最近优先"仲裁会选择 5.x，但 mongo-flex-core 编译时链接的是 4.11.1。5.x 中以下 API 发生了**方法签名级别**的二进制不兼容：
+**结论:** mongo-flex 天然兼容 MongoDB Driver 4.x 和 5.x，无需 bridge、无需拆版本。
 
-| 文件 | 4.x API（编译时） | 5.x 变化 |
+**原因:** mongo-flex 引用的 17 个 MongoDB Driver 类全部落在 4.x → 5.x 的稳定子集中：
+
+| mongo-flex 使用的 API | 5.0 是否受影响 |
+|---|---|
+| `Filters`（eq/ne/gt/lt/regex/in/exists/or/and/nor 等 21 个操作符） | ✅ 无变更 |
+| `Document` / `Bson` / `BsonValue` / `ObjectId` | ✅ 无变更 |
+| `MongoCollection.find/countDocuments/updateOne/deleteOne/...` | ✅ 无变更 |
+| `InsertOneResult.getInsertedId()` / `InsertManyResult.getInsertedIds()` | ✅ 无变更 |
+| `ConnectionString` / `ConnectionString.getDatabase()` | ✅ 无变更（签名一致） |
+| `MongoClientSettings` / `MongoClients.create()` | ✅ 无变更 |
+| `Projections` / `UpdateOptions` / `DeleteResult` / `UpdateResult` | ✅ 无变更 |
+| `FindIterable` | ✅ 无变更 |
+
+**5.0 真正的破坏性变更都在 mongo-flex 不使用的区域：**
+
+- Stream/Netty 传输层重构（`StreamFactoryFactory` → `TransportSettings`）
+- `ConnectionId` 参数类型 int→long
+- `SocketSettings` 超时参数 int→long
+- `MapCodec`/`IterableCodec` 移除
+- `geoHaystack` 索引 API 移除
+- 事件监听器（`ClusterListener` 等）构造函数移除
+- `ServerAddress.getSocketAddress()` 等底层方法移除
+- `Parameterizable` 接口移除
+- Record 注解重定位（`org.bson.codecs.record.annotations` → `org.bson.codecs.pojo.annotations`）
+- 最低 MongoDB Server 版本提升至 4.0+（5.2）
+
+这证明了 Java 8 bytecode + 只用核心稳定 API 的策略是有效的：mongo-flex 没有碰 Driver 的任何 volatile 层（传输、事件、Codec 扩展），只用的 CRUD API 是 MongoDB 最精心维护的公共面。
+
+**测试覆盖状态:**
+
+| 测试模块 | Driver 版本 | 覆盖路径 |
 |---|---|---|
-| `SimpleMongoRepository.java:82` | `InsertOneResult.getInsertedId()` → `BsonValue` | 5.x 泛型化，返回类型变为泛型 `T` |
-| `SimpleMongoRepository.java` | `InsertManyResult.getInsertedIds()` | 同上 |
-| `MongoFlexProperties.java` | `ConnectionString.getDatabase()` | 5.x `ConnectionString` 重构，方法可能移除或改名 |
+| `mongo-flex-test-spring-boot2` | 4.11.1（手动 pin） | 4.x |
+| `mongo-flex-test-spring-boot3` | 5.5.1（Spring Boot BOM 带） | 5.x |
 
-其余 14 个被引用的 MongoDB Driver 类（`Filters`、`Document`、`Bson`、`MongoCollection`、`Projections`、`UpdateOptions`、`MongoClientSettings` 等）在 4.x 和 5.x 之间 API 稳定。
-
-**影响:** 运行时 `NoSuchMethodError`，插入操作和连接初始化直接崩溃。目前没有 `mongo-flex-driver5` artifact 也没有版本范围锁。
-
-**推荐方案（待实现）:** 方案 A — 内部 `MongoDriverBridge` 接口 + V4/V5 适配器
-- V4 适配器：直接调用（编译时 link 4.x，零开销）
-- V5 适配器：纯反射调用 5.x API（不 import 任何 5.x 类，运行时不存在 5.x 则不加载）
-- 启动时自动检测 driver 版本选适配器
-- 总计约 60 行代码，改动局限在 `SimpleMongoRepository` 和 `MongoFlexProperties`
-
-**涉及的 API（仅 3 处需要 bridge）：**
-1. `ConnectionString.getDatabase()` — 连接初始化
-2. `InsertOneResult.getInsertedId()` — 单条插入回填 ID
-3. `InsertManyResult.getInsertedIds()` — 批量插入回填 ID
-
-**参考:** Spring Data MongoDB 选择版本对齐（框架大版本绑 Driver 大版本），但 mongo-flex 不兼容 API 量极少（3 vs 几百），bridge 方案更轻量。
-**文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:78`
-**问题:** write/read 层隐式映射 `id → _id`，但 post-insert ID 回填只认 @CollectionId 注解，不标注不会收到回填 ID。
-**状态:** 已在本文件附录 B 中详细分析。
+两条路径均已验证通过，`SB3` 是主要测试目标。
 
 ---
 
@@ -262,9 +273,13 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/MyRepositoryProxyHandler.java:84-93`
 **状态:** MQL 代理内部保留方法，虽当前未被调用但作为 MQL 结果映射的兜底实现，暂不删除。
 
-### L-5. ~~未使用的依赖 java-uuid-generator~~ ✅ 已知限制
-**文件:** `pom.xml:105-108`
-**状态:** 保留依赖。`UlidCreator` 在 `IdType.ULID` 路径中使用（`SimpleMongoRepository.fillId()`），依赖声明正确。
+### L-5. 冗余的 mongodb-driver-core 和 bson 依赖 ✅ 已解决
+
+**文件:** `mongo-flex-core/pom.xml`
+
+**问题:** `mongodb-driver-core` 和 `bson` 已由 `mongodb-driver-sync` 传递依赖，显式声明冗余。
+
+**修复:** 删除两个冗余依赖，保留 `mongodb-driver-sync`（`optional` 作用域）。用户自行控制 Driver 版本，编译时 link 4.x，运行时 5.x 经 SB3 测试验证通过。
 
 ### L-6. ~~拼写不一致 "Convertor" vs "Converter"~~ ✅ 已知限制
 **文件:** `convertor/` 整个包
@@ -333,9 +348,9 @@
 |--------|:---:|:---:|:---:|
 | Critical | 9 | 2 | 11 |
 | High | 6 | 3 | 9 |
-| Medium | 9 | 4 | 13 |
-| Low | 14 | 6 | 20 |
-| **合计** | **38** | **15** | **53** |
+| Medium | 10 | 3 | 13 |
+| Low | 15 | 5 | 20 |
+| **合计** | **40** | **13** | **53** |
 
 > ✅ 所有 Critical 问题已解决或确认为已知限制。MQL 体系限制（C-5/C-6/C-11/H-6/H-7/M-4/M-5）集中在 `strategy/` 执行器 + `QueryParser` + `MyRepositoryProxyHandler`，是相对封闭的模块，不影响 Lambda 查询和 Repository CRUD 主路径。
 
