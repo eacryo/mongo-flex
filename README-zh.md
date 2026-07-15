@@ -32,6 +32,8 @@ Mongo-flex 编译为 Java 8 字节码，兼容 **JDK 8+** 和 **Spring Boot 2.7.
 </dependency>
 ```
 
+**与 Spring Data MongoDB 可共存：** mongo-flex 仅排除 `MongoAutoConfiguration`（防止 Spring Boot 自动连接 `localhost:27017`），**不会干扰** `MongoDataAutoConfiguration`（Spring Data MongoDB 的自动配置类）。若你同时引入了 Spring Data MongoDB 并提供了 `MongoClient` Bean，两个框架可在同一项目中正常协作。
+
 ## 快速开始
 
 ### 1. 引入依赖

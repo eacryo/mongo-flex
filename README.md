@@ -32,6 +32,8 @@ Mongo-flex is compiled to Java 8 bytecode and is compatible with **JDK 8+** and 
 </dependency>
 ```
 
+**Coexists with Spring Data MongoDB:** mongo-flex only excludes `MongoAutoConfiguration` (preventing Spring Boot from auto-connecting to `localhost:27017`) and intentionally leaves `MongoDataAutoConfiguration` (Spring Data MongoDB's auto-configuration) untouched. If you include Spring Data MongoDB and provide a `MongoClient` bean, both frameworks work together in the same project.
+
 ## Quick Start
 
 ### 1. Add dependency
