@@ -388,7 +388,7 @@ public class LambdaQueryWrapper<T> implements QuerySpec<T> {
 
     /**
      * 从实体对象自动构建查询条件。遍历 entity 的所有非 null 字段，每个非 null 字段
-     * 自动生成 {@code eq()} 条件。与 {@link #include(Object...)} 等方法组合使用：
+     * 自动生成 {@code eq()} 条件。与 {@link #include(SFunction...)} 等方法组合使用：
      *
      * <pre>{@code
      * User probe = new User();
