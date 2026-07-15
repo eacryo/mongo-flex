@@ -4,7 +4,23 @@
 
 ## What is it?
 
-Mongo-flex is a lightweight MongoDB toolkit for simplifying development. It provides a repository abstraction, lambda-based query builder, and `@Find`/`@Count`/`@Delete` annotations for JSON-based queries.
+Mongo-flex is a lightweight MongoDB toolkit offering three query paths that converge into a unified `QuerySpec` abstraction and execution engine:
+
+| Path | Mechanism | Use Case |
+|---|---|---|
+| Repository methods | `MongoRepository<T,ID>` interface | CRUD by ID, entity example, lambda field queries |
+| Lambda type-safe queries | `LambdaQueryWrapper<T>` + operators | Type-safe dynamic queries, 21 operators |
+| Annotation-driven JSON | `@Find` / `@Count` / `@Delete` | Complex / ad-hoc JSON queries |
+
+**Interface hierarchy:**
+
+```
+CrudRepository<T,ID>       — insert, findById, findAll, count, deleteOneById, deleteAll
+  └─ QueryRepository<T,ID>  — findOne, findList, findPage, count, update, delete (QuerySpec)
+       └─ MongoRepository<T,ID> — SFunction / entity / LambdaQueryWrapper convenience methods
+```
+
+All query paths produce `Bson` and execute through a single `QueryExecutor<T>`. Compiled to Java 8 bytecode — compatible with JDK 8+ and Spring Boot 2.7.x / 3.x.
 
 ## Compatibility
 
@@ -76,15 +92,23 @@ public class Character {
 
 ### 3. Create a repository interface
 
+Choose the interface level you need:
+
 ```java
+// Basic CRUD — insert / findById / findAll / count / deleteOneById / deleteAll only
+@MRepository
+public interface CharacterRepository extends CrudRepository<Character, String> {}
+
+// CRUD + QuerySpec queries — all Lambda / MQL / entity query paths available
+@MRepository
+public interface CharacterRepository extends QueryRepository<Character, String> {}
+
+// Full-featured — adds SFunction / entity / LambdaQueryWrapper convenience methods
 @MRepository
 public interface CharacterRepository extends MongoRepository<Character, String> {
 
     @Find("{name: #{name}}")
     List<Character> findByName(@Param("name") String name);
-
-    @Count("{}")
-    long countAll();
 }
 ```
 

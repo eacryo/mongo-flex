@@ -11,6 +11,8 @@ import com.github.eacryo.mongoflex.entity.PageDTO;
 import com.github.eacryo.mongoflex.entity.SortOrder;
 import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.lambda.MongoBsonRenderer;
+import com.github.eacryo.mongoflex.query.QueryExecutor;
+import com.github.eacryo.mongoflex.query.QuerySpec;
 import com.github.eacryo.mongoflex.util.DateValueGenerator;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import com.github.eacryo.mongoflex.util.SFunction;
@@ -53,6 +55,8 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     private final MongoMappingConvertor mongoMappingConvertor;
     private final IdGenerator<?> idGenerator;
     private final DateValueProvider dateValueProvider;
+    /** Unified query execution engine / 统一查询执行引擎 */
+    private final QueryExecutor<T> queryExecutor;
     /** Cache for per-entity-class ID generator instances, populated from @CollectionId.generatorClass. / 按实体类缓存 ID 生成器实例，从 @CollectionId.generatorClass 中解析。 */
     private final Map<Class<? extends IdGenerator>, IdGenerator<?>> generatorCache = new ConcurrentHashMap<>();
     /** Cache for per-class DateValueProvider instances, populated from @CreateDate/@UpdateDate.providerClass. / 按类缓存 DateValueProvider 实例，从 @CreateDate/@UpdateDate.providerClass 中解析。 */
@@ -68,6 +72,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         this.mongoMappingConvertor = Objects.requireNonNull(mongoMappingConvertor, "mongoMappingConvertor must not be null");
         this.idGenerator = idGenerator;
         this.dateValueProvider = dateValueProvider;
+        this.queryExecutor = new QueryExecutor<>(entityClass, databaseSupplier, collectionName, mongoMappingConvertor);
     }
 
     // ---- create ----
@@ -702,6 +707,77 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return query;
     }
 
+
+    // ── QuerySpec<T> unified query methods / 统一查询方法 ──
+
+    // ── findOne / findList / findPage ──
+
+    @Override
+    public T findOne(QuerySpec<T> query) {
+        return queryExecutor.findOne(query);
+    }
+
+    @Override
+    public List<T> findList(QuerySpec<T> query) {
+        return queryExecutor.findList(query, null, null);
+    }
+
+    @Override
+    public PageDTO<T> findPage(QuerySpec<T> query, PageDTO<T> pageDTO) {
+        return queryExecutor.findPage(query, pageDTO);
+    }
+
+    // ── count ──
+
+    @Override
+    public long count(QuerySpec<T> query) {
+        return queryExecutor.count(query);
+    }
+
+    // ── updateOne / updateMany ──
+
+    @Override
+    public long updateOne(QuerySpec<T> query, T entity) {
+        return updateBySpec(query, entity, false, false);
+    }
+
+    @Override
+    public long updateOne(QuerySpec<T> query, T entity, boolean upsert) {
+        return updateBySpec(query, entity, false, upsert);
+    }
+
+    @Override
+    public long updateMany(QuerySpec<T> query, T entity) {
+        return updateBySpec(query, entity, true, false);
+    }
+
+    @Override
+    public long updateMany(QuerySpec<T> query, T entity, boolean upsert) {
+        return updateBySpec(query, entity, true, upsert);
+    }
+
+    private long updateBySpec(QuerySpec<T> query, T entity, boolean many, boolean upsert) {
+        Objects.requireNonNull(query, "query must not be null");
+        Objects.requireNonNull(entity, "entity must not be null");
+        fillDate(entity, upsert);
+        Document doc = mongoMappingConvertor.write(entity);
+        doc.remove("_id");
+        Document updateDoc = new Document("$set", doc);
+        return many ? queryExecutor.updateMany(query, updateDoc, upsert)
+                    : queryExecutor.updateOne(query, updateDoc, upsert);
+    }
+
+    // ── deleteOne / deleteMany ──
+
+    @Override
+    public long deleteOne(QuerySpec<T> query) {
+        return queryExecutor.deleteOne(query);
+    }
+
+    @Override
+    public long deleteMany(QuerySpec<T> query) {
+        return queryExecutor.deleteMany(query);
+    }
 
     private void ensureEntityClass(LambdaQueryWrapper<T> wrapper) {
         if (wrapper.getEntityClass() == null) {

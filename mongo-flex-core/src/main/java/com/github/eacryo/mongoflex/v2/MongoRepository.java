@@ -3,12 +3,23 @@ package com.github.eacryo.mongoflex.v2;
 
 import com.github.eacryo.mongoflex.entity.PageDTO;
 import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
+import com.github.eacryo.mongoflex.query.QuerySpec;
 import com.github.eacryo.mongoflex.util.SFunction;
 
 import java.util.List;
 
 /**
- * Repository interface with LambdaQueryWrapper support.
+ * Full-featured repository interface — extends {@link QueryRepository} with
+ * convenience methods for entity-based, field-based, and LambdaQueryWrapper queries /
+ * 完整功能 Repository 接口——继承 {@link QueryRepository}，
+ * 额外提供基于实体、字段和 LambdaQueryWrapper 的便捷查询方法。
+ * <p>
+ * Interface hierarchy / 接口层级:
+ * <pre>{@code
+ * CrudRepository<T,ID>     — insert, findById, findAll, count, deleteOneById, deleteAll
+ *   └─ QueryRepository<T,ID>  — findOne/findList/findPage/count/update/delete by QuerySpec
+ *        └─ MongoRepository<T,ID> — convenience methods (SFunction, entity, LambdaQueryWrapper)
+ * }</pre>
  * <p>
  * <b>null 参数：</b>所有方法的参数都不接受 null，传入 null 会抛出 {@code IllegalArgumentException}。
  * <p>
@@ -17,25 +28,7 @@ import java.util.List;
  * <p>
  * <b>读操作（find/count）：</b>空实体或空条件视为无条件查询，返回全量结果。
  */
-public interface MongoRepository<T, ID> {
-
-    /**
-     * Insert a single document, entity must not be null. / 插入一条文档，entity 不可为 null。
-     */
-    T insert(T entity);
-
-    /**
-     * Batch insert multiple documents, entities must not be null or empty. / 批量插入多条文档，entities 不可为 null 或空列表。
-     *
-     * @param entities non-null, non-empty list of entities to insert / 要插入的实体列表，不可为 null 或空列表
-     * @return the inserted entities with IDs back-filled (if applicable) / 返回已回填 ID 的实体列表（如适用）
-     */
-    List<T> insertMany(List<T> entities);
-
-    /**
-     * 按 ID 查询，id 不可为 null。
-     */
-    T findById(ID id);
+public interface MongoRepository<T, ID> extends QueryRepository<T, ID> {
 
     /**
      * 按实体中的非空字段作为条件查询，返回第一条匹配记录。
@@ -56,24 +49,25 @@ public interface MongoRepository<T, ID> {
 
     /**
      * 按 LambdaQueryWrapper 条件查询，wrapper 不可为 null。
+     * @deprecated use {@link #findOne(QuerySpec)} instead / 请使用 {@link #findOne(QuerySpec)}
      */
+    @Deprecated
     T findOne(LambdaQueryWrapper<T> wrapper);
 
     /**
      * 按 LambdaQueryWrapper 条件查询列表，wrapper 不可为 null。
+     * @deprecated use {@link #findList(QuerySpec)} instead / 请使用 {@link #findList(QuerySpec)}
      */
+    @Deprecated
     List<T> findList(LambdaQueryWrapper<T> wrapper);
-
-    /**
-     * 查询全集合所有文档。
-     */
-    List<T> findAll();
 
     /**
      * 按 LambdaQueryWrapper 条件分页查询。
      * 回填 pageDTO 的 total/records（totalPage 为计算属性，自动同步）后返回同一对象。
      * wrapper 不可为 null，空条件视为无条件分页。
+     * @deprecated use {@link #findPage(QuerySpec, PageDTO)} instead / 请使用 {@link #findPage(QuerySpec, PageDTO)}
      */
+    @Deprecated
     PageDTO<T> findPage(LambdaQueryWrapper<T> wrapper, PageDTO<T> pageDTO);
 
     /**
@@ -85,13 +79,10 @@ public interface MongoRepository<T, ID> {
 
     /**
      * 按 LambdaQueryWrapper 条件统计，wrapper 不可为 null。
+     * @deprecated use {@link #count(QuerySpec)} instead / 请使用 {@link #count(QuerySpec)}
      */
+    @Deprecated
     long count(LambdaQueryWrapper<T> wrapper);
-
-    /**
-     * 统计集合总文档数。
-     */
-    long count();
 
     /**
      * 按实体中的非空字段作为条件统计，entity 不可为 null。
@@ -117,8 +108,10 @@ public interface MongoRepository<T, ID> {
     <R> long updateOne(SFunction<T, R> field, R value, T entity, boolean upsert);
 
     /** 按 LambdaQueryWrapper 条件更新第一条匹配文档，wrapper 和 entity 不可为 null。 */
+    @Deprecated
     long updateOne(LambdaQueryWrapper<T> wrapper, T entity);
     /** 按 LambdaQueryWrapper 条件更新第一条匹配文档，可选 upsert。 */
+    @Deprecated
     long updateOne(LambdaQueryWrapper<T> wrapper, T entity, boolean upsert);
 
     // ──── updateMany / 更新多条 ────
@@ -129,18 +122,18 @@ public interface MongoRepository<T, ID> {
     <R> long updateMany(SFunction<T, R> field, R value, T entity, boolean upsert);
 
     /** 按 LambdaQueryWrapper 条件更新所有匹配文档，wrapper 和 entity 不可为 null。 */
+    @Deprecated
     long updateMany(LambdaQueryWrapper<T> wrapper, T entity);
     /** 按 LambdaQueryWrapper 条件更新所有匹配文档，可选 upsert。 */
+    @Deprecated
     long updateMany(LambdaQueryWrapper<T> wrapper, T entity, boolean upsert);
-
 
     // ──── deleteOne / 删除单条 ────
 
-    /** 按 ID 删除单条，id 不可为 null。 */
-    long deleteOneById(ID id);
     /** 按字段值删除第一条匹配文档，field 不可为 null。 */
     <R> long deleteOne(SFunction<T, R> field, R value);
     /** 按 LambdaQueryWrapper 条件删除第一条匹配文档，wrapper 不可为 null。 */
+    @Deprecated
     long deleteOne(LambdaQueryWrapper<T> wrapper);
 
     // ──── deleteMany / 删除多条 ────
@@ -150,11 +143,7 @@ public interface MongoRepository<T, ID> {
     /** 按字段值删除所有匹配文档，field 不可为 null。 */
     <R> long deleteMany(SFunction<T, R> field, R value);
     /** 按 LambdaQueryWrapper 条件删除所有匹配文档，wrapper 不可为 null。 */
+    @Deprecated
     long deleteMany(LambdaQueryWrapper<T> wrapper);
-
-    // ──── deleteAll / 全量删除 ────
-
-    /** 删除全集合所有文档。 */
-    long deleteAll();
 }
 
