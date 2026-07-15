@@ -502,3 +502,115 @@ public interface MethodHandler {
 | 代理分发 | 硬编码 if-else | `MethodHandler` 责任链，可扩展 |
 | 代码重复 | find/count/delete 逻辑在多个文件重复 | 集中在 `QueryExecutor` |
 | strategy/ 包 | @Mql 专属执行器 | 废弃，逻辑合并到 `QueryExecutor` |
+
+---
+
+## 八、架构决策分析：BSON vs Mongo Command 与三条路径统一
+
+> 2026-07-15 新增。本章节记录对当前架构的深层分析，为 Phase 1-3 的实施方案提供决策依据。
+
+### 8.1 BSON or Mongo Command？
+
+**MQL 查询的底层是 BSON，不是 Mongo Command。**
+
+2026-07-11 的 `@Find`/`@Count`/`@Delete` 重构已经用 `JsonTemplateParser` + `Document.parse()` 替代了老的 `QueryParser` shell 命令解析器。这意味着：
+
+```java
+// 当前实现（正确）—— BSON 路径
+@Find("{name: #{name}, level: #{level}}")
+// → JsonTemplateParser → Document.parse(json) → Document（实现 Bson）
+// → collection.find(document) → FindIterable<Document>
+```
+
+而不是：
+```java
+// 错误路径（已废弃）—— Mongo Command 路径
+// → QueryParser 正则解析 "db.getCollection('x').find({...})"
+// → 提取命令字符串 → db.runCommand(...) ← 这不是 CRUD 的正确方式
+```
+
+**为什么 BSON 是正确的选择：**
+
+| 维度 | BSON（`MongoCollection` API） | Mongo Command（`db.runCommand()`） |
+|---|---|---|
+| 协议层 | Driver 封装层，标准的 CRUD 操作 | 原始 wire protocol，用于 admin/诊断操作 |
+| 查询构建 | `Filters.eq()`、`Document.parse()`、`Bson` 接口 | 手写 `{ "find": "coll", "filter": {...} }` 命令文档 |
+| 返回类型 | 类型安全的 `FindIterable<Document>`、`long` | 原始 `Document`，需手写结果解析 |
+| 连接管理 | Driver 自动处理连接池、重试、读写分离 | 需自行管理 |
+| 用途 | CRUD 查询的正确方式 | `serverStatus`、`buildInfo`、`createIndexes`、`mapReduce` 等管理命令 |
+| 代表方法 | `collection.find()`、`collection.aggregate()` | `database.runCommand(new Document("serverStatus", 1))` |
+
+MongoDB Java Driver 的设计本身就把这两层分开了：`MongoCollection` 负责 CRUD，`MongoDatabase.runCommand()` 负责管理命令。mongo-flex 作为一个 ORM/数据访问工具，正确且唯一的交互层应该是 `MongoCollection` + `Bson`。
+
+### 8.2 三条路径的统一现状
+
+当前三条路径已经在外层收敛于 `Bson` → `MongoCollection`：
+
+```
+@Find("{name: #{name}}")         entity                          LambdaQueryWrapper
+        │                           │                                     │
+  JsonTemplateParser          MongoMappingConvertor              MongoBsonRenderer
+   #{} 替换 + JSON 拼接        字段 → Document                     Condition → Filters.*
+        │                           │                                     │
+        ▼                           ▼                                     ▼
+  Document.parse(json)       new Document(k, v)         Filters.eq/ne/gt/.../and/or
+        │                           │                                     │
+        ▼                           ▼                                     ▼
+      Document ─────────────────── Document ──────────────── Filters 结果
+        │                           │                                     │
+        └───────────────────────────┴─────────────────────────────────────┘
+                                        │
+                                        ▼
+                               Bson（三者都实现）
+                                        │
+                                        ▼
+                        collection.find(Bson)
+                        collection.countDocuments(Bson)
+                        collection.deleteOne(Bson)
+                        collection.updateOne(Bson, ...)
+```
+
+**关键洞察：输入不同，中间层必然不同，外层已经统一。**
+
+| 层 | MQL | Entity | Lambda | 能否统一？ |
+|---|---|---|---|---|
+| 输入 | JSON 字符串 | 实体对象 | 方法引用 | ❌ 不可统一（本质不同） |
+| 中间 | `Document.parse()` | `new Document(k,v)` | `Filters.*` | ❌ 不必统一（各有最优路径） |
+| 外层 | `Bson` | `Bson` | `Bson` | ✅ **已经统一** |
+| 执行 | `MongoCollection` | `MongoCollection` | `MongoCollection` | ✅ **已经统一** |
+
+这说明 `QuerySpec<T>` 抽象（Phase 1）绝非空中楼阁——它只是对**已有事实的形式化表达**。`MongoBsonRenderer.render()` 返回的是 `Bson`，`Document.parse()` 返回的是 `Document`（实现 `Bson`），`JsonTemplateParser` 产出的也是 `Document`。它们都已经可以是 `QuerySpec.toBson()` 的不同实现了。
+
+### 8.3 为什么不把 MQL 也转成 Filters？
+
+理论上可以让 `JsonTemplateParser` 把解析后的 `Document` 反向拆解为 `Filters.eq()` / `Filters.gt()` 等，但这是**过度设计**：
+
+1. **`Document.parse()` 是 MongoDB Driver 原生能力**——Driver 内置的 JSON → BSON 转换器，不需要自己造轮子
+2. **JSON filter 的语法空间远大于 `Filters` API**——`$expr`、`$jsonSchema`、`$text`、`$geoWithin` 等操作符在 `Filters` 里没有对应方法。要全覆盖等于在 `Filters` 上加一个 query parser，这正是已删除的 `QueryParser` 做过的错事
+3. **`Document` 已经实现了 `Bson`**——`Document.parse()` 的产物可以直接传给 `collection.find()`，不需要中间转换
+
+**唯一需要统一的是执行层**——这正是 Phase 2 做的事。当前 `@Find`/`@Count`/`@Delete` 走 `MyRepositoryProxyHandler` → `SimpleMongoRepository` 的 `findByFilter`/`countByFilter`/`deleteByFilter`，已经不经过 `CommandExecutor` 了。老的 `strategy/` 包已经是死代码。
+
+### 8.4 与 Spring Data MongoDB 的对比
+
+Spring Data MongoDB 的统一层是 `MongoTemplate`：
+
+```java
+// Spring Data 的所有查询路径最终都到这里
+mongoTemplate.find(query, entityClass, collectionName);
+mongoTemplate.count(query, entityClass, collectionName);
+```
+
+`Query` 对象持有 `Document` filter + sort + skip/limit，`MongoTemplate` 统一执行。mongo-flex 的 `QuerySpec<T>` + `QueryExecutor<T>` 本质上是同一个模式——只是 `QuerySpec` 比 Spring Data 的 `Query` 更抽象（Spring Data 的 `Query` 只能包 `Document`，不支持直接包 `Filters`），而 `Bson` 接口天然就是比 `Document` 更宽泛的抽象。
+
+### 8.5 MongoDB Driver 版本兼容的架构影响
+
+（详见 `ISSUES.md` M-13）
+
+mongo-flex 引用 17 个 MongoDB Driver 类，其中 14 个在 4.x 和 5.x 之间 API 稳定。仅 3 个不兼容：
+
+- `ConnectionString.getDatabase()` — 连接初始化
+- `InsertOneResult.getInsertedId()` → `BsonValue` — 插入回填 ID
+- `InsertManyResult.getInsertedIds()` — 批量插入回填 ID
+
+这三处都需要 bridge 适配，建议放在 `QueryExecutor`（Phase 2）中统一处理，不污染 `QuerySpec` 抽象层。V4 适配器直接调用（零开销），V5 适配器纯反射（不 import 5.x 类）。

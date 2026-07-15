@@ -209,6 +209,35 @@
 - `mongo-flex-core/.../v2/RepositoryFactoryBean.java` — 装配
 
 ### M-12. ~~Insert 回填ID 时 ID 字段可能会没有 @CollectionId 注解~~ → 详见 [附录 B: Bug 1](#附录-b-simplemongoRepository-问题)
+
+### M-13. MongoDB Driver 5.x 二进制不兼容 — 3 个 API 会炸 ❌ 待实现
+
+**文件:** `mongo-flex-core/pom.xml`（依赖声明）、`SimpleMongoRepository.java`（2 处）、`MongoFlexProperties.java`（1 处）
+
+**问题:** 用户在自己的项目中声明 MongoDB Driver 5.x 后，Maven "最近优先"仲裁会选择 5.x，但 mongo-flex-core 编译时链接的是 4.11.1。5.x 中以下 API 发生了**方法签名级别**的二进制不兼容：
+
+| 文件 | 4.x API（编译时） | 5.x 变化 |
+|---|---|---|
+| `SimpleMongoRepository.java:82` | `InsertOneResult.getInsertedId()` → `BsonValue` | 5.x 泛型化，返回类型变为泛型 `T` |
+| `SimpleMongoRepository.java` | `InsertManyResult.getInsertedIds()` | 同上 |
+| `MongoFlexProperties.java` | `ConnectionString.getDatabase()` | 5.x `ConnectionString` 重构，方法可能移除或改名 |
+
+其余 14 个被引用的 MongoDB Driver 类（`Filters`、`Document`、`Bson`、`MongoCollection`、`Projections`、`UpdateOptions`、`MongoClientSettings` 等）在 4.x 和 5.x 之间 API 稳定。
+
+**影响:** 运行时 `NoSuchMethodError`，插入操作和连接初始化直接崩溃。目前没有 `mongo-flex-driver5` artifact 也没有版本范围锁。
+
+**推荐方案（待实现）:** 方案 A — 内部 `MongoDriverBridge` 接口 + V4/V5 适配器
+- V4 适配器：直接调用（编译时 link 4.x，零开销）
+- V5 适配器：纯反射调用 5.x API（不 import 任何 5.x 类，运行时不存在 5.x 则不加载）
+- 启动时自动检测 driver 版本选适配器
+- 总计约 60 行代码，改动局限在 `SimpleMongoRepository` 和 `MongoFlexProperties`
+
+**涉及的 API（仅 3 处需要 bridge）：**
+1. `ConnectionString.getDatabase()` — 连接初始化
+2. `InsertOneResult.getInsertedId()` — 单条插入回填 ID
+3. `InsertManyResult.getInsertedIds()` — 批量插入回填 ID
+
+**参考:** Spring Data MongoDB 选择版本对齐（框架大版本绑 Driver 大版本），但 mongo-flex 不兼容 API 量极少（3 vs 几百），bridge 方案更轻量。
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:78`
 **问题:** write/read 层隐式映射 `id → _id`，但 post-insert ID 回填只认 @CollectionId 注解，不标注不会收到回填 ID。
 **状态:** 已在本文件附录 B 中详细分析。
@@ -304,9 +333,9 @@
 |--------|:---:|:---:|:---:|
 | Critical | 9 | 2 | 11 |
 | High | 6 | 3 | 9 |
-| Medium | 9 | 3 | 12 |
+| Medium | 9 | 4 | 13 |
 | Low | 14 | 6 | 20 |
-| **合计** | **38** | **14** | **52** |
+| **合计** | **38** | **15** | **53** |
 
 > ✅ 所有 Critical 问题已解决或确认为已知限制。MQL 体系限制（C-5/C-6/C-11/H-6/H-7/M-4/M-5）集中在 `strategy/` 执行器 + `QueryParser` + `MyRepositoryProxyHandler`，是相对封闭的模块，不影响 Lambda 查询和 Repository CRUD 主路径。
 
