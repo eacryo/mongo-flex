@@ -3,7 +3,7 @@ package com.github.eacryo.mongoflex.repository;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class RepositoryCrudTest {
     @Order(1)
     void testInsertAndFindById() {
         log.info("=== test insert + findById ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         try {
             Character c = new Character();
             c.setId(id);
@@ -54,7 +54,7 @@ public class RepositoryCrudTest {
     @Order(2)
     void testUpdateById() {
         log.info("=== test updateById ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         try {
             Character c = new Character();
             c.setId(id);
@@ -81,7 +81,7 @@ public class RepositoryCrudTest {
     @Order(3)
     void testDeleteById() {
         log.info("=== test deleteById ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         Character c = new Character();
         c.setId(id);
         c.setName("CrudDeleteTest-" + id);
@@ -105,7 +105,7 @@ public class RepositoryCrudTest {
     @Order(4)
     void testFindOneByEntity() throws InterruptedException {
         log.info("=== test findOneByEntity ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         try {
             String name = "CrudFindOneEntity-" + id;
             Character c = new Character();
@@ -140,7 +140,7 @@ public class RepositoryCrudTest {
     @Order(6)
     void testDeleteByEntity() {
         log.info("=== test deleteByEntity ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         String name = "CrudDeleteByEntity-" + id;
         Character c = new Character();
         c.setId(id);
@@ -163,7 +163,7 @@ public class RepositoryCrudTest {
     @Order(7)
     void testFindAll() {
         log.info("=== test findAll ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         try {
             Character c = new Character();
             c.setId(id);
@@ -184,7 +184,7 @@ public class RepositoryCrudTest {
     @Order(8)
     void testDeleteAll() {
         log.info("=== test deleteAll ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         Character c = new Character();
         c.setId(id);
         c.setName("CrudDeleteAll-" + id);

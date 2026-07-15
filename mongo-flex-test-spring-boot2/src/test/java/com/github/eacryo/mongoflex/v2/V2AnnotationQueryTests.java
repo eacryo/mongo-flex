@@ -5,7 +5,7 @@ import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
 import com.github.eacryo.mongoflex.repository.DynamicMongoClient;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -72,7 +72,7 @@ public class V2AnnotationQueryTests {
     @Test
     public void testInsert() throws ParseException {
         Character character = new Character();
-        character.setId(UlidCreator.getUlid().toString());
+        character.setId(Ulid.generate());
         character.setName("Furina");
         character.setAddress("Fontaine");
         character.setBirthday(new Date());

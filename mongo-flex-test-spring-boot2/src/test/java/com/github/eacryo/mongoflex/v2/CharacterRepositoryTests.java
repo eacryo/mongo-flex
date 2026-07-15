@@ -3,7 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.util.SFunction;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -69,7 +69,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testInsert() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("InsertTest-" + id);
         c.setAddress("InsertAddress");
@@ -85,7 +85,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testFindById() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("FindByIdTest-" + id);
         characterRepositoryV2.insert(c);
@@ -99,7 +99,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testFindOneByEntity() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("FindOneEntityTest-" + id);
         characterRepositoryV2.insert(c);
@@ -115,15 +115,15 @@ public class CharacterRepositoryTests {
     @Test
     public void testFindListByEntity() {
         // 插入两条同 name 的记录
-        String commonName = "FindListEntityTest-" + UlidCreator.getUlid().toString();
+        String commonName = "FindListEntityTest-" + Ulid.generate();
         Character c1 = new Character();
-        c1.setId(UlidCreator.getUlid().toString());
+        c1.setId(Ulid.generate());
         c1.setName(commonName);
         c1.setAddress("Addr1");
         characterRepositoryV2.insert(c1);
 
         Character c2 = new Character();
-        c2.setId(UlidCreator.getUlid().toString());
+        c2.setId(Ulid.generate());
         c2.setName(commonName);
         c2.setAddress("Addr2");
         characterRepositoryV2.insert(c2);
@@ -142,11 +142,11 @@ public class CharacterRepositoryTests {
 
     @Test
     public void testFindPageByEntity() {
-        String commonName = "FindPageTest-" + UlidCreator.getUlid().toString();
+        String commonName = "FindPageTest-" + Ulid.generate();
         // 插入 5 条记录，address 用于区分和排序
         for (int i = 0; i < 5; i++) {
             Character c = new Character();
-            c.setId(UlidCreator.getUlid().toString());
+            c.setId(Ulid.generate());
             c.setName(commonName);
             c.setAddress("PageAddr-" + i);
             characterRepositoryV2.insert(c);
@@ -171,10 +171,10 @@ public class CharacterRepositoryTests {
 
     @Test
     public void testFindPageWithLambdaSort() {
-        String commonName = "FindPageLambdaSort-" + UlidCreator.getUlid().toString();
+        String commonName = "FindPageLambdaSort-" + Ulid.generate();
         for (int i = 0; i < 5; i++) {
             Character c = new Character();
-            c.setId(UlidCreator.getUlid().toString());
+            c.setId(Ulid.generate());
             c.setName(commonName);
             c.setAddress("LambdaAddr-" + i);
             characterRepositoryV2.insert(c);
@@ -199,7 +199,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testFindOneByFunction() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("FindOneByFuncTest-" + id);
         characterRepositoryV2.insert(c);
@@ -229,7 +229,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testUpdateById() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("UpdateByIdTest-" + id);
         c.setAddress("Before");
@@ -248,7 +248,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testUpdateByField() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("UpdateByFieldTest-" + id);
         c.setAddress("Addr");
@@ -263,7 +263,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testDeleteById() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("DeleteByIdTest-" + id);
         characterRepositoryV2.insert(c);
@@ -275,7 +275,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testDeleteByEntity() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("DeleteByEntityTest-" + id);
         characterRepositoryV2.insert(c);
@@ -287,7 +287,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testDeleteByField() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("DeleteByFieldTest-" + id);
         characterRepositoryV2.insert(c);

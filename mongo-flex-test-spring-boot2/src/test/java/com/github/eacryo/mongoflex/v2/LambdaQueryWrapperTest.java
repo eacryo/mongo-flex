@@ -3,7 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testFindOneByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("FindOneWrapper-" + id);
         c.setArea("Inazuma");
@@ -43,7 +43,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testFindListByWrapper() {
         Character c1 = new Character();
-        String id1 = UlidCreator.getUlid().toString();
+        String id1 = Ulid.generate();
         c1.setId(id1);
         c1.setName("FindListWrapper-A-" + id1);
         c1.setArea("Liyue");
@@ -51,7 +51,7 @@ public class LambdaQueryWrapperTest {
         characterRepositoryV2.insert(c1);
 
         Character c2 = new Character();
-        String id2 = UlidCreator.getUlid().toString();
+        String id2 = Ulid.generate();
         c2.setId(id2);
         c2.setName("FindListWrapper-B-" + id2);
         c2.setArea("Liyue");
@@ -73,7 +73,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testCountByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("CountWrapper-" + id);
         c.setArea("Sumeru");
@@ -92,7 +92,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testUpdateByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("UpdateWrapper-" + id);
         c.setAddress("Fontaine");
@@ -112,7 +112,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testDeleteByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("DeleteWrapper-" + id);
         c.setBirthday(new Date());

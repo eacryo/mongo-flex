@@ -4,7 +4,7 @@ import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ public class LambdaQueryBasicTest {
 
     @BeforeEach
     void setUp() {
-        id1 = UlidCreator.getUlid().toString();
+        id1 = Ulid.generate();
         Character c1 = new Character();
         c1.setId(id1);
         c1.setName(TEST_NAME + "-A-" + id1);
@@ -37,7 +37,7 @@ public class LambdaQueryBasicTest {
         repo.insert(c1);
         log.info("inserted: id={}, name={}", id1, c1.getName());
 
-        id2 = UlidCreator.getUlid().toString();
+        id2 = Ulid.generate();
         Character c2 = new Character();
         c2.setId(id2);
         c2.setName(TEST_NAME + "-B-" + id2);

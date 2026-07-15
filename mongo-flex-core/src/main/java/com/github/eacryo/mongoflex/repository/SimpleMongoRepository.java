@@ -16,7 +16,7 @@ import com.github.eacryo.mongoflex.query.QuerySpec;
 import com.github.eacryo.mongoflex.util.DateValueGenerator;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import com.github.eacryo.mongoflex.util.SFunction;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -580,7 +580,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
             }
             switch (idType){
                 case ULID :
-                    idField.set(entity, UlidCreator.getUlid().toString());
+                    idField.set(entity, Ulid.generate());
                     break;
                 case UUID :
                     idField.set(entity, UUID.randomUUID().toString());

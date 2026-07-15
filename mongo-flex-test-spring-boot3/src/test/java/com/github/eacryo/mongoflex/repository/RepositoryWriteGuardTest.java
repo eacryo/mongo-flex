@@ -4,7 +4,7 @@ import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,7 +93,7 @@ public class RepositoryWriteGuardTest {
     @Test
     void testDeleteWrapperNonNull() {
         log.info("=== test delete(non-empty wrapper) should work ===");
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         try {
             Character c = new Character();
             c.setId(id);

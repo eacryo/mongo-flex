@@ -4,7 +4,7 @@ import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ public class LambdaQueryCollectionTest {
 
     @BeforeEach
     void setUp() {
-        id1 = UlidCreator.getUlid().toString();
+        id1 = Ulid.generate();
         Character c1 = new Character();
         c1.setId(id1);
         c1.setName("CollectionTest-A-" + id1);
@@ -36,7 +36,7 @@ public class LambdaQueryCollectionTest {
         c1.setBirthday(new Date());
         repo.insert(c1);
 
-        id2 = UlidCreator.getUlid().toString();
+        id2 = Ulid.generate();
         Character c2 = new Character();
         c2.setId(id2);
         c2.setName("CollectionTest-B-" + id2);
@@ -44,7 +44,7 @@ public class LambdaQueryCollectionTest {
         c2.setBirthday(new Date());
         repo.insert(c2);
 
-        id3 = UlidCreator.getUlid().toString();
+        id3 = Ulid.generate();
         Character c3 = new Character();
         c3.setId(id3);
         c3.setName("CollectionTest-C-" + id3);

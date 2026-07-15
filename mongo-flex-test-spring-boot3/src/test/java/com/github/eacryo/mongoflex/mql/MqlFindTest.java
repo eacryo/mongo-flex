@@ -3,7 +3,7 @@ package com.github.eacryo.mongoflex.mql;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +30,7 @@ public class MqlFindTest {
     void insertData() {
         // Insert 12 documents for skip/limit pagination tests / 插入12条数据用于分页测试
         for (int i = 0; i < 12; i++) {
-            String id = UlidCreator.getUlid().toString();
+            String id = Ulid.generate();
             Character c = new Character();
             c.setId(id);
             c.setName("MqlFindTest-" + i + "-" + id);

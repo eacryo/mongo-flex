@@ -3,7 +3,7 @@ package com.github.eacryo.mongoflex.mql;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class MqlParamTest {
 
     @BeforeAll
     void insertData() {
-        id = UlidCreator.getUlid().toString();
+        id = Ulid.generate();
         Character c = new Character();
         c.setId(id);
         c.setName("MqlParam-" + id);

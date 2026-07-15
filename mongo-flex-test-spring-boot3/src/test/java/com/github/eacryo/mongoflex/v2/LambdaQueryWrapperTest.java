@@ -3,7 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
-import com.github.f4b6a3.ulid.UlidCreator;
+import com.github.eacryo.mongoflex.ulid.Ulid;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testFindOneByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("FindOneWrapper-" + id);
         c.setArea("Inazuma");
@@ -43,7 +43,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testFindListByWrapper() {
         Character c1 = new Character();
-        String id1 = UlidCreator.getUlid().toString();
+        String id1 = Ulid.generate();
         c1.setId(id1);
         c1.setName("FindListWrapper-A-" + id1);
         c1.setArea("Liyue");
@@ -51,7 +51,7 @@ public class LambdaQueryWrapperTest {
         characterRepositoryV2.insert(c1);
 
         Character c2 = new Character();
-        String id2 = UlidCreator.getUlid().toString();
+        String id2 = Ulid.generate();
         c2.setId(id2);
         c2.setName("FindListWrapper-B-" + id2);
         c2.setArea("Liyue");
@@ -73,7 +73,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testCountByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("CountWrapper-" + id);
         c.setArea("Sumeru");
@@ -92,7 +92,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testUpdateByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("UpdateWrapper-" + id);
         c.setAddress("Fontaine");
@@ -112,7 +112,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testDeleteByWrapper() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("DeleteWrapper-" + id);
         c.setBirthday(new Date());
@@ -128,7 +128,7 @@ public class LambdaQueryWrapperTest {
 
     @Test
     public void testOrSimple() {
-        String id1 = UlidCreator.getUlid().toString();
+        String id1 = Ulid.generate();
         Character c1 = new Character();
         c1.setId(id1);
         c1.setName("OrSimple-A-" + id1);
@@ -136,7 +136,7 @@ public class LambdaQueryWrapperTest {
         c1.setArea("Inazuma");
         characterRepositoryV2.insert(c1);
 
-        String id2 = UlidCreator.getUlid().toString();
+        String id2 = Ulid.generate();
         Character c2 = new Character();
         c2.setId(id2);
         c2.setName("OrSimple-B-" + id2);
@@ -157,7 +157,7 @@ public class LambdaQueryWrapperTest {
 
     @Test
     public void testOrChained() {
-        String id1 = UlidCreator.getUlid().toString();
+        String id1 = Ulid.generate();
         Character c1 = new Character();
         c1.setId(id1);
         c1.setName("OrChain-A-" + id1);
@@ -165,7 +165,7 @@ public class LambdaQueryWrapperTest {
         c1.setArea("Inazuma");
         characterRepositoryV2.insert(c1);
 
-        String id2 = UlidCreator.getUlid().toString();
+        String id2 = Ulid.generate();
         Character c2 = new Character();
         c2.setId(id2);
         c2.setName("OrChain-B-" + id2);
@@ -190,7 +190,7 @@ public class LambdaQueryWrapperTest {
 
     @Test
     public void testOrWithNestedWrapper() {
-        String idA = UlidCreator.getUlid().toString();
+        String idA = Ulid.generate();
         Character cA = new Character();
         cA.setId(idA);
         cA.setName("OrNested-A-" + idA);
@@ -198,7 +198,7 @@ public class LambdaQueryWrapperTest {
         cA.setBirthday(new Date());
         characterRepositoryV2.insert(cA);
 
-        String idB = UlidCreator.getUlid().toString();
+        String idB = Ulid.generate();
         Character cB = new Character();
         cB.setId(idB);
         cB.setName("OrNested-B-" + idB);
@@ -225,7 +225,7 @@ public class LambdaQueryWrapperTest {
 
     @Test
     public void testBackwardCompatiblePureAnd() {
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         Character c = new Character();
         c.setId(id);
         c.setName("PureAnd-" + id);
@@ -248,7 +248,7 @@ public class LambdaQueryWrapperTest {
     public void testIncludeProjection() {
         // insert
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("SelectProj-" + id);
         c.setArea("Fontaine");
@@ -284,7 +284,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testIncludeProjectionFindOne() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("SelectOne-" + id);
         c.setArea("Natlan");
@@ -315,7 +315,7 @@ public class LambdaQueryWrapperTest {
     public void testFromEntity() {
         // insert test data
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("FromEntity-" + id);
         c.setArea("Sumeru");
@@ -352,7 +352,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testFromEntityWithIncludeAndSort() {
         // insert test data
-        String id1 = UlidCreator.getUlid().toString();
+        String id1 = Ulid.generate();
         Character c1 = new Character();
         c1.setId(id1);
         c1.setName("FE-Proj-A-" + id1);
@@ -361,7 +361,7 @@ public class LambdaQueryWrapperTest {
         c1.setDescription("desc A");
         characterRepositoryV2.insert(c1);
 
-        String id2 = UlidCreator.getUlid().toString();
+        String id2 = Ulid.generate();
         Character c2 = new Character();
         c2.setId(id2);
         c2.setName("FE-Proj-B-" + id2);
@@ -402,7 +402,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testIncludeProjectionPagination() {
         // insert 2 records
-        String id1 = UlidCreator.getUlid().toString();
+        String id1 = Ulid.generate();
         Character c1 = new Character();
         c1.setId(id1);
         c1.setName("PageProj-A-" + id1);
@@ -411,7 +411,7 @@ public class LambdaQueryWrapperTest {
         c1.setDescription("page projection A");
         characterRepositoryV2.insert(c1);
 
-        String id2 = UlidCreator.getUlid().toString();
+        String id2 = Ulid.generate();
         Character c2 = new Character();
         c2.setId(id2);
         c2.setName("PageProj-B-" + id2);
@@ -455,7 +455,7 @@ public class LambdaQueryWrapperTest {
     public void testExcludeProjection() {
         // insert
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("ExcludeProj-" + id);
         c.setArea("Snezhnaya");
@@ -492,7 +492,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testExcludeProjectionFindOne() {
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("ExcludeOne-" + id);
         c.setArea("Mondstadt");
@@ -522,7 +522,7 @@ public class LambdaQueryWrapperTest {
     public void testIncludeWithExcludeId() {
         // insert
         Character c = new Character();
-        String id = UlidCreator.getUlid().toString();
+        String id = Ulid.generate();
         c.setId(id);
         c.setName("SelectExcludeId-" + id);
         c.setArea("Liyue");
@@ -559,7 +559,7 @@ public class LambdaQueryWrapperTest {
     @Test
     public void testExcludeProjectionPagination() {
         // insert 2 records
-        String id1 = UlidCreator.getUlid().toString();
+        String id1 = Ulid.generate();
         Character c1 = new Character();
         c1.setId(id1);
         c1.setName("PageExcl-A-" + id1);
@@ -568,7 +568,7 @@ public class LambdaQueryWrapperTest {
         c1.setDescription("page exclude A");
         characterRepositoryV2.insert(c1);
 
-        String id2 = UlidCreator.getUlid().toString();
+        String id2 = Ulid.generate();
         Character c2 = new Character();
         c2.setId(id2);
         c2.setName("PageExcl-B-" + id2);
