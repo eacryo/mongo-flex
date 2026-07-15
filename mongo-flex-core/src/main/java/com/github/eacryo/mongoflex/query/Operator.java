@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.lambda;
+package com.github.eacryo.mongoflex.query;
 
 public enum Operator {
 

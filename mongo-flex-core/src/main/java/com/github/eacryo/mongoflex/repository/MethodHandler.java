@@ -1,10 +1,10 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.repository;
 
 import java.lang.reflect.Method;
 
 /**
- * Pluggable method handler for {@link MRepository} proxy dispatch /
- * 可插拔的方法处理器，用于 {@link MRepository} 代理分发。
+ * Pluggable method handler for {@link com.github.eacryo.mongoflex.annotation.MRepository} proxy dispatch /
+ * 可插拔的方法处理器，用于 {@link com.github.eacryo.mongoflex.annotation.MRepository} 代理分发。
  * <p>
  * Each handler type (annotation-driven, repository-inherited, future extensions)
  * implements this interface. The proxy handler iterates through a list of

@@ -1,10 +1,10 @@
 package com.github.eacryo.mongoflex.mql;
 
 import com.github.eacryo.mongoflex.bean.Character;
-import com.github.eacryo.mongoflex.v2.Find;
-import com.github.eacryo.mongoflex.v2.MRepository;
-import com.github.eacryo.mongoflex.v2.MongoRepository;
-import com.github.eacryo.mongoflex.v2.Param;
+import com.github.eacryo.mongoflex.annotation.Find;
+import com.github.eacryo.mongoflex.annotation.MRepository;
+import com.github.eacryo.mongoflex.repository.MongoRepository;
+import com.github.eacryo.mongoflex.annotation.Param;
 
 import java.util.List;
 

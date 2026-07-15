@@ -2,7 +2,7 @@ package com.github.eacryo.mongoflex.lambda;
 
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
-import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
+import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
 import com.github.f4b6a3.ulid.UlidCreator;
 import lombok.extern.slf4j.Slf4j;

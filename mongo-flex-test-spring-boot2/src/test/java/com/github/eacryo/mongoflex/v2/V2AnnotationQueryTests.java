@@ -4,6 +4,7 @@ import com.fasterxml.uuid.Generators;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
+import com.github.eacryo.mongoflex.repository.DynamicMongoClient;
 import com.github.f4b6a3.ulid.UlidCreator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

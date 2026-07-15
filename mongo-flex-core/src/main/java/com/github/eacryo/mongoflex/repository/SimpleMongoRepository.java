@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.repository;
 
 import com.github.eacryo.mongoflex.annotation.CollectionId;
 import com.github.eacryo.mongoflex.annotation.CreateDate;
@@ -9,8 +9,8 @@ import com.github.eacryo.mongoflex.constant.IdType;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.github.eacryo.mongoflex.entity.PageDTO;
 import com.github.eacryo.mongoflex.entity.SortOrder;
-import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
-import com.github.eacryo.mongoflex.lambda.MongoBsonRenderer;
+import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
+import com.github.eacryo.mongoflex.query.MongoBsonRenderer;
 import com.github.eacryo.mongoflex.query.QueryExecutor;
 import com.github.eacryo.mongoflex.query.QuerySpec;
 import com.github.eacryo.mongoflex.util.DateValueGenerator;

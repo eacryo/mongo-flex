@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * Prevents Spring Boot from auto-creating a {@code MongoClient} that defaults to
  * {@code localhost:27017} — mongo-flex manages its own clients via
- * {@link com.github.eacryo.mongoflex.v2.DynamicMongoClient}.
+ * {@link com.github.eacryo.mongoflex.repository.DynamicMongoClient}.
  * <p>
  * Spring Data MongoDB's {@code MongoDataAutoConfiguration} is intentionally NOT
  * excluded: if the user provides a {@code MongoClient} bean (e.g. for Spring Data),

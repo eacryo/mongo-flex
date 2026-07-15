@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.lambda;
+package com.github.eacryo.mongoflex.query;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.github.eacryo.mongoflex.query.QuerySpec;

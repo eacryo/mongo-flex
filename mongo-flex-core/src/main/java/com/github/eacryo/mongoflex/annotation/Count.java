@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

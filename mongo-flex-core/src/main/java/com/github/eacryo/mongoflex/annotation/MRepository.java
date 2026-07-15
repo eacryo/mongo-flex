@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.annotation;
 
 import org.springframework.stereotype.Repository;
 
@@ -29,8 +29,7 @@ import java.lang.annotation.Target;
  * 此注解同时被 {@link Repository @Repository} 元注解标记，
  * 因此 Spring 会为其应用持久层异常翻译。
  *
- * @see MongoRepository
- * @see Mql
+ * @see com.github.eacryo.mongoflex.repository.MongoRepository
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

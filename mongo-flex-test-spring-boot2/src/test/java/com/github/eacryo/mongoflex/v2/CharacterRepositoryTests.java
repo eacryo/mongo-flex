@@ -11,7 +11,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.github.eacryo.mongoflex.entity.PageDTO;
 import com.github.eacryo.mongoflex.entity.SortOrder;
-import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
+import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
 
 import java.util.Arrays;
 import java.util.Date;

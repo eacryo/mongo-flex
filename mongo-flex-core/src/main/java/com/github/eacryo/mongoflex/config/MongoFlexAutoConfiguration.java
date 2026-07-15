@@ -1,7 +1,8 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.config;
 
-import com.github.eacryo.mongoflex.config.MongoFlexProperties;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import com.github.eacryo.mongoflex.repository.DynamicMongoClient;
+import com.github.eacryo.mongoflex.repository.RepositoryRegistrar;
 import com.github.eacryo.mongoflex.util.CollectionNameUtil;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

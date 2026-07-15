@@ -2,7 +2,7 @@ package com.github.eacryo.mongoflex.v2;
 
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
-import com.github.eacryo.mongoflex.lambda.LambdaQueryWrapper;
+import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
 import com.github.f4b6a3.ulid.UlidCreator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

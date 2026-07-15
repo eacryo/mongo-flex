@@ -3,6 +3,7 @@ package com.github.eacryo.mongoflex.v2;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.config.MongoFlexProperties;
+import com.github.eacryo.mongoflex.repository.DynamicMongoClient;
 import com.github.eacryo.mongoflex.constant.MongoFlexConstant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

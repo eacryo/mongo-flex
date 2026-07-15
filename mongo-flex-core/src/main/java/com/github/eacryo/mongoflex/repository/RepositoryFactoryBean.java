@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.repository;
 
 
 import com.github.eacryo.mongoflex.annotation.CollectionName;

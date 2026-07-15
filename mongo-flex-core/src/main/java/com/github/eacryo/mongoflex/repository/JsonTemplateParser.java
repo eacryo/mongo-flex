@@ -1,9 +1,12 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.repository;
 
 import org.bson.Document;
+import com.github.eacryo.mongoflex.annotation.Param;
 
 import java.lang.reflect.Method;
+import com.github.eacryo.mongoflex.annotation.Param;
 import java.lang.reflect.Parameter;
+import com.github.eacryo.mongoflex.annotation.Param;
 
 /**
  * JSON template parser — replaces {@code #{paramName}} placeholders with JSON-encoded
@@ -19,7 +22,7 @@ import java.lang.reflect.Parameter;
  * // with name="Hu Tao", level=90 → {name: "Hu Tao", level: 90}
  * }</pre>
  * <p>
- * Replaces the old shell-command-based {@link QueryParser}.
+ * Replaces the old shell-command-based QueryParser (removed).
  */
 public class JsonTemplateParser {
 

@@ -1,29 +1,53 @@
-package com.github.eacryo.mongoflex.v2;
+package com.github.eacryo.mongoflex.repository;
 import lombok.extern.slf4j.Slf4j;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.type.AnnotationMetadata;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.io.Resource;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.core.type.classreading.MetadataReader;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import org.springframework.util.ClassUtils;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 
 import java.io.IOException;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.lang.reflect.ParameterizedType;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.lang.reflect.Type;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.lang.reflect.TypeVariable;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.util.HashMap;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.util.List;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.util.Map;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.util.Set;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 import java.util.HashSet;
+import com.github.eacryo.mongoflex.annotation.MRepository;
 
 @Slf4j
 public class RepositoryRegistrar implements ImportBeanDefinitionRegistrar {

@@ -1,4 +1,4 @@
-package com.github.eacryo.mongoflex.lambda;
+package com.github.eacryo.mongoflex.query;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.mongodb.client.model.Filters;
@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * 将 LambdaQueryWrapper 中的条件渲染为 MongoDB Bson 过滤器。
- * 不直接对外使用，由 {@link com.github.eacryo.mongoflex.v2.SimpleMongoRepository} 在调用前
+ * 不直接对外使用，由 {@link com.github.eacryo.mongoflex.repository.SimpleMongoRepository} 在调用前
  * 自动补齐 entityClass。直接调用时请确保 wrapper 已设置 entityClass，否则字段名无法转换为
  * MongoDB 实际字段名。
  */
