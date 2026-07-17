@@ -4,6 +4,7 @@ import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
 import com.github.eacryo.mongoflex.annotation.Count;
 import com.github.eacryo.mongoflex.annotation.Delete;
 import com.github.eacryo.mongoflex.annotation.Find;
+import com.github.eacryo.mongoflex.annotation.Update;
 import com.mongodb.client.MongoDatabase;
 import com.github.eacryo.mongoflex.annotation.Count;
 import com.github.eacryo.mongoflex.annotation.Delete;
@@ -35,7 +36,7 @@ import com.github.eacryo.mongoflex.annotation.Find;
  * <p>
  * Dispatch logic:
  * <ol>
- *   <li>{@code @Find} / {@code @Count} / {@code @Delete} — JSON template → filter Document → baseRepository</li>
+ *   <li>{@code @Find} / {@code @Count} / {@code @Delete} / {@code @Update} — JSON template → filter Document → baseRepository</li>
  *   <li>Method inherited from {@link MongoRepository} — delegate to baseRepository</li>
  * </ol>
  */
@@ -79,6 +80,9 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         if (method.isAnnotationPresent(Delete.class)) {
             return handleDelete(method, args);
         }
+        if (method.isAnnotationPresent(Update.class)) {
+            return handleUpdate(method, args);
+        }
 
         // ── Inherited from MongoRepository / 继承自 MongoRepository ──
         if (isMethodFromTargetInterface(method, targetInterface)) {
@@ -95,7 +99,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         }
 
         throw new UnsupportedOperationException("Method " + method.getName() +
-                " is neither annotated with @Find/@Count/@Delete nor inherited from MongoRepository.");
+                " is neither annotated with @Find/@Count/@Delete/@Update nor inherited from MongoRepository.");
     }
 
     // ──── @Find handler / @Find 处理器 ────
@@ -168,6 +172,20 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             return null;
         }
         return deleted;
+    }
+
+    // ──── @Update handler / @Update 处理器 ────
+
+    private Object handleUpdate(Method method, Object[] args) {
+        Update update = method.getAnnotation(Update.class);
+        Document filter = jsonTemplateParser.parse(update.value(), method, args);
+        Document updateDoc = jsonTemplateParser.parse(update.update(), method, args);
+        long modified = baseRepository.updateByFilter(filter, updateDoc, update.multi(), update.upsert());
+        Class<?> returnType = method.getReturnType();
+        if (returnType == void.class || returnType == Void.class) {
+            return null;
+        }
+        return modified;
     }
 
     // ──── Helpers / 辅助方法 ────

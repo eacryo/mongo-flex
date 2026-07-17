@@ -65,17 +65,17 @@
 
 ## 高（High）
 
-### H-1. findOneByEntity 空实体返回随机文档 — 设计如此
+### H-1. ~~findOneByEntity 空实体返回随机文档 — 设计如此~~
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java`
 **问题:** 实体所有字段为 null 时 `write(entity)` 生成空 `Document{}`，`find({}).first()` 返回集合自然顺序第一条文档。
 **决定:** 读操作允许空条件（与 MyBatis-Plus 行为一致），仅写操作（delete/update）拒绝空条件。
 
-### H-2. count(T entity) 空实体返回总数 — 设计如此
+### H-2. ~~count(T entity) 空实体返回总数 — 设计如此~~
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java`
 **问题:** 同 H-1，空实体统计返回集合总文档数。
 **决定:** 同 H-1。
 
-### H-3. IdGenerator<?> 类型不安全 ✅ 已修复
+### H-3. ~~IdGenerator<?> 类型不安全 ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:46`
 **问题:** 无界通配符，ID 生成器产出类型与实体 ID 字段类型不匹配只在运行时报错。
@@ -94,7 +94,7 @@
 **问题:** `convertIdIfNecessary((ID) id)` 将 Object 强转为 ID，堆污染风险。
 **状态:** 已在本文件附录 B 中详细分析。
 
-### H-5. DynamicMongoClient select() 返回错误客户端 ✅ 已修复
+### H-5. ~~DynamicMongoClient select() 返回错误客户端 ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/DynamicMongoClient.java:49-55`
 **问题:** `NullPointerException` 用作参数校验异常不恰当，且错误信息只报 tenant 名却不列出可用 tenant 列表，排查困难。
@@ -113,7 +113,7 @@
 **问题:** `args[i].toString()` 直接拼入 JSON 字符串，值中含引号或特殊字符导致 JSON 格式错误。
 **状态:** 与 C-6 同源——MQL 参数占位符替换的已知限制。特殊字符的转义需引入 JSON 序列化库，留待后续统一处理。
 
-### H-8. ClassFieldMetaData 无条件 setAccessible(true) ✅ 已修复
+### H-8. ~~ClassFieldMetaData 无条件 setAccessible(true) ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/convertor/ClassFieldMetaData.java:35`
 **问题:** 对所有字段（包括 static final 常量）调用 `setAccessible(true)`，JPMS 下可能抛 `InaccessibleObjectException`。
@@ -158,7 +158,7 @@
 **问题:** 返回 null 而非抛明确异常，所有调用方必须自行判空。
 **解决方案:** 抛 `IllegalArgumentException("entity must not be null")`。同时移除 `@Component` 注解，改为在 `MyOrmAutoConfiguration` 中通过 `@Bean` 显式注册，防止用户直接 `@Autowired` 此内部组件。
 
-### M-7. SimpleMongoRepository.findList 全量加载到内存 — 设计如此
+### M-7. ~~SimpleMongoRepository.findList 全量加载到内存 — 设计如此~~
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java:120`
 **问题:** `into(new ArrayList<>())` 一次加载全部结果，大数据集 OOM。
 **决定:** `findList` 的语义就是"查全量"，需要分页时使用 `findPage`，需要流式处理时使用 `findAll` 逐条迭代。与 MyBatis-Plus `selectList` 行为一致。
@@ -168,7 +168,7 @@
 **问题:** 所有条件固定 AND 连接，无法表达 `WHERE a=1 OR b=2`。
 **修复:** 添加 `or()` 和 `or(LambdaQueryWrapper<T>)` 方法。`or()` 插入 sentinel 分割条件组，渲染时组内 AND、组间 OR。
 
-### M-9. ReflectUtil.getFieldNameFromLambda 对 boolean getter 前缀处理不准确 ✅ 已修复
+### M-9. ~~ReflectUtil.getFieldNameFromLambda 对 boolean getter 前缀处理不准确 ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/ReflectUtil.java:31-37`
 **问题:** `isActive()` 始终解析为 `active`，但实际字段名可能是 `isActive`（`is` 不是 getter 前缀时）。
@@ -181,7 +181,7 @@
 - 非 getter 风格的方法名抛 `IllegalArgumentException`（明确 fail-fast，而非静默使用原方法名）
 - 在类 Javadoc 中明确记录此已知限制，并说明用 `@CollectionField` 覆盖的方式
 
-### M-10. 泛型解析只检查直接接口，不支持层级接口继承 ✅ 已修复
+### M-10. ~~泛型解析只检查直接接口，不支持层级接口继承 ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/RepositoryRegistrar.java:43-55`
 **问题:** `interface UserRepo extends BaseRepo<User, String>` 且 `BaseRepo extends MongoRepository` 时泛型解析失败。
@@ -191,7 +191,7 @@
 - `resolveTypeVariable(Type, Map)` — 用映射表将 TypeVariable 替换为实际类型
 - `registerBeanDefinitions()` 调用 `resolveMongoRepositoryTypes()` 替代原先的扁平 for 循环
 
-### M-11. DateValueGenerator 只支持 Date 和 String ✅ 已修复
+### M-11. ~~DateValueGenerator 只支持 Date 和 String ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/util/DateValueGenerator.java:20-28`
 **问题:** `LocalDateTime`、`LocalDate`、`Instant` 等常见类型不支持，抛 `IllegalArgumentException`。
@@ -210,7 +210,7 @@
 
 ### M-12. ~~Insert 回填ID 时 ID 字段可能会没有 @CollectionId 注解~~ → 详见 [附录 B: Bug 1](#附录-b-simplemongoRepository-问题)
 
-### M-13. MongoDB Driver 5.x 兼容性 — 已确认兼容 ✅
+### M-13. ~~MongoDB Driver 5.x 兼容性 — 已确认兼容 ✅~~
 
 **验证方式:** SB3 测试模块（Spring Boot 3.5.4）通过 BOM 间接依赖 `mongodb-driver-sync:5.5.1`，全部测试通过。
 
@@ -255,9 +255,31 @@
 
 ---
 
+## UlidTest 问题
+
+### U-1. encode 测试未覆盖 byte 负值边界（0x80 ~ 0xFF）
+**文件:** `mongo-flex-core/src/test/java/com/github/eacryo/mongoflex/ulid/UlidTest.java:253-300`
+**问题:** `encodeShouldProduceValidOutput` 和 `encodeShouldBeDeterministic` 两个测试的 random 数组只用 `0..9` 和 `i * 17 + 42` 等正小值 pattern，未覆盖 Java `byte` signed 类型的负值边界。`Ulid.encode()` 第 143 行 `random[byteIdx++] & 0xFF` 虽已正确处理 signed byte，但无测试覆盖 `0x80` ~ `0xFF` 区间。
+**建议:** 补充 random 数组含 `-1`（`0xFF`）、`-128`（`0x80`）等边界值的 encode 测试用例。
+
+### U-2. 时钟回退测试依赖反射，Java 17+ 模块化环境需 --add-opens
+**文件:** `mongo-flex-core/src/test/java/com/github/eacryo/mongoflex/ulid/UlidTest.java:223-247`
+**问题:** `shouldHandleClockRollback` 通过 `setAccessible(true)` 反射修改 `Ulid.lastTimestamp`，在 Java 17+ 模块化环境下（未开放反射）会抛 `InaccessibleObjectException`。当前需加 `--add-opens java.base/java.lang=ALL-UNNAMED` 或确保 `Ulid` 所在包已开放。
+**建议:** 考虑提取 package-private 的测试辅助方法（如 `Ulid.setLastTimestamp(long)`）替代反射。
+
+### U-3. concurrentGenerationShouldBeMonotonicPerThread 中 prev 变量最终值未使用
+**文件:** `mongo-flex-core/src/test/java/com/github/eacryo/mongoflex/ulid/UlidTest.java:192-201`
+**问题:** 每个线程内 `prev` 在循环末尾赋值为 `next`，循环结束后 `prev` 持有最后一个值但不再被使用。不影响正确性，但变量作用域可缩小（仅在循环内使用）。
+
+### U-4. @RepeatedTest(5) × 50,000 次 = 250,000 次生成，慢环境可能耗时
+**文件:** `mongo-flex-core/src/test/java/com/github/eacryo/mongoflex/ulid/UlidTest.java:306-325`
+**问题:** `repeatedBulkShouldBeUniqueAndMonotonic` 标记 `@RepeatedTest(5)`，每次重复生成 50,000 ULID 并全部插入 `HashSet` + `compareTo` 检查。5 次共 250,000 次，慢环境可能数秒。加上 `@AfterEach` 调用 `resetState()` 每次重复后重置，每轮从新鲜随机开始，各轮之间无同比性（非 bug，但值得注意）。
+
+---
+
 ## 低（Low）
 
-### L-1. FillConstant 字段非 final ✅ 已修复
+### L-1. ~~FillConstant 字段非 final ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/FillConstant.java:4-7`
 **修复:** 字段加 `final` 修饰，加私有构造器禁止实例化，加中英双语文档注释。
@@ -273,7 +295,7 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/v2/MyRepositoryProxyHandler.java:84-93`
 **状态:** MQL 代理内部保留方法，虽当前未被调用但作为 MQL 结果映射的兜底实现，暂不删除。
 
-### L-5. 冗余的 mongodb-driver-core 和 bson 依赖 ✅ 已解决
+### L-5. ~~冗余的 mongodb-driver-core 和 bson 依赖 ✅ 已解决~~
 
 **文件:** `mongo-flex-core/pom.xml`
 
@@ -289,7 +311,7 @@
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/MongoFlexConstant.java`
 **状态:** 常量类为配置属性占位符类，Spring 通过反射实例化，加 private 构造器反而可能干扰框架行为。保持现状。
 
-### L-8. FillConstant 允许实例化 ✅ 已修复
+### L-8. ~~FillConstant 允许实例化 ✅ 已修复~~
 
 **文件:** `src/main/java/com/github/eacryo/mongoflex/constant/FillConstant.java`
 **修复:** 加 `private` 构造器（与 L-1 同批次修复）。
@@ -366,7 +388,7 @@ mongo-flex 当前没有类型鉴别机制（如 Spring Data MongoDB 的 `_class`
 
 ---
 
-## 问题 A-1：反序列化类型丢失，子类字段被丢弃（✅ 设计如此，不需要解决）
+## 问题 A-1：~~反序列化类型丢失，子类字段被丢弃（✅ 设计如此，不需要解决）~~
 
 **设计原则（与 MyBatis-Plus 一致）：Repository 的类型参数决定了读写的数据边界。**
 
@@ -429,7 +451,7 @@ if (c instanceof LiyueCharacter) {   // ❌ 永远 false！
 
 ---
 
-## 问题 A-3：Lambda 查询子类字段时，`@CollectionField` 映射失效（✅ 已解决）
+## 问题 A-3：~~Lambda 查询子类字段时，`@CollectionField` 映射失效（✅ 已解决）~~
 
 ### 设计分析
 
@@ -491,7 +513,7 @@ Lambda 表达式本身携带了字段声明类的信息——`SerializedLambda.g
 
 ---
 
-## 问题 A-4：`@Mql` 查询同样无法反序列化为子类（✅ 设计如此，不需要解决）
+## 问题 A-4：~~`@Mql` 查询同样无法反序列化为子类（✅ 设计如此，不需要解决）~~
 
 **根因：** `FindExecutor` / `FindOneExecutor` 通过 `method.getReturnType()` 或 `method.getGenericReturnType()` 获取目标类型，即方法签名中声明的返回类型。
 
@@ -583,7 +605,7 @@ if (id instanceof String && ObjectId.isValid((String) id)) {
 
 ---
 
-## 问题 B-3（低，代码质量，❌ 不需要解决）：`doc.remove("_id")` + `$set` 模式重复 4 次
+## ~~问题 B-3（低，代码质量，❌ 不需要解决）：`doc.remove("_id")` + `$set` 模式重复 4 次~~
 
 **文件:** `mongo-flex-core/src/main/java/com/github/eacryo/mongoflex/v2/SimpleMongoRepository.java`
 

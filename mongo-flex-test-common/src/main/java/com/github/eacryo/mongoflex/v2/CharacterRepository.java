@@ -4,6 +4,7 @@ import com.github.eacryo.mongoflex.annotation.Count;
 import com.github.eacryo.mongoflex.annotation.Find;
 import com.github.eacryo.mongoflex.annotation.MRepository;
 import com.github.eacryo.mongoflex.annotation.Param;
+import com.github.eacryo.mongoflex.annotation.Update;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.repository.MongoRepository;
 
@@ -51,4 +52,16 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
 
     @Find(value = "{}", skip = 5, limit = 5)
     List<Character> findListWithSkipAndLimit();
+
+    @Update(value = "{name: #{name}}", update = "{$set: {level: #{level}}}")
+    long updateLevelByName(@Param("name") String name, @Param("level") int level);
+
+    @Update(value = "{name: #{name}}", update = "{$set: {level: #{level}}}", upsert = true)
+    long upsertLevelByName(@Param("name") String name, @Param("level") int level);
+
+    @Update(value = "{vision: #{vision}}", update = "{$set: {status: #{status}}}", multi = true)
+    long updateStatusByVision(@Param("vision") String vision, @Param("status") String status);
+
+    @Update(value = "{name: #{name}}", update = "{$set: {address: #{address}}}")
+    void updateAddressByName(@Param("name") String name, @Param("address") String address);
 }

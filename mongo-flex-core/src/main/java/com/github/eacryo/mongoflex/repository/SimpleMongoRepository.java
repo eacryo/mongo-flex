@@ -495,7 +495,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     }
 
     // ---- annotation-driven query execution / 注解驱动的查询执行 ----
-    // These are called by MyRepositoryProxyHandler for @Find/@Count/@Delete methods.
+    // These are called by MyRepositoryProxyHandler for @Find/@Count/@Delete/@Update methods.
     // They bypass the Lambda query wrapper and work directly with Bson filters.
     // 以下方法供 MyRepositoryProxyHandler 调用，用于 @Find/@Count/@Delete 注解方法，
     // 绕过 Lambda 查询包装器，直接使用 Bson 过滤器。
@@ -540,6 +540,20 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     public long deleteByFilter(Bson filter) {
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
         return result.getDeletedCount();
+    }
+
+    /**
+     * Update by raw Bson filter and update document / 根据原始 Bson 过滤器和更新文档执行更新
+     */
+    public long updateByFilter(Bson filter, Document updateDoc, boolean multi, boolean upsert) {
+        UpdateOptions options = new UpdateOptions().upsert(upsert);
+        UpdateResult result;
+        if (multi) {
+            result = databaseSupplier.get().getCollection(collectionName).updateMany(filter, updateDoc, options);
+        } else {
+            result = databaseSupplier.get().getCollection(collectionName).updateOne(filter, updateDoc, options);
+        }
+        return result.getModifiedCount();
     }
 
     // ---- internal helpers ----

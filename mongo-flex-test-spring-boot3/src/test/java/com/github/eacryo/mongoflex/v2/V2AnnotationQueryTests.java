@@ -105,4 +105,50 @@ public class V2AnnotationQueryTests {
     public void testFindById(){
         System.out.println(characterRepositoryV2.findById("specialId"));
     }
+
+    @Test
+    public void testUpdateByAnnotation() {
+        String id = Ulid.generate();
+        String name = "V2UpdateTest-" + id;
+        Character c = new Character();
+        c.setId(id);
+        c.setName(name);
+        c.setLevel(1);
+        c.setBirthday(new Date());
+        System.out.println("before insert: id=" + id + ", name=" + name + ", level=1");
+        characterRepositoryV2.insert(c);
+        System.out.println("after insert: inserted");
+
+        long modified = characterRepositoryV2.updateLevelByName(name, 60);
+        System.out.println("after update: modified=" + modified + ", expected=1");
+
+        Character fetched = characterRepositoryV2.findById(id);
+        System.out.println("after update fetched: id=" + fetched.getId() + ", level=" + fetched.getLevel() + ", expected level=60");
+
+        System.out.println("cleanup: deleteById(" + id + ")");
+        characterRepositoryV2.deleteOneById(id);
+    }
+
+    @Test
+    public void testUpdateVoid() {
+        String id = Ulid.generate();
+        String name = "V2VoidUpdate-" + id;
+        Character c = new Character();
+        c.setId(id);
+        c.setName(name);
+        c.setBirthday(new Date());
+        System.out.println("before insert: id=" + id + ", name=" + name + ", address=null");
+        characterRepositoryV2.insert(c);
+        System.out.println("after insert: inserted");
+
+        System.out.println("before update: void updateAddressByName to 'V2 Address'");
+        characterRepositoryV2.updateAddressByName(name, "V2 Address");
+        System.out.println("after update: void return — done");
+
+        Character fetched = characterRepositoryV2.findById(id);
+        System.out.println("after update fetched: id=" + fetched.getId() + ", address=" + fetched.getAddress() + ", expected address='V2 Address'");
+
+        System.out.println("cleanup: deleteById(" + id + ")");
+        characterRepositoryV2.deleteOneById(id);
+    }
 }
