@@ -3,6 +3,7 @@ package com.github.eacryo.mongoflex.lambda;
 import com.github.eacryo.mongoflex.TestApplication;
 import com.github.eacryo.mongoflex.bean.Character;
 import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
+import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.eacryo.mongoflex.v2.CharacterRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
@@ -24,8 +25,9 @@ public class LambdaQueryErrorTest {
     void testNullField() {
         log.info("=== test null field -> NPE ===");
         LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
+        // Cast disambiguates the SFunction overload from the FieldPath overload / 强制转型以区分 SFunction 与 FieldPath 重载
         assertThrows(NullPointerException.class, () ->
-                wrapper.eq(null, "value"));
+                wrapper.eq((SFunction<Character, String>) null, "value"));
         log.info("correctly threw NullPointerException");
     }
 

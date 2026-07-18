@@ -57,6 +57,15 @@ public interface MongoRepository<T, ID> {
     long updateOneById(T entity, boolean upsert);
 
     // ──── by entity / 按实体条件 ────
+    // Note: entity-based queries are single-layer — every non-null field becomes a top-level
+    // equality condition; a nested object field is matched as an EXACT subdocument (all fields
+    // and order must be identical), it is NOT flattened into dot-notation per-field matching.
+    // For per-field nested queries use FieldPath with LambdaQueryWrapper, or @Find with a
+    // dot-notation JSON key (e.g. {'address.city': #{city}}).
+    // 注意：按实体查询是单层语义——每个非 null 字段生成一个顶层等值条件；嵌套对象字段按【精确子文档】
+    // 匹配（所有字段和顺序必须完全一致），不会展平为点号逐字段匹配。
+    // 需要嵌套字段的逐字段查询时，请使用 FieldPath + LambdaQueryWrapper，
+    // 或使用 @Find 的点号 JSON 键（如 {'address.city': #{city}}）。
 
     /** Find one by entity fields / 按实体字段查一条 */
     T findOneByEntity(T entity);

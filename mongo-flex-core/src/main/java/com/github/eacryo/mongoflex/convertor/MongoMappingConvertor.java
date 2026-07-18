@@ -28,19 +28,91 @@ public class MongoMappingConvertor {
 
 
     /**
-     * 将 Java 字段名解析为 MongoDB 中对应的字段名。
-     * 例如将 {@code id} 映射为 {@code _id}，或使用 {@code @CollectionField} 注解指定的名称。
+     * Resolve a Java field path (single field name or dot-separated nested path) to the
+     * corresponding MongoDB field path. / 将 Java 字段路径（单段字段名或点号分隔的嵌套路径）解析为 MongoDB 中对应的字段路径。
+     * <p>
+     * Each segment is mapped independently against the metadata of its declaring class
+     * ({@code @CollectionId} / {@code @CollectionField} / implicit {@code id -> _id}),
+     * then the segments are joined back with dots. / 每一段都基于其声明类的元数据独立映射
+     * （@CollectionId / @CollectionField / 隐式 id→_id），再用点号重新拼接。
+     * <p>
+     * Examples / 示例：
+     * <ul>
+     *   <li>{@code resolveMongoFieldPath(User.class, "id")} → {@code "_id"}</li>
+     *   <li>{@code resolveMongoFieldPath(User.class, "address.city")} → {@code "addr.city"}
+     *       (when the address field is annotated with {@code @CollectionField("addr")}
+     *       / 当 address 字段标注了 {@code @CollectionField("addr")} 时)</li>
+     * </ul>
+     * Collection segments are traversed transparently into their generic element type,
+     * matching MongoDB's dot-notation semantics for arrays. / 集合段会透明穿透到其泛型元素类型，
+     * 与 MongoDB 数组的点号语义一致。
+     * <p>
+     * If a segment has no mapping in the metadata, that segment and all following
+     * segments are kept as-is. / 若某段在元数据中找不到映射，该段及其后所有段原样保留。
      *
-     * @param clazz         实体类
-     * @param javaFieldName Java 字段名
-     * @return MongoDB 中对应的字段名，若未找到映射则返回原始字段名
+     * @param clazz         root entity class the path starts from / 路径起始的根实体类
+     * @param javaFieldPath Java field name or dot-separated field path / Java 字段名或点号分隔的字段路径
+     * @return the corresponding MongoDB field path / MongoDB 中对应的字段路径
      */
-    public String resolveMongoFieldName(Class<?> clazz, String javaFieldName){
-        FieldMapping mapping = getMetaData(clazz).getFieldMappingByJavaName().get(javaFieldName);
-        if (mapping != null) {
-            return mapping.getMongoFieldName();
+    public String resolveMongoFieldPath(Class<?> clazz, String javaFieldPath){
+        if (javaFieldPath == null || javaFieldPath.indexOf('.') < 0) {
+            // Single segment — fast path, identical to the legacy single-name behavior
+            // 单段——快速路径，与旧的单字段名行为完全一致
+            FieldMapping mapping = getMetaData(clazz).getFieldMappingByJavaName().get(javaFieldPath);
+            if (mapping != null) {
+                return mapping.getMongoFieldName();
+            }
+            return javaFieldPath;
         }
-        return javaFieldName; // 如果没有找到对应的映射，返回原始字段名
+
+        String[] segments = javaFieldPath.split("\\.");
+        StringBuilder result = new StringBuilder();
+        Class<?> currentClass = clazz;
+        for (int i = 0; i < segments.length; i++) {
+            if (i > 0) {
+                result.append('.');
+            }
+            String segment = segments[i];
+            FieldMapping mapping = currentClass != null
+                    ? getMetaData(currentClass).getFieldMappingByJavaName().get(segment)
+                    : null;
+            if (mapping == null) {
+                // Unknown segment — keep this and all remaining segments as-is
+                // 未知段——该段及其后所有段原样保留
+                result.append(segment);
+                currentClass = null;
+                continue;
+            }
+            result.append(mapping.getMongoFieldName());
+            currentClass = nextSegmentClass(mapping);
+        }
+        return result.toString();
+    }
+
+    /**
+     * Determine the class used to resolve the next path segment: collection fields are
+     * traversed into their generic element type, plain fields use their declared type.
+     * Primitive/system types are not traversable and yield null. / 确定用于解析下一段路径的类：
+     * 集合字段穿透到其泛型元素类型，普通字段使用其声明类型。基础/系统类型不可继续导航，返回 null。
+     */
+    private Class<?> nextSegmentClass(FieldMapping mapping) {
+        Class<?> fieldType = mapping.getFieldType();
+        if (fieldType == null) {
+            return null;
+        }
+        if (Collection.class.isAssignableFrom(fieldType)) {
+            Type genericType = mapping.getGenericType();
+            if (genericType instanceof ParameterizedType) {
+                Type[] args = ((ParameterizedType) genericType).getActualTypeArguments();
+                if (args.length > 0 && args[0] instanceof Class) {
+                    Class<?> elementClass = (Class<?>) args[0];
+                    // Element type may itself be a system type (e.g. List<String>) / 元素类型本身也可能是系统类型（如 List<String>）
+                    return isPrimitiveOrSystemType(elementClass) ? null : elementClass;
+                }
+            }
+            return null;
+        }
+        return isPrimitiveOrSystemType(fieldType) ? null : fieldType;
     }
 
     /**
@@ -51,10 +123,36 @@ public class MongoMappingConvertor {
     }
 
     /**
-     * 获取字段的泛型元素类型（如 List&lt;Item&gt; → Item.class）
+     * Get the field metadata of the last segment of a Java field path, walking nested
+     * types segment by segment. / 获取 Java 字段路径末段的字段元数据，逐段穿透嵌套类型。
+     * Returns null if any segment cannot be resolved. / 任一段无法解析时返回 null。
      */
-    public Class<?> getFieldGenericElementType(Class<?> clazz, String javaFieldName) {
-        FieldMapping mapping = getFieldMapping(clazz, javaFieldName);
+    private FieldMapping getFieldMappingByPath(Class<?> clazz, String javaFieldPath) {
+        if (javaFieldPath == null || javaFieldPath.indexOf('.') < 0) {
+            return getFieldMapping(clazz, javaFieldPath);
+        }
+        String[] segments = javaFieldPath.split("\\.");
+        Class<?> currentClass = clazz;
+        FieldMapping mapping = null;
+        for (String segment : segments) {
+            if (currentClass == null) {
+                return null;
+            }
+            mapping = getFieldMapping(currentClass, segment);
+            if (mapping == null) {
+                return null;
+            }
+            currentClass = nextSegmentClass(mapping);
+        }
+        return mapping;
+    }
+
+    /**
+     * 获取字段的泛型元素类型（如 List&lt;Item&gt; → Item.class）。
+     * Supports dot-separated nested paths, e.g. {@code "team.members"}. / 支持点号分隔的嵌套路径，如 {@code "team.members"}。
+     */
+    public Class<?> getFieldGenericElementType(Class<?> clazz, String javaFieldPath) {
+        FieldMapping mapping = getFieldMappingByPath(clazz, javaFieldPath);
         if (mapping == null) return null;
         Type genericType = mapping.getGenericType();
         if (genericType instanceof ParameterizedType) {

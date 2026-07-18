@@ -39,6 +39,11 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
     @Find("{name: #{name}}")
     Character findOneByName(@Param("name") String name);
 
+    // Nested field query via raw JSON dot notation — nested keys pass through Document.parse() natively
+    // 通过原始 JSON 点号语法查询嵌套字段——嵌套键由 Document.parse() 原生支持
+    @Find("{'home_region.main_city': #{city}}")
+    List<Character> findListByRegionCity(@Param("city") String city);
+
     // FIXME: hardcoded data dependency — relies on pre-existing document with specific _id
     // 硬编码数据依赖——依赖集合中已存在特定 _id 的文档
     // @Find("{_id: '01K43T5EFTT1QVSS8FPT6XK773', name: 'Ganyu'}")

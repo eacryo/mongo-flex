@@ -2,7 +2,7 @@
 
 > **状态**：待实施  
 > **创建日期**：2026-07-11  
-> **最后更新**：2026-07-11
+> **最后更新**：2026-07-19
 
 ---
 
@@ -614,3 +614,38 @@ mongo-flex 引用 17 个 MongoDB Driver 类，其中 14 个在 4.x 和 5.x 之�
 - `InsertManyResult.getInsertedIds()` — 批量插入回填 ID
 
 这三处都需要 bridge 适配，建议放在 `QueryExecutor`（Phase 2）中统一处理，不污染 `QuerySpec` 抽象层。V4 适配器直接调用（零开销），V5 适配器纯反射（不 import 5.x 类）。
+
+---
+
+## 九、嵌套字段查询（点号路径）—— 已实施
+
+> 2026-07-19 实施。设计参考 Spring Data MongoDB：统一基座是"点号字符串路径 + 逐段字段名映射"（对标 `QueryMapper`），类型安全入口对标 `TypedPropertyPath.of().then()`。
+
+### 9.1 核心机制
+
+`Condition.field` 从"单段 Java 字段名"扩展为"Java 点号路径"（如 `address.city`），`Condition`/`Operator`/渲染骨架零改动。
+
+| 组件 | 改动 |
+|------|------|
+| `MongoMappingConvertor.resolveMongoFieldName` | **重命名为 `resolveMongoFieldPath`**：按 `.` 拆段，逐段查 `ClassFieldMetaData`（每段独立应用 `@CollectionField`/`@CollectionId`/隐式 `id→_id`），段间用 `FieldMapping.fieldType` 推进到嵌套类型；`List` 段穿透泛型元素类型（MongoDB 数组点号语义）；基础/系统类型不可继续导航；未知段起原样保留。单段输入行为与旧版完全一致 |
+| `getFieldGenericElementType` | 同步支持点号路径（elemMatch 嵌套 List 场景） |
+| 新建 `util/FieldPath<T, R>` | 链式方法引用：`FieldPath.of(User::getAddress).then(Address::getCity)`，两级/三级便捷工厂 `of(f1, f2[, f3])`；不可变；构造时即解析 `javaPath` + `rootImplClass` |
+| `LambdaQueryWrapper` | 20 个 filter 操作符 + `orderByAsc/Desc` + `include/exclude` 各增加 `FieldPath` 重载，统一走私有 `addPathCondition()` |
+
+### 9.2 三条路径的嵌套语义
+
+| 路径 | 嵌套支持 | 说明 |
+|------|---------|------|
+| Lambda（`FieldPath`） | ✅ 逐字段点号匹配 | 每段自动应用 `@CollectionField` 映射，如 `region.mainCity` → `home_region.main_city` |
+| `@Find`/`@Count`/`@Delete` 原始 JSON | ✅ 点号键原生直通 | `Document.parse()` 原生能力，用户手写 MongoDB 字段名 |
+| `*ByEntity` 实体查询 | ⚠️ **单层语义（有意保留）** | 嵌套对象字段按**精确子文档**匹配（全部字段+顺序一致才命中），不展平为点号。需要逐字段嵌套匹配请改用 FieldPath 或 @Find 点号 JSON |
+
+### 9.3 破坏性变更
+
+- `resolveMongoFieldName` → `resolveMongoFieldPath` 直接重命名，不保留旧方法（内部调用点 5 处已同步）。
+- 操作符重载导致裸 `null` 字段参数产生编译歧义（如 `eq(null, v)`），需显式转型 `(SFunction<T,R>) null`——仅影响传字面量 null 的调用（正常业务代码不受影响）。
+
+### 9.4 测试
+
+- core 纯单元测试（无需 MongoDB）：`ResolveMongoFieldPathTest`（单段回归/多段映射/List 穿透/未知段 fallback）、`FieldPathTest`（解析/不可变/相等性）、`NestedFieldPathRenderTest`（渲染 Bson 断言，含 elemMatch/or 分组/排序投影）
+- boot3 集成测试：`NestedFieldQueryTest`（`Character.region` → `home_region` 子文档；FieldPath eq/gt/between/exists/分页排序、`@Find` 点号 JSON、写读回环、byEntity 精确子文档语义固化）

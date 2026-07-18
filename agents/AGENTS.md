@@ -88,7 +88,8 @@ mongo-flex-test-spring-boot2/  ← legacy SB2 tests
 - **ID generation**: Controlled by `IdType` enum — `OBJECT_ID` (MongoDB ObjectId, stored as hex String), `ULID` (26-char sortable), `UUID` (v4), `INPUT` (custom `IdGenerator`).
 - **ObjectId conversion**: Only converts String→ObjectId when `IdType.OBJECT_ID` (MongoDB generates ObjectId but Java stores hex String). Other modes store native String. Use `shouldConvertToObjectId()` — never raw `ObjectId.isValid()`.
 - **Repository proxies**: `@MRepository` interfaces get JDK proxy via `RepositoryFactoryBean`. `@Find`/`@Count`/`@Delete` methods use `JsonTemplateParser`; `MongoRepository` methods delegated to `SimpleMongoRepository`.
-- **Field name resolution**: `ReflectUtil.getFieldNameFromLambda()` extracts field name from `SFunction` via `SerializedLambda`; `MongoMappingConvertor.resolveMongoFieldName()` maps Java→MongoDB field names using cached `ClassFieldMetaData`.
+- **Field name resolution**: `ReflectUtil.getFieldNameFromLambda()` extracts field name from `SFunction` via `SerializedLambda`; `MongoMappingConvertor.resolveMongoFieldPath()` maps Java→MongoDB field paths using cached `ClassFieldMetaData` — accepts a single field name (`"name"`) or a dot-separated nested path (`"address.city"`), mapping each segment independently (`@CollectionField`/`id`→`_id`) and traversing `List` segments into their generic element type.
+- **Nested field queries**: `FieldPath.of(A::getB).then(B::getC)` (or `FieldPath.of(A::getB, B::getC)`) builds a type-safe nested path for `LambdaQueryWrapper` operator overloads, rendered as dot notation. `@Find`/`@Count`/`@Delete` support raw JSON dot keys natively. Entity-based (`*ByEntity`) queries are single-layer: nested objects match as exact subdocuments, never flattened.
 
 ### Lambda Query Operators
 

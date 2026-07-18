@@ -59,6 +59,10 @@ public class Character {
     /** 天赋技能名列表：如 ["蝶引来生", "血之灶火", "彼岸蝶舞"] */
     private List<String> talents;
 
+    /** Home region (nested object for dot-notation query tests) / 家乡地区（嵌套对象，用于点号嵌套查询测试） */
+    @CollectionField("home_region")
+    private Region region;
+
     @CreateDate
     private Date createAt;
     @UpdateDate

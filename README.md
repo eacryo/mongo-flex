@@ -205,6 +205,56 @@ Lambda query wrappers use method references to extract field names. The resoluti
 
 > **Known Limitation:** A method like `isActive()` is inherently ambiguous — it could be the getter for `boolean active` or `boolean isActive`. The resolver always assumes the former (JavaBeans convention). If your field is literally named `isActive`, use `@CollectionField("is_active")` to override the MongoDB field mapping, or rename your Java field to `active`.
 
+#### Nested Field Queries (dot notation)
+
+MongoDB addresses fields inside nested subdocuments with dot notation (`address.city`). Each query path supports it as follows:
+
+**Lambda path — type-safe `FieldPath` chained method references:**
+
+```java
+public class Character {
+    @CollectionField("home_region")
+    private Region region;          // nested object
+}
+public class Region {
+    private String nation;
+    @CollectionField("main_city")
+    private String mainCity;
+    private Integer altitude;
+}
+
+// two-level path → renders {"home_region.main_city": "Liyue Harbor"}
+wrapper.eq(FieldPath.of(Character::getRegion, Region::getMainCity), "Liyue Harbor");
+
+// fluent form, arbitrary depth via then()
+wrapper.gt(FieldPath.of(Character::getRegion).then(Region::getAltitude), 1000);
+
+// also works with sorting and projection
+wrapper.orderByDesc(FieldPath.of(Character::getRegion, Region::getAltitude))
+       .include(FieldPath.of(Character::getRegion, Region::getMainCity));
+```
+
+Every path segment honors `@CollectionField` mapping (`region` → `home_region`, `mainCity` → `main_city`), and `List` segments traverse transparently into their element type. All filter operators (`eq`/`gt`/`between`/`exists`/...) have `FieldPath` overloads.
+
+**Annotation path — raw JSON dot keys work natively:**
+
+```java
+@Find("{'home_region.main_city': #{city}}")
+List<Character> findByRegionCity(@Param("city") String city);
+```
+
+> Raw JSON uses MongoDB field names (after `@CollectionField` mapping), not Java field names.
+
+**Entity path (`*ByEntity`) — single-layer semantics:**
+
+Entity example queries match a nested object field as an **exact subdocument** — the whole nested object must be identical (all fields, including field order). They are **not** flattened into per-field dot notation. When you need per-field nested matching, use `FieldPath` or `@Find` dot keys instead.
+
+```java
+Character probe = new Character();
+probe.setRegion(new Region("Liyue", "Liyue Harbor", 500));
+repo.findListByEntity(probe);  // matches only documents whose whole subdocument is identical
+```
+
 #### Auto-fill Date/Time Fields
 
 Use `@CreateDate` and `@UpdateDate` to auto-fill timestamps on insert and update. No configuration needed — just annotate the field.

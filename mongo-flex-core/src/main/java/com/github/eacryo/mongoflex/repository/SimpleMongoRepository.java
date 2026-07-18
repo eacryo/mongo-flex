@@ -272,7 +272,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
             Document sort = new Document();
             for (LambdaQueryWrapper.OrderBy ob : wrapper.getOrderBys()) {
                 Class<?> resolveClass = ob.getImplClass() != null ? ob.getImplClass() : entityClass;
-                String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, ob.getJavaFieldName());
+                String mongoField = mongoMappingConvertor.resolveMongoFieldPath(resolveClass, ob.getJavaFieldName());
                 sort.append(mongoField, ob.isAscending() ? 1 : -1);
             }
             return sort;
@@ -285,7 +285,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
                 // string-based SortOrder falls back to entityClass / 基于 Lambda 的 SortOrder 携带 implClass 以正确解析 @CollectionField
                 Class<?> resolveClass = so.getImplClass() != null ? so.getImplClass() : entityClass;
                 String javaField = so.getJavaFieldName() != null ? so.getJavaFieldName() : so.getField();
-                String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, javaField);
+                String mongoField = mongoMappingConvertor.resolveMongoFieldPath(resolveClass, javaField);
                 sort.append(mongoField, so.isAscending() ? 1 : -1);
             }
             return sort;
@@ -777,7 +777,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         List<String> mongoFields = new ArrayList<>();
         for (LambdaQueryWrapper.ProjectionField pf : fields) {
             Class<?> resolveClass = pf.getImplClass() != null ? pf.getImplClass() : entityClass;
-            String mongoField = mongoMappingConvertor.resolveMongoFieldName(resolveClass, pf.getJavaFieldName());
+            String mongoField = mongoMappingConvertor.resolveMongoFieldPath(resolveClass, pf.getJavaFieldName());
             mongoFields.add(mongoField);
         }
         return mongoFields;
@@ -785,7 +785,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
 
     private <R> Document buildFilterFromLambda(SFunction<T, R> field, R value) {
         String javaFieldName = ReflectUtil.getFieldNameFromLambda(field);
-        String mongoFieldName = mongoMappingConvertor.resolveMongoFieldName(entityClass, javaFieldName);
+        String mongoFieldName = mongoMappingConvertor.resolveMongoFieldPath(entityClass, javaFieldName);
         Object queryValue = value;
         if ("_id".equals(mongoFieldName) && shouldConvertToObjectId()
                 && value instanceof String && ObjectId.isValid((String) value)) {

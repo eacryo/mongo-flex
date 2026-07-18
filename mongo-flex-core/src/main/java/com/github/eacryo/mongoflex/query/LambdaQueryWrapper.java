@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.query;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import com.github.eacryo.mongoflex.util.FieldPath;
 import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 
@@ -237,6 +238,124 @@ public class LambdaQueryWrapper<T> {
         return conditions;
     }
 
+    // ---- FieldPath overloads — nested dot-notation queries / FieldPath 重载——嵌套点号查询 ----
+
+    /**
+     * Append a condition addressed by a nested {@link FieldPath}. The Java dot path is
+     * stored on the {@link Condition} and mapped segment-by-segment to the MongoDB field
+     * path at render time. / 追加一个以嵌套 {@link FieldPath} 定位的条件。Java 点号路径存入
+     * {@link Condition}，渲染时逐段映射为 MongoDB 字段路径。
+     */
+    private LambdaQueryWrapper<T> addPathCondition(FieldPath<T, ?> path, Operator operator, Object value) {
+        Objects.requireNonNull(path, "path must not be null");
+        conditions.add(new Condition(path.javaPath(), operator, value, path.rootImplClass()));
+        return this;
+    }
+
+    /**
+     * Nested-path equality, e.g. {@code eq(FieldPath.of(User::getAddress, Address::getCity), "NY")}
+     * → {@code {"address.city": "NY"}}. / 嵌套路径等值查询，如
+     * {@code eq(FieldPath.of(User::getAddress, Address::getCity), "NY")} → {@code {"address.city": "NY"}}。
+     */
+    public <R> LambdaQueryWrapper<T> eq(FieldPath<T, R> path, R value) {
+        return addPathCondition(path, Operator.EQ, value);
+    }
+
+    /** Nested-path not-equal / 嵌套路径不等值查询 */
+    public <R> LambdaQueryWrapper<T> ne(FieldPath<T, R> path, R value) {
+        return addPathCondition(path, Operator.NE, value);
+    }
+
+    /** Nested-path greater-than / 嵌套路径大于查询 */
+    public <R> LambdaQueryWrapper<T> gt(FieldPath<T, R> path, R value) {
+        return addPathCondition(path, Operator.GT, value);
+    }
+
+    /** Nested-path less-than / 嵌套路径小于查询 */
+    public <R> LambdaQueryWrapper<T> lt(FieldPath<T, R> path, R value) {
+        return addPathCondition(path, Operator.LT, value);
+    }
+
+    /** Nested-path greater-than-or-equal / 嵌套路径大于等于查询 */
+    public <R> LambdaQueryWrapper<T> gte(FieldPath<T, R> path, R value) {
+        return addPathCondition(path, Operator.GTE, value);
+    }
+
+    /** Nested-path less-than-or-equal / 嵌套路径小于等于查询 */
+    public <R> LambdaQueryWrapper<T> lte(FieldPath<T, R> path, R value) {
+        return addPathCondition(path, Operator.LTE, value);
+    }
+
+    /** Nested-path regex match / 嵌套路径正则查询 */
+    public LambdaQueryWrapper<T> regex(FieldPath<T, ?> path, String pattern) {
+        return addPathCondition(path, Operator.REGEX, pattern);
+    }
+
+    /** Nested-path $in / 嵌套路径 $in 查询 */
+    public LambdaQueryWrapper<T> in(FieldPath<T, ?> path, Collection<?> values) {
+        return addPathCondition(path, Operator.IN, values);
+    }
+
+    /** Nested-path $nin / 嵌套路径 $nin 查询 */
+    public LambdaQueryWrapper<T> nin(FieldPath<T, ?> path, Collection<?> values) {
+        return addPathCondition(path, Operator.NIN, values);
+    }
+
+    /** Nested-path $exists / 嵌套路径 $exists 查询 */
+    public LambdaQueryWrapper<T> exists(FieldPath<T, ?> path, boolean value) {
+        return addPathCondition(path, Operator.EXISTS, value);
+    }
+
+    /** Nested-path $all / 嵌套路径 $all 查询 */
+    public LambdaQueryWrapper<T> all(FieldPath<T, ?> path, Collection<?> values) {
+        return addPathCondition(path, Operator.ALL, values);
+    }
+
+    /** Nested-path $size / 嵌套路径 $size 查询 */
+    public LambdaQueryWrapper<T> size(FieldPath<T, ?> path, int value) {
+        return addPathCondition(path, Operator.SIZE, value);
+    }
+
+    /** Nested-path $elemMatch / 嵌套路径 $elemMatch 查询 */
+    public LambdaQueryWrapper<T> elemMatch(FieldPath<T, ?> path, LambdaQueryWrapper<?> subWrapper) {
+        return addPathCondition(path, Operator.ELEM_MATCH, subWrapper);
+    }
+
+    /** Nested-path LIKE (wildcards * and % converted to regex) / 嵌套路径 LIKE 查询（* 和 % 通配符自动转正则） */
+    public LambdaQueryWrapper<T> like(FieldPath<T, ?> path, String pattern) {
+        return addPathCondition(path, Operator.LIKE, pattern);
+    }
+
+    /** Nested-path NOT LIKE / 嵌套路径 NOT LIKE 查询 */
+    public LambdaQueryWrapper<T> notLike(FieldPath<T, ?> path, String pattern) {
+        return addPathCondition(path, Operator.NOT_LIKE, pattern);
+    }
+
+    /** Nested-path BETWEEN (inclusive) / 嵌套路径 BETWEEN 范围查询（含边界） */
+    public <R> LambdaQueryWrapper<T> between(FieldPath<T, R> path, R start, R end) {
+        return addPathCondition(path, Operator.BETWEEN, Arrays.asList(start, end));
+    }
+
+    /** Nested-path IS NULL / 嵌套路径 IS NULL 查询 */
+    public LambdaQueryWrapper<T> isNull(FieldPath<T, ?> path) {
+        return addPathCondition(path, Operator.IS_NULL, null);
+    }
+
+    /** Nested-path IS NOT NULL / 嵌套路径 IS NOT NULL 查询 */
+    public LambdaQueryWrapper<T> isNotNull(FieldPath<T, ?> path) {
+        return addPathCondition(path, Operator.IS_NOT_NULL, null);
+    }
+
+    /** Nested-path $mod / 嵌套路径 $mod 查询 */
+    public LambdaQueryWrapper<T> mod(FieldPath<T, ?> path, int divisor, int remainder) {
+        return addPathCondition(path, Operator.MOD, Arrays.asList(divisor, remainder));
+    }
+
+    /** Nested-path $type / 嵌套路径 $type 查询 */
+    public LambdaQueryWrapper<T> type(FieldPath<T, ?> path, String bsonTypeName) {
+        return addPathCondition(path, Operator.TYPE, bsonTypeName);
+    }
+
     public LambdaQueryWrapper<T> or() {
         conditions.add(new Condition());
         return this;
@@ -288,6 +407,20 @@ public class LambdaQueryWrapper<T> {
                 ReflectUtil.getFieldNameFromLambda(field),
                 ReflectUtil.getImplClassFromLambda(field),
                 false));
+        return this;
+    }
+
+    /** Nested-path ascending sort / 嵌套路径升序排序 */
+    public LambdaQueryWrapper<T> orderByAsc(FieldPath<T, ?> path) {
+        Objects.requireNonNull(path, "path must not be null");
+        orderBys.add(new OrderBy(path.javaPath(), path.rootImplClass(), true));
+        return this;
+    }
+
+    /** Nested-path descending sort / 嵌套路径降序排序 */
+    public LambdaQueryWrapper<T> orderByDesc(FieldPath<T, ?> path) {
+        Objects.requireNonNull(path, "path must not be null");
+        orderBys.add(new OrderBy(path.javaPath(), path.rootImplClass(), false));
         return this;
     }
 
@@ -353,6 +486,17 @@ public class LambdaQueryWrapper<T> {
         return projections;
     }
 
+    /** Nested-path projection include / 嵌套路径投影包含 */
+    @SafeVarargs
+    public final LambdaQueryWrapper<T> include(FieldPath<T, ?>... paths) {
+        Objects.requireNonNull(paths, "paths must not be null");
+        for (FieldPath<T, ?> path : paths) {
+            Objects.requireNonNull(path, "path must not be null");
+            projections.add(new ProjectionField(path.javaPath(), path.rootImplClass()));
+        }
+        return this;
+    }
+
     /**
      * 指定查询排除的字段（MongoDB projection exclude 模式）。
      * 除列出的字段外，其他字段均返回（包括 {@code _id}）。
@@ -381,6 +525,17 @@ public class LambdaQueryWrapper<T> {
 
     public List<ProjectionField> getExcludes() {
         return excludes;
+    }
+
+    /** Nested-path projection exclude / 嵌套路径投影排除 */
+    @SafeVarargs
+    public final LambdaQueryWrapper<T> exclude(FieldPath<T, ?>... paths) {
+        Objects.requireNonNull(paths, "paths must not be null");
+        for (FieldPath<T, ?> path : paths) {
+            Objects.requireNonNull(path, "path must not be null");
+            excludes.add(new ProjectionField(path.javaPath(), path.rootImplClass()));
+        }
+        return this;
     }
 
     // ---- 静态工厂 ----

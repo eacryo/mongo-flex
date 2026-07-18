@@ -190,6 +190,56 @@ Lambda 查询包装器通过方法引用提取字段名，解析规则遵循 **M
 
 > **已知限制：** `isActive()` 这样的方法具有天然歧义——它可能是 `boolean active` 的 getter，也可能是 `boolean isActive` 的 getter。解析器始终按 JavaBeans 约定采用前一种解释。如果你的字段确实叫 `isActive`，请使用 `@CollectionField("is_active")` 覆盖 MongoDB 字段映射，或将 Java 字段重命名为 `active`。
 
+#### 嵌套字段查询（点号语法）
+
+MongoDB 使用点号语法（`address.city`）定位嵌套子文档中的字段。三条查询路径的支持方式如下：
+
+**Lambda 路径——类型安全的 `FieldPath` 链式方法引用：**
+
+```java
+public class Character {
+    @CollectionField("home_region")
+    private Region region;          // 嵌套对象
+}
+public class Region {
+    private String nation;
+    @CollectionField("main_city")
+    private String mainCity;
+    private Integer altitude;
+}
+
+// 两级路径 → 渲染为 {"home_region.main_city": "璃月港"}
+wrapper.eq(FieldPath.of(Character::getRegion, Region::getMainCity), "璃月港");
+
+// 流式写法，通过 then() 支持任意深度
+wrapper.gt(FieldPath.of(Character::getRegion).then(Region::getAltitude), 1000);
+
+// 排序与投影同样支持
+wrapper.orderByDesc(FieldPath.of(Character::getRegion, Region::getAltitude))
+       .include(FieldPath.of(Character::getRegion, Region::getMainCity));
+```
+
+路径的每一段都会应用 `@CollectionField` 映射（`region` → `home_region`、`mainCity` → `main_city`），`List` 段会透明穿透到其元素类型。所有 filter 操作符（`eq`/`gt`/`between`/`exists`/……）均提供 `FieldPath` 重载。
+
+**注解路径——原始 JSON 点号键原生支持：**
+
+```java
+@Find("{'home_region.main_city': #{city}}")
+List<Character> findByRegionCity(@Param("city") String city);
+```
+
+> 原始 JSON 中使用的是 MongoDB 字段名（`@CollectionField` 映射后的名字），不是 Java 字段名。
+
+**Entity 路径（`*ByEntity`）——单层语义：**
+
+按实体查询时，嵌套对象字段按**精确子文档**匹配——整个嵌套对象必须完全一致（所有字段，包括字段顺序），**不会**展平为点号逐字段匹配。需要逐字段嵌套匹配时，请改用 `FieldPath` 或 `@Find` 点号键。
+
+```java
+Character probe = new Character();
+probe.setRegion(new Region("Liyue", "璃月港", 500));
+repo.findListByEntity(probe);  // 仅命中整个子文档完全一致的文档
+```
+
 #### 日期/时间字段自动填充
 
 使用 `@CreateDate` 和 `@UpdateDate` 在插入和更新时自动填充时间戳。无需配置——直接注解字段即可。

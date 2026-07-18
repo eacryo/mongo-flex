@@ -77,7 +77,7 @@ public class MongoBsonRenderer {
             // 也能正确解析 @CollectionField("is_adeptus") 映射。
             Class<?> resolveClass = c.implClass() != null ? c.implClass() : entityClass;
             String field = resolveClass != null
-                    ? convertor.resolveMongoFieldName(resolveClass, c.field())
+                    ? convertor.resolveMongoFieldPath(resolveClass, c.field())
                     : c.field();
 
             switch (c.operator()) {
