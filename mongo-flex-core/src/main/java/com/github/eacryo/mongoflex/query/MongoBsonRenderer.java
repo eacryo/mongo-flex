@@ -170,11 +170,11 @@ public class MongoBsonRenderer {
                 }
 
                 case IS_NULL:
-                    filters.add(Filters.exists(field, false));
+                    filters.add(Filters.eq(field, null));
                     break;
 
                 case IS_NOT_NULL:
-                    filters.add(Filters.exists(field, true));
+                    filters.add(Filters.ne(field, null));
                     break;
 
                 case NOT: {

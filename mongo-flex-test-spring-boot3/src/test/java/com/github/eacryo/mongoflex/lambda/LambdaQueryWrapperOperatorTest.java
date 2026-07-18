@@ -197,6 +197,22 @@ public class LambdaQueryWrapperOperatorTest {
         }
     }
 
+    /**
+     * Verify that isNull does NOT match documents where the field has a non-null value.
+     * This confirms the operator correctly distinguishes null/absent from present values.
+     */
+    @Test
+    @Order(71)
+    void testIsNullNegative() {
+        log.info("=== test isNull negative (vision is non-null, should NOT match) ===");
+        LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class);
+        wrapper.isNull(Character::getVision)
+               .like(Character::getName, "*OperatorTest-*");
+        List<Character> result = repo.findList(wrapper);
+        log.info("isNull on vision result size: {}", result.size());
+        Assertions.assertTrue(result.isEmpty(), "isNull on non-null field should return empty");
+    }
+
     // ========== NOT ==========
 
     @Test

@@ -137,6 +137,12 @@ LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class
 wrapper.eq(Character::getName, "Furina");
 List<Character> list = repo.findList(wrapper);
 
+// isNull / isNotNull — aligned with SQL IS NULL / IS NOT NULL semantics
+// isNull → { field: null }, matching both null-valued and missing fields
+wrapper.isNull(Character::getPhone);
+// isNotNull → { field: { $ne: null } }, matching existing + non-null fields
+wrapper.isNotNull(Character::getVision);
+
 // find all
 List<Character> all = repo.findAll();
 

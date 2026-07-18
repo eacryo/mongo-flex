@@ -111,9 +111,9 @@ LambdaQueryWrapper 已支持 `include(SFunction...)` / `exclude(SFunction...)` �
 
 **涉及文件:** `mongo-flex-core/.../lambda/MongoBsonRenderer.java`
 
-#### BUG-2: IS_NULL 使用 `$exists: false`，语义不同于 SQL NULL
+#### ~~BUG-2: IS_NULL 使用 `$exists: false`，语义不同于 SQL NULL~~ ✅ 已修复
 
-`MongoBsonRenderer.java` 第 172-173 行 `Filters.exists(field, false)` 只匹配字段不存在的文档，不匹配字段存在但值为 null 的文档。标准 SQL `IS NULL` 等价 MongoDB 查询应是 `{ field: null }` 或 `{ field: { $type: 10 } }`。
+`MongoBsonRenderer.java` 第 172-173 行原 `Filters.exists(field, false)` 只匹配字段不存在的文档，不匹配字段存在但值为 null 的文档。已改为 `Filters.eq(field, null)`（IS_NULL）和 `Filters.ne(field, null)`（IS_NOT_NULL），对齐 Spring Data MongoDB 语义。
 
 **涉及文件:** `mongo-flex-core/.../lambda/MongoBsonRenderer.java`
 

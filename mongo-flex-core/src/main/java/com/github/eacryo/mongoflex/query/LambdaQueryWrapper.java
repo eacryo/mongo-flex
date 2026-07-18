@@ -178,7 +178,9 @@ public class LambdaQueryWrapper<T> {
     }
 
     /**
-     * IS NULL → { field: { $exists: false } }
+     * IS NULL → { field: null }
+     * Matches documents where the field is null or does not exist (equivalent to SQL IS NULL).
+     * Use {@link #exists(SFunction, boolean)} with false for $exists: false semantics.
      */
     public LambdaQueryWrapper<T> isNull(SFunction<T, ?> field) {
         Objects.requireNonNull(field, "field must not be null");
@@ -188,7 +190,9 @@ public class LambdaQueryWrapper<T> {
     }
 
     /**
-     * IS NOT NULL → { field: { $exists: true } }
+     * IS NOT NULL → { field: { $ne: null } }
+     * Matches documents where the field exists and has a non-null value (equivalent to SQL IS NOT NULL).
+     * Use {@link #exists(SFunction, boolean)} with true for $exists: true semantics.
      */
     public LambdaQueryWrapper<T> isNotNull(SFunction<T, ?> field) {
         Objects.requireNonNull(field, "field must not be null");

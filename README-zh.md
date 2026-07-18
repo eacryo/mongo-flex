@@ -122,6 +122,12 @@ LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<>(Character.class
 wrapper.eq(Character::getName, "Furina");
 List<Character> list = repo.findList(wrapper);
 
+// isNull / isNotNull — 对齐 SQL IS NULL / IS NOT NULL 语义
+// isNull → { field: null }，匹配字段为 null 或不存在的文档
+wrapper.isNull(Character::getPhone);
+// isNotNull → { field: { $ne: null } }，匹配字段存在且非 null 的文档
+wrapper.isNotNull(Character::getVision);
+
 // 查询全部
 List<Character> all = repo.findAll();
 
