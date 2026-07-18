@@ -21,10 +21,6 @@ import java.util.function.Supplier;
 /**
  * Unified query execution engine — all CRUD operations flow through this class /
  * 统一的查询执行引擎——所有 CRUD 操作汇聚于此。
- * <p>
- * Replaces the scattered find/count/delete/update logic previously duplicated across
- * {@code SimpleMongoRepository} and the deprecated {@code strategy/} package /
- * 替代原先分散在 SimpleMongoRepository 和已废弃 strategy/ 包中的重复逻辑。
  *
  * @param <T> entity type / 实体类型
  */
@@ -47,18 +43,18 @@ public class QueryExecutor<T> {
 
     // ── find / 查询 ──
 
-    /** Find one by QuerySpec / 按 QuerySpec 查询一条 */
-    public T findOne(QuerySpec<T> query) {
+    /** Find one by LambdaQueryWrapper / 按 LambdaQueryWrapper 查询一条 */
+    public T findOne(LambdaQueryWrapper<T> query) {
         Objects.requireNonNull(query, "query must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         Document document = databaseSupplier.get().getCollection(collectionName).find(filter).first();
         return document != null ? convertor.read(document, resolveEntityClass(query)) : null;
     }
 
-    /** Find list by QuerySpec / 按 QuerySpec 查询列表 */
-    public List<T> findList(QuerySpec<T> query, Integer skip, Integer limit) {
+    /** Find list by LambdaQueryWrapper / 按 LambdaQueryWrapper 查询列表 */
+    public List<T> findList(LambdaQueryWrapper<T> query, Integer skip, Integer limit) {
         Objects.requireNonNull(query, "query must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         FindIterable<Document> iter = databaseSupplier.get().getCollection(collectionName).find(filter);
         if (skip != null && skip > 0) iter = iter.skip(skip);
         if (limit != null && limit > 0) iter = iter.limit(limit);
@@ -104,10 +100,10 @@ public class QueryExecutor<T> {
 
     // ── count / 统计 ──
 
-    /** Count by QuerySpec / 按 QuerySpec 统计 */
-    public long count(QuerySpec<T> query) {
+    /** Count by LambdaQueryWrapper / 按 LambdaQueryWrapper 统计 */
+    public long count(LambdaQueryWrapper<T> query) {
         Objects.requireNonNull(query, "query must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         return databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
     }
 
@@ -124,18 +120,18 @@ public class QueryExecutor<T> {
 
     // ── delete / 删除 ──
 
-    /** Delete one by QuerySpec / 按 QuerySpec 删除一条 */
-    public long deleteOne(QuerySpec<T> query) {
+    /** Delete one by LambdaQueryWrapper / 按 LambdaQueryWrapper 删除一条 */
+    public long deleteOne(LambdaQueryWrapper<T> query) {
         Objects.requireNonNull(query, "query must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteOne(filter);
         return result.getDeletedCount();
     }
 
-    /** Delete many by QuerySpec / 按 QuerySpec 删除多条 */
-    public long deleteMany(QuerySpec<T> query) {
+    /** Delete many by LambdaQueryWrapper / 按 LambdaQueryWrapper 删除多条 */
+    public long deleteMany(LambdaQueryWrapper<T> query) {
         Objects.requireNonNull(query, "query must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         DeleteResult result = databaseSupplier.get().getCollection(collectionName).deleteMany(filter);
         return result.getDeletedCount();
     }
@@ -149,20 +145,20 @@ public class QueryExecutor<T> {
 
     // ── update / 更新 ──
 
-    /** Update one by QuerySpec / 按 QuerySpec 更新一条 */
-    public long updateOne(QuerySpec<T> query, Document updateDoc, boolean upsert) {
+    /** Update one by LambdaQueryWrapper / 按 LambdaQueryWrapper 更新一条 */
+    public long updateOne(LambdaQueryWrapper<T> query, Document updateDoc, boolean upsert) {
         Objects.requireNonNull(query, "query must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         UpdateOptions options = upsert ? new UpdateOptions().upsert(true) : new UpdateOptions();
         UpdateResult result = databaseSupplier.get().getCollection(collectionName)
                 .updateOne(filter, updateDoc, options);
         return result.getModifiedCount();
     }
 
-    /** Update many by QuerySpec / 按 QuerySpec 更新多条 */
-    public long updateMany(QuerySpec<T> query, Document updateDoc, boolean upsert) {
+    /** Update many by LambdaQueryWrapper / 按 LambdaQueryWrapper 更新多条 */
+    public long updateMany(LambdaQueryWrapper<T> query, Document updateDoc, boolean upsert) {
         Objects.requireNonNull(query, "query must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         UpdateOptions options = upsert ? new UpdateOptions().upsert(true) : new UpdateOptions();
         UpdateResult result = databaseSupplier.get().getCollection(collectionName)
                 .updateMany(filter, updateDoc, options);
@@ -171,11 +167,11 @@ public class QueryExecutor<T> {
 
     // ── pagination / 分页 ──
 
-    /** Paginated find by QuerySpec / 按 QuerySpec 分页查询 */
-    public PageDTO<T> findPage(QuerySpec<T> query, PageDTO<T> pageDTO) {
+    /** Paginated find by LambdaQueryWrapper / 按 LambdaQueryWrapper 分页查询 */
+    public PageDTO<T> findPage(LambdaQueryWrapper<T> query, PageDTO<T> pageDTO) {
         Objects.requireNonNull(query, "query must not be null");
         Objects.requireNonNull(pageDTO, "pageDTO must not be null");
-        Bson filter = toFilter(query);
+        Bson filter = MongoBsonRenderer.render(query, convertor);
         long currentPage = pageDTO.getCurrentPage();
         long pageSize = pageDTO.getPageSize();
         long total = databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
@@ -197,11 +193,7 @@ public class QueryExecutor<T> {
 
     // ── helpers / 辅助方法 ──
 
-    private Bson toFilter(QuerySpec<T> query) {
-        return query.toBson(convertor);
-    }
-
-    private Class<T> resolveEntityClass(QuerySpec<T> query) {
+    private Class<T> resolveEntityClass(LambdaQueryWrapper<T> query) {
         Class<T> cls = query.getEntityClass();
         return cls != null ? cls : entityClass;
     }

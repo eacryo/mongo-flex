@@ -4,23 +4,22 @@
 
 ## 这是什么？
 
-Mongo-flex 是一个轻量级 MongoDB 工具库，提供三种查询路径，它们汇聚于统一的 `QuerySpec` 抽象和执行引擎：
+Mongo-flex 是一个轻量级 MongoDB 工具库，提供三种查询路径，全部收敛为 MongoDB `Bson`：
 
 | 路径 | 机制 | 适用场景 |
 |---|---|---|
 | Repository 方法 | `MongoRepository<T,ID>` 接口 | 按 ID 的 CRUD、实体示例查询、Lambda 字段查询 |
 | Lambda 类型安全查询 | `LambdaQueryWrapper<T>` + 操作符 | 类型安全的动态查询，21 种操作符 |
-| 注解驱动 JSON 查询 | `@Find` / `@Count` / `@Delete` 注解 | 复杂 / 临时 JSON 查询 |
+| 注解驱动 JSON 查询 | `@Find` / `@Count` / `@Delete` / `@Update` 注解 | 复杂 / 临时 JSON 查询 |
 
-**接口层级：**
+**`MongoRepository<T, ID>`** — 覆盖所有操作的单层接口：
 
-```
-CrudRepository<T,ID>       — insert, findById, findAll, count, deleteOneById, deleteAll
-  └─ QueryRepository<T,ID>  — findOne, findList, findPage, count, update, delete (QuerySpec)
-       └─ MongoRepository<T,ID> — SFunction / entity / LambdaQueryWrapper 便捷方法
-```
+- 基础 CRUD — insert, insertMany, findById, findAll, count, deleteOneById, deleteAll, updateOneById
+- 按实体 — findOneByEntity, findListByEntity, findPageByEntity, countByEntity, deleteByEntity
+- 按 Lambda 引用 — findOne, count, updateOne, updateMany, deleteOne, deleteMany (SFunction)
+- 按 LambdaQueryWrapper — findOne, findList, findPage, count, update, delete
 
-所有查询路径最终产出 `Bson`，通过 `QueryExecutor<T>` 统一执行。编译目标为 Java 8 字节码，兼容 JDK 8+ 和 Spring Boot 2.7.x / 3.x。
+编译目标为 Java 8 字节码，兼容 JDK 8+ 和 Spring Boot 2.7.x / 3.x。
 
 ## 版本兼容性
 
@@ -95,15 +94,6 @@ public class Character {
 选择你需要的接口层级：
 
 ```java
-// 基础 CRUD — 仅 insert / findById / findAll / count / deleteOneById / deleteAll
-@MRepository
-public interface CharacterRepository extends CrudRepository<Character, String> {}
-
-// 基础 CRUD + QuerySpec 查询 — 上游的 Lambda / MQL / 实体查询全部可用
-@MRepository
-public interface CharacterRepository extends QueryRepository<Character, String> {}
-
-// 完整功能 — 额外提供 SFunction / entity / LambdaQueryWrapper 便捷方法
 @MRepository
 public interface CharacterRepository extends MongoRepository<Character, String> {
 

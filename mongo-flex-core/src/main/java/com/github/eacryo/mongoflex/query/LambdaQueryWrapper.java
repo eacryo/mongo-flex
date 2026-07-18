@@ -1,7 +1,6 @@
 package com.github.eacryo.mongoflex.query;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
-import com.github.eacryo.mongoflex.query.QuerySpec;
 import com.github.eacryo.mongoflex.util.SFunction;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 
@@ -17,10 +16,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * A Lambda-based query wrapper similar to MyBatis-Plus's LambdaQueryWrapper.
- * Implements {@link QuerySpec} so it can be used anywhere a query specification is expected /
+ * A Lambda-based query wrapper similar to MyBatis-Plus's LambdaQueryWrapper /
  * 基于 Lambda 的查询构造器，类似 MyBatis-Plus 的 LambdaQueryWrapper。
- * 实现 {@link QuerySpec}，可作为统一查询抽象在任何查询路径中使用。
  * <p>
  * Example usage / 使用示例:
  * <pre>{@code
@@ -28,7 +25,7 @@ import java.util.Objects;
  * w.eq(User::getUserName, "Tom");
  * }</pre>
  */
-public class LambdaQueryWrapper<T> implements QuerySpec<T> {
+public class LambdaQueryWrapper<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LambdaQueryWrapper.class);
 
@@ -42,7 +39,6 @@ public class LambdaQueryWrapper<T> implements QuerySpec<T> {
         this.entityClass = entityClass;
     }
 
-    @Override
     public Class<T> getEntityClass() {
         return entityClass;
     }
@@ -55,7 +51,6 @@ public class LambdaQueryWrapper<T> implements QuerySpec<T> {
      * Render this wrapper as a MongoDB Bson filter via {@link MongoBsonRenderer} /
      * 通过 {@link MongoBsonRenderer} 将此 wrapper 渲染为 MongoDB Bson 过滤器
      */
-    @Override
     public Bson toBson(MongoMappingConvertor convertor) {
         return MongoBsonRenderer.render(this, convertor);
     }

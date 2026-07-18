@@ -4,7 +4,22 @@
 
 ## What is it?
 
-Mongo-flex is a lightweight MongoDB toolkit offering three query paths that converge into a unified `QuerySpec` abstraction and execution engine:
+Mongo-flex is a lightweight MongoDB toolkit offering three query paths that converge into MongoDB `Bson`:
+
+| Path | Mechanism | Use Case |
+|---|---|---|---|
+| Repository methods | `MongoRepository<T,ID>` interface | CRUD by ID, entity example, lambda field queries |
+| Lambda type-safe queries | `LambdaQueryWrapper<T>` + operators | Type-safe dynamic queries, 21 operators |
+| Annotation-driven JSON | `@Find` / `@Count` / `@Delete` / `@Update` | Complex / ad-hoc JSON queries |
+
+**`MongoRepository<T, ID>`** — single interface covering all operations:
+
+- Basic CRUD — insert, insertMany, findById, findAll, count, deleteOneById, deleteAll, updateOneById
+- by entity — findOneByEntity, findListByEntity, findPageByEntity, countByEntity, deleteByEntity
+- by lambda reference — findOne, count, updateOne, updateMany, deleteOne, deleteMany (SFunction)
+- by LambdaQueryWrapper — findOne, findList, findPage, count, update, delete
+
+Compiled to Java 8 bytecode — compatible with JDK 8+ and Spring Boot 2.7.x / 3.x.
 
 | Path | Mechanism | Use Case |
 |---|---|---|
@@ -12,15 +27,14 @@ Mongo-flex is a lightweight MongoDB toolkit offering three query paths that conv
 | Lambda type-safe queries | `LambdaQueryWrapper<T>` + operators | Type-safe dynamic queries, 21 operators |
 | Annotation-driven JSON | `@Find` / `@Count` / `@Delete` | Complex / ad-hoc JSON queries |
 
-**Interface hierarchy:**
+**`MongoRepository<T, ID>`** — single interface covering all operations:
 
-```
-CrudRepository<T,ID>       — insert, findById, findAll, count, deleteOneById, deleteAll
-  └─ QueryRepository<T,ID>  — findOne, findList, findPage, count, update, delete (QuerySpec)
-       └─ MongoRepository<T,ID> — SFunction / entity / LambdaQueryWrapper convenience methods
-```
+- Basic CRUD — insert, insertMany, findById, findAll, count, deleteOneById, deleteAll, updateOneById
+- by entity — findOneByEntity, findListByEntity, findPageByEntity, countByEntity, deleteByEntity
+- by lambda reference — findOne, count, updateOne, updateMany, deleteOne, deleteMany (SFunction)
+- by LambdaQueryWrapper — findOne, findList, findPage, count, update, delete
 
-All query paths produce `Bson` and execute through a single `QueryExecutor<T>`. Compiled to Java 8 bytecode — compatible with JDK 8+ and Spring Boot 2.7.x / 3.x.
+Compiled to Java 8 bytecode — compatible with JDK 8+ and Spring Boot 2.7.x / 3.x.
 
 ## Compatibility
 
@@ -95,15 +109,6 @@ public class Character {
 Choose the interface level you need:
 
 ```java
-// Basic CRUD — insert / findById / findAll / count / deleteOneById / deleteAll only
-@MRepository
-public interface CharacterRepository extends CrudRepository<Character, String> {}
-
-// CRUD + QuerySpec queries — all Lambda / MQL / entity query paths available
-@MRepository
-public interface CharacterRepository extends QueryRepository<Character, String> {}
-
-// Full-featured — adds SFunction / entity / LambdaQueryWrapper convenience methods
 @MRepository
 public interface CharacterRepository extends MongoRepository<Character, String> {
 

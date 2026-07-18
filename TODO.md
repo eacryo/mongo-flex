@@ -458,22 +458,18 @@ LambdaAggregationWrapper ─┬── .match(LambdaQueryWrapper) → 复用 Mong
 - `MongoRepository.java` — 新增 `aggregate()` 方法
 - `SimpleMongoRepository.java` — 实现 `aggregate()`
 
-### Phase 4：Repository 接口分层
+### Phase 4：Repository 接口分层 <sup>已废弃</sup>
 
-当前 30+ 个方法平铺在一个 `MongoRepository` 接口中，无继承层次。需要拆出最小 API 接口，降低用户入门门槛。
+~~当前 30+ 个方法平铺在一个 `MongoRepository` 接口中，无继承层次。需要拆出最小 API 接口，降低用户入门门槛。~~
 
-```
-CrudRepository<T, ID>           (基础 CRUD: insert, findById, findAll, count, deleteById...)
-  └─ QueryRepository<T, ID>     (查询 + 聚合: findOne/findList/count/delete by QuerySpec, aggregate)
-      └─ MongoRepository<T, ID> (完整能力: 当前所有方法)
-```
+**已废弃。** 三层拆分（CrudRepository → QueryRepository → MongoRepository）过度设计，已回退为单层 `MongoRepository`。参考 MyBatis-Plus 的 `BaseMapper<T>`，单层接口更简单直观。
 
-**涉及文件:**
-- 新建 `CrudRepository.java`
-- 新建 `QueryRepository.java`
-- `MongoRepository.java` — 改为 `extends QueryRepository<T, ID>`
-- `SimpleMongoRepository.java` — 改为 `implements MongoRepository<T, ID>`
-- `RepositoryRegistrar.java` — 支持三种接口类型的声明
+~~涉及文件:~~
+- ~~新建 `CrudRepository.java`~~
+- ~~新建 `QueryRepository.java`~~
+- ~~`MongoRepository.java` — 改为 `extends QueryRepository<T, ID>`~~
+- ~~`SimpleMongoRepository.java` — 改为 `implements MongoRepository<T, ID>`~~
+- ~~`RepositoryRegistrar.java` — 支持三种接口类型的声明~~
 
 ### Phase 5：代理分发插件化 `MethodHandler`
 

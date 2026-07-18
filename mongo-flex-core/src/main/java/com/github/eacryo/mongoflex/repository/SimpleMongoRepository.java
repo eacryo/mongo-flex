@@ -12,7 +12,6 @@ import com.github.eacryo.mongoflex.entity.SortOrder;
 import com.github.eacryo.mongoflex.query.LambdaQueryWrapper;
 import com.github.eacryo.mongoflex.query.MongoBsonRenderer;
 import com.github.eacryo.mongoflex.query.QueryExecutor;
-import com.github.eacryo.mongoflex.query.QuerySpec;
 import com.github.eacryo.mongoflex.util.DateValueGenerator;
 import com.github.eacryo.mongoflex.util.ReflectUtil;
 import com.github.eacryo.mongoflex.util.SFunction;
@@ -497,7 +496,7 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     // ---- annotation-driven query execution / 注解驱动的查询执行 ----
     // These are called by MyRepositoryProxyHandler for @Find/@Count/@Delete/@Update methods.
     // They bypass the Lambda query wrapper and work directly with Bson filters.
-    // 以下方法供 MyRepositoryProxyHandler 调用，用于 @Find/@Count/@Delete 注解方法，
+    // 以下方法供 MyRepositoryProxyHandler 调用，用于 @Find/@Count/@Delete/@Update 注解方法，
     // 绕过 Lambda 查询包装器，直接使用 Bson 过滤器。
 
     /**
@@ -721,77 +720,6 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         return query;
     }
 
-
-    // ── QuerySpec<T> unified query methods / 统一查询方法 ──
-
-    // ── findOne / findList / findPage ──
-
-    @Override
-    public T findOne(QuerySpec<T> query) {
-        return queryExecutor.findOne(query);
-    }
-
-    @Override
-    public List<T> findList(QuerySpec<T> query) {
-        return queryExecutor.findList(query, null, null);
-    }
-
-    @Override
-    public PageDTO<T> findPage(QuerySpec<T> query, PageDTO<T> pageDTO) {
-        return queryExecutor.findPage(query, pageDTO);
-    }
-
-    // ── count ──
-
-    @Override
-    public long count(QuerySpec<T> query) {
-        return queryExecutor.count(query);
-    }
-
-    // ── updateOne / updateMany ──
-
-    @Override
-    public long updateOne(QuerySpec<T> query, T entity) {
-        return updateBySpec(query, entity, false, false);
-    }
-
-    @Override
-    public long updateOne(QuerySpec<T> query, T entity, boolean upsert) {
-        return updateBySpec(query, entity, false, upsert);
-    }
-
-    @Override
-    public long updateMany(QuerySpec<T> query, T entity) {
-        return updateBySpec(query, entity, true, false);
-    }
-
-    @Override
-    public long updateMany(QuerySpec<T> query, T entity, boolean upsert) {
-        return updateBySpec(query, entity, true, upsert);
-    }
-
-    private long updateBySpec(QuerySpec<T> query, T entity, boolean many, boolean upsert) {
-        Objects.requireNonNull(query, "query must not be null");
-        Objects.requireNonNull(entity, "entity must not be null");
-        fillDate(entity, upsert);
-        Document doc = mongoMappingConvertor.write(entity);
-        doc.remove("_id");
-        Document updateDoc = new Document("$set", doc);
-        return many ? queryExecutor.updateMany(query, updateDoc, upsert)
-                    : queryExecutor.updateOne(query, updateDoc, upsert);
-    }
-
-    // ── deleteOne / deleteMany ──
-
-    @Override
-    public long deleteOne(QuerySpec<T> query) {
-        return queryExecutor.deleteOne(query);
-    }
-
-    @Override
-    public long deleteMany(QuerySpec<T> query) {
-        return queryExecutor.deleteMany(query);
-    }
 
     private void ensureEntityClass(LambdaQueryWrapper<T> wrapper) {
         if (wrapper.getEntityClass() == null) {
