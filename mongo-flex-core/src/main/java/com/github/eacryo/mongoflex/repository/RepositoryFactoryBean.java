@@ -4,14 +4,11 @@ package com.github.eacryo.mongoflex.repository;
 import com.github.eacryo.mongoflex.annotation.CollectionName;
 import com.github.eacryo.mongoflex.config.DateValueProvider;
 import com.github.eacryo.mongoflex.config.IdGenerator;
-import com.github.eacryo.mongoflex.config.MongoFlexProperties;
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
-import com.mongodb.client.MongoDatabase;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.lang.reflect.Proxy;
-import java.util.function.Supplier;
 
 public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
 
@@ -19,15 +16,10 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
     private DynamicMongoClient mongoClient;
     @Autowired
     private MongoMappingConvertor mongoMappingConvertor;
-    @Autowired
-    private MongoFlexProperties mongoFlexProperties;
     @Autowired(required = false)
     private IdGenerator<?> idGenerator;
     @Autowired(required = false)
     private DateValueProvider dateValueProvider;
-
-    Supplier<MongoDatabase> dbSupplier = () ->
-        mongoClient.select().getDatabase(mongoFlexProperties.getDatabaseFromUri());
 
     private final Class<T> repositoryInterface;
     private final Class<E> entityClass;
@@ -43,7 +35,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
     @SuppressWarnings({"unchecked", "resource"})
     public T getObject() {
         SimpleMongoRepository<E, ID> baseRepository = new SimpleMongoRepository<>(
-                dbSupplier,
+                mongoClient::selectDatabase,
                 this.getCollectionName(entityClass),
                 entityClass, mongoMappingConvertor, idGenerator, dateValueProvider
         );
@@ -52,7 +44,7 @@ public class RepositoryFactoryBean<T, E, ID> implements FactoryBean<T> {
                 new Class<?>[]{repositoryInterface},
                 new MyRepositoryProxyHandler<>(
                         repositoryInterface,
-                        dbSupplier,
+                        mongoClient::selectDatabase,
                         mongoMappingConvertor,
                         baseRepository)
         );
