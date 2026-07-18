@@ -83,6 +83,50 @@ public class CharacterRepositoryTests {
     }
 
     @Test
+    public void testInsertMany() {
+        // Create multiple entities / 创建多个实体
+        Character c1 = new Character();
+        String id1 = Ulid.generate();
+        c1.setId(id1);
+        c1.setName("InsertManyTest-" + id1);
+        c1.setAddress("InsertManyAddress1");
+        c1.setBirthday(new Date());
+
+        Character c2 = new Character();
+        String id2 = Ulid.generate();
+        c2.setId(id2);
+        c2.setName("InsertManyTest-" + id2);
+        c2.setAddress("InsertManyAddress2");
+        c2.setBirthday(new Date());
+
+        Character c3 = new Character();
+        String id3 = Ulid.generate();
+        c3.setId(id3);
+        c3.setName("InsertManyTest-" + id3);
+        c3.setAddress("InsertManyAddress3");
+        c3.setBirthday(new Date());
+
+        // Batch insert / 批量插入
+        List<Character> inserted = characterRepositoryV2.insertMany(Arrays.asList(c1, c2, c3));
+        System.out.println("insertMany count: " + (inserted == null ? 0 : inserted.size()));
+        for (Character c : inserted) {
+            System.out.println("  inserted: id=" + c.getId() + ", name=" + c.getName());
+        }
+
+        // Verify each inserted entity can be found / 验证每个插入的实体都能查到
+        for (Character c : inserted) {
+            Character fetched = characterRepositoryV2.findById(c.getId());
+            assert fetched != null : "Should find inserted entity / 应该能查到插入的实体: " + c.getId();
+            assert c.getName().equals(fetched.getName()) : "Name should match / 名称应该匹配";
+        }
+
+        // Cleanup / 清理
+        for (Character c : inserted) {
+            characterRepositoryV2.deleteOneById(c.getId());
+        }
+    }
+
+    @Test
     public void testFindById() {
         Character c = new Character();
         String id = Ulid.generate();
@@ -165,6 +209,15 @@ public class CharacterRepositoryTests {
                 + ", totalPage=" + result.getTotalPage()
                 + ", records.size=" + (result.getRecords() != null ? result.getRecords().size() : 0));
 
+        // 验证总数和分页
+        System.out.println("total: " + result.getTotal() + ", totalPage: " + result.getTotalPage() + ", records: " + result.getRecords());
+        System.out.println("records size: " + result.getRecords().size());
+        System.out.println("first record address: " + result.getRecords().get(0).getAddress());
+        System.out.println("second record address: " + result.getRecords().get(1).getAddress());
+        // total 应该 >= 5（可能有其他测试残留的同名数据）
+        // 但由于使用了唯一 commonName，total 应该恰好为 5
+        // records 大小应 <= pageSize
+
         // cleanup：按 name 批量删
         characterRepositoryV2.deleteMany(Character::getName, commonName);
     }
@@ -172,6 +225,7 @@ public class CharacterRepositoryTests {
     @Test
     public void testFindPageWithLambdaSort() {
         String commonName = "FindPageLambdaSort-" + Ulid.generate();
+        // 插入 5 条记录，address 用于区分
         for (int i = 0; i < 5; i++) {
             Character c = new Character();
             c.setId(Ulid.generate());
@@ -180,19 +234,30 @@ public class CharacterRepositoryTests {
             characterRepositoryV2.insert(c);
         }
 
-        LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<Character>()
-                .eq(Character::getName, commonName)
-                .orderByDesc(Character::getAddress);
-
+        // Lambda 类型安全排序：按 address 降序
         PageDTO<Character> pageDTO = new PageDTO<>();
         pageDTO.setCurrentPage(1L);
         pageDTO.setPageSize(3L);
+
+        LambdaQueryWrapper<Character> wrapper = new LambdaQueryWrapper<Character>()
+                .eq(Character::getName, commonName)
+                .orderByDesc(Character::getAddress);
 
         PageDTO<Character> result = characterRepositoryV2.findPage(wrapper, pageDTO);
         System.out.println("findPage with Lambda sort: total=" + result.getTotal()
                 + ", totalPage=" + result.getTotalPage()
                 + ", records.size=" + (result.getRecords() != null ? result.getRecords().size() : 0));
 
+        // 验证分页
+        System.out.println("records size: " + result.getRecords().size());
+        if (result.getRecords().size() >= 2) {
+            String first = result.getRecords().get(0).getAddress();
+            String second = result.getRecords().get(1).getAddress();
+            System.out.println("first: " + first + ", second: " + second);
+            // 降序排列：LambdaAddr-4 > LambdaAddr-3 > ...
+        }
+
+        // cleanup
         characterRepositoryV2.deleteMany(Character::getName, commonName);
     }
 
@@ -218,7 +283,7 @@ public class CharacterRepositoryTests {
         Character c = new Character();
         c.setName("CountEntityTest");
         long c2 = characterRepositoryV2.countByEntity(c);
-        System.out.println("count(entity): " + c2);
+        System.out.println("countByEntity(entity): " + c2);
 
         long c3 = characterRepositoryV2.count(Character::getName, "CountEntityTest");
         System.out.println("count(field,value): " + c3);
@@ -257,6 +322,37 @@ public class CharacterRepositoryTests {
         long updated = characterRepositoryV2.updateMany(Character::getName, c.getName(), c);
         System.out.println("update(field) result: " + updated);
 
+        characterRepositoryV2.deleteOneById(id);
+    }
+
+    @Test
+    public void testUpsert() {
+        String id = Ulid.generate();
+        // 先确认这条记录不存在
+        Character fetched = characterRepositoryV2.findById(id);
+        System.out.println("pre-upsert findById: " + fetched);
+
+        // upsert：不存在则插入
+        Character c = new Character();
+        c.setId(id);
+        c.setName("UpsertTest-" + id);
+        c.setAddress("Upserted");
+        long result1 = characterRepositoryV2.updateOneById(c, true);
+        System.out.println("upsertById (insert) result: " + result1);
+
+        // 验证已插入
+        Character afterInsert = characterRepositoryV2.findById(id);
+        System.out.println("after upsertById: " + afterInsert);
+
+        // 再次 upsert 同 _id：应更新
+        c.setAddress("Upserted-Updated");
+        long result2 = characterRepositoryV2.updateOneById(c, true);
+        System.out.println("upsertById (update) result: " + result2);
+
+        Character afterUpdate = characterRepositoryV2.findById(id);
+        System.out.println("after second upsertById: " + afterUpdate);
+
+        // cleanup
         characterRepositoryV2.deleteOneById(id);
     }
 

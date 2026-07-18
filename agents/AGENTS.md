@@ -11,6 +11,9 @@ mvn compile -pl mongo-flex-core -am
 # Run all SB3 tests (requires REMOTE_MONGO_URI env var)
 mvn test -pl mongo-flex-test-spring-boot3
 
+# Run all SB2 tests (requires REMOTE_MONGO_URI env var)
+mvn test -pl mongo-flex-test-spring-boot2
+
 # Run a single test class
 mvn test -pl mongo-flex-test-spring-boot3 -Dtest=LambdaQueryWrapperOperatorTest
 
@@ -23,7 +26,7 @@ mvn clean install -pl mongo-flex-core -am -DskipTests
 
 Tests connect to a remote MongoDB Atlas cluster via the `REMOTE_MONGO_URI` environment variable. There is no embedded MongoDB. **Tests are slow** (remote Atlas latency): a single test class takes 2–5 minutes; the full suite takes 10+ minutes. Always use a generous timeout when running test commands (≥ 600 seconds for Bash tool timeout).
 
-**当前只需验证 SB3 测试：** `mongo-flex-test-spring-boot2` 是遗留模块，保持编译通过即可，不需要运行测试。所有测试验证集中在 `mongo-flex-test-spring-boot3`。
+**每次代码改动必须同时验证 SB2 和 SB3：** `mongo-flex-test-spring-boot2` 与 `mongo-flex-test-spring-boot3` 保持相同的测试集（test classes are mirrored between the two modules）。Every code change must pass the full test suites of **both** `mongo-flex-test-spring-boot2` and `mongo-flex-test-spring-boot3`. When adding or modifying a test, apply the same change to both modules (test code is Java 8 compatible across the whole reactor, so files can usually be copied verbatim).
 
 ## Java 8 Constraint
 
@@ -79,7 +82,7 @@ When modifying `README.md`, apply the same changes to `README-zh.md` (Chinese tr
 mongo-flex-core/          ← framework code
 mongo-flex-test-common/   ← shared test entities & repository interfaces
 mongo-flex-test-spring-boot3/  ← integration tests (active profile: v2)
-mongo-flex-test-spring-boot2/  ← legacy SB2 tests
+mongo-flex-test-spring-boot2/  ← integration tests on Spring Boot 2.7 (mirrors SB3 test set)
 ```
 
 ### Key Design Decisions

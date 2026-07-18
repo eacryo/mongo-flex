@@ -70,4 +70,17 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Remote MongoDB Atlas latency is high, forked JVM timeout set to 15 minutes / 远程 MongoDB Atlas 延迟较高，forked JVM 超时设为 15 分钟 -->
+                    <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
