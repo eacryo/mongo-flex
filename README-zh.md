@@ -61,7 +61,16 @@ Mongo-flex 编译为 Java 8 字节码，兼容 **JDK 8+** 和 **Spring Boot 2.7.
 </dependency>
 ```
 
-### 2. 定义实体
+### 2. 配置连接
+
+```yaml
+mongo-flex:
+  uri: mongodb://localhost:27017/mydb
+```
+
+不启用多租户时，默认使用 `mongo-flex.uri` 创建一个 `MongoClient`。
+
+### 3. 定义实体
 
 ```java
 @CollectionName("character")
@@ -89,7 +98,7 @@ public class Character {
 }
 ```
 
-### 3. 创建 Repository 接口
+### 4. 创建 Repository 接口
 
 选择你需要的接口层级：
 
@@ -99,10 +108,16 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
 
     @Find("{name: #{name}}")
     List<Character> findByName(@Param("name") String name);
+
+    @Find(value = "{area: #{area}}", skip = 0, limit = 10)
+    List<Character> findTop10ByArea(@Param("area") String area);
+
+    @Update(value = "{name: #{name}}", update = "{$set: {level: #{level}}}")
+    long updateLevelByName(@Param("name") String name, @Param("level") int level);
 }
 ```
 
-### 4. 使用
+### 5. 使用
 
 ```java
 @Autowired
@@ -177,6 +192,40 @@ wrapper.or(w -> w.eq(Character::getArea, "Liyue")
                   .eq(Character::getArea, "Fontaine"));
 List<Character> orResult = repo.findList(wrapper);
 ```
+
+#### Entity 转 Wrapper 工厂方法
+
+`LambdaQueryWrapper.fromEntity(entity)` 从已填充的实体对象自动构建查询条件。每个非 null 字段自动生成 `eq()` 条件，static / transient 字段会被忽略：
+
+```java
+Character probe = new Character();
+probe.setArea("Liyue");
+// probe → wrapper.eq(Character::getArea, "Liyue")
+
+List<Character> result = repo.findList(
+    LambdaQueryWrapper.fromEntity(probe)
+        .include(Character::getName, Character::getLevel)
+        .orderByAsc(Character::getName)
+);
+```
+
+#### 字段投影（include / exclude）
+
+使用 `include()` 和 `exclude()` 限制返回字段：
+
+```java
+// 仅返回 name 和 age（_id 默认仍返回）
+wrapper.include(Character::getName, Character::getAge);
+
+// 排除敏感字段
+wrapper.exclude(Character::getPassword, Character::getLargeData);
+
+// 组合使用：包含指定字段但排除 _id
+wrapper.include(Character::getName, Character::getAge)
+       .exclude(Character::getId);  // _id 是混合模式下唯一允许排除的字段
+```
+
+> MongoDB 不允许在非 `_id` 字段上同时使用 include 和 exclude。若先调用了 `include()`，则 `exclude()` 仅能排除 `_id`。
 
 #### Lambda 方法引用 → 字段名解析规则
 
@@ -293,7 +342,7 @@ private ZonedDateTime createAt;
 
 > **解析优先级：** 注解上的 `providerClass` → 全局 `DateValueProvider` bean → 内置类型表。
 
-### 5. 实体继承
+### 6. 实体继承
 
 Mongo-flex 采用 **MyBatis-Plus 风格**的显式类型绑定：`Repository<T>` 只处理 `T` 的字段，不多不少。
 
@@ -344,7 +393,7 @@ c instanceof LiyueCharacter;  // ❌ 永远为 false — read() 返回的是 Cha
 
 **为什么不像 Spring Data MongoDB 那样自动多态？** Spring Data 会存储 `_class` 鉴别字段并自动实例化子类——但这意味着 `repo.findById(id)` 在你声明 `Character` 时可能悄悄返回一个 `LiyueCharacter`。灵活但需要 `instanceof` 防御。Mongo-flex 选择显式类型绑定：insert 存入全部字段（运行时类型），但 read 只返回 Repository 接口声明的字段（编译期类型）。没有意外。
 
-### 6. 多租户（可选）
+### 7. 多租户（可选）
 
 ```yaml
 mongo-flex:
@@ -362,4 +411,4 @@ repo.insert(c);
 MDC.clear();
 ```
 
-如果不启用多租户，默认会使用标准 `spring.data.mongodb.uri` 配置创建一个 `MongoClient`。
+如果不启用多租户，默认会使用 `mongo-flex.uri` 配置创建一个 `MongoClient`。

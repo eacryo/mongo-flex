@@ -1,31 +1,16 @@
 # mongo-flex
 
-[中文](README-zh.md)
+[中文](README-ZH.md)
 
 ## What is it?
 
 Mongo-flex is a lightweight MongoDB toolkit offering three query paths that converge into MongoDB `Bson`:
 
 | Path | Mechanism | Use Case |
-|---|---|---|---|
-| Repository methods | `MongoRepository<T,ID>` interface | CRUD by ID, entity example, lambda field queries |
-| Lambda type-safe queries | `LambdaQueryWrapper<T>` + operators | Type-safe dynamic queries, 21 operators |
-| Annotation-driven JSON | `@Find` / `@Count` / `@Delete` / `@Update` | Complex / ad-hoc JSON queries |
-
-**`MongoRepository<T, ID>`** — single interface covering all operations:
-
-- Basic CRUD — insert, insertMany, findById, findAll, count, deleteOneById, deleteAll, updateOneById
-- by entity — findOneByEntity, findListByEntity, findPageByEntity, countByEntity, deleteByEntity
-- by lambda reference — findOne, count, updateOne, updateMany, deleteOne, deleteMany (SFunction)
-- by LambdaQueryWrapper — findOne, findList, findPage, count, update, delete
-
-Compiled to Java 8 bytecode — compatible with JDK 8+ and Spring Boot 2.7.x / 3.x.
-
-| Path | Mechanism | Use Case |
 |---|---|---|
 | Repository methods | `MongoRepository<T,ID>` interface | CRUD by ID, entity example, lambda field queries |
 | Lambda type-safe queries | `LambdaQueryWrapper<T>` + operators | Type-safe dynamic queries, 21 operators |
-| Annotation-driven JSON | `@Find` / `@Count` / `@Delete` | Complex / ad-hoc JSON queries |
+| Annotation-driven JSON | `@Find` / `@Count` / `@Delete` / `@Update` | Complex / ad-hoc JSON queries |
 
 **`MongoRepository<T, ID>`** — single interface covering all operations:
 
@@ -76,7 +61,16 @@ Mongo-flex is compiled to Java 8 bytecode and is compatible with **JDK 8+** and 
 </dependency>
 ```
 
-### 2. Define your entity
+### 2. Configure connection
+
+```yaml
+mongo-flex:
+  uri: mongodb://localhost:27017/mydb
+```
+
+Without multi-tenancy, a default `MongoClient` is created from `mongo-flex.uri`.
+
+### 3. Define your entity
 
 ```java
 @CollectionName("character")
@@ -104,7 +98,7 @@ public class Character {
 }
 ```
 
-### 3. Create a repository interface
+### 4. Create a repository interface
 
 Choose the interface level you need:
 
@@ -114,10 +108,16 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
 
     @Find("{name: #{name}}")
     List<Character> findByName(@Param("name") String name);
+
+    @Find(value = "{area: #{area}}", skip = 0, limit = 10)
+    List<Character> findTop10ByArea(@Param("area") String area);
+
+    @Update(value = "{name: #{name}}", update = "{$set: {level: #{level}}}")
+    long updateLevelByName(@Param("name") String name, @Param("level") int level);
 }
 ```
 
-### 4. Use it
+### 5. Use it
 
 ```java
 @Autowired
@@ -192,6 +192,40 @@ wrapper.or(w -> w.eq(Character::getArea, "Liyue")
                   .eq(Character::getArea, "Fontaine"));
 List<Character> orResult = repo.findList(wrapper);
 ```
+
+#### Entity-to-Wrapper Factory
+
+`LambdaQueryWrapper.fromEntity(entity)` automatically builds query conditions from a populated entity object. Each non-null field becomes an `eq()` condition, and static/transient fields are ignored:
+
+```java
+Character probe = new Character();
+probe.setArea("Liyue");
+// probe → wrapper.eq(Character::getArea, "Liyue")
+
+List<Character> result = repo.findList(
+    LambdaQueryWrapper.fromEntity(probe)
+        .include(Character::getName, Character::getLevel)
+        .orderByAsc(Character::getName)
+);
+```
+
+#### Field Projection (include / exclude)
+
+Limit returned fields using `include()` and `exclude()`:
+
+```java
+// Return only name and age (plus _id by default)
+wrapper.include(Character::getName, Character::getAge);
+
+// Exclude sensitive fields
+wrapper.exclude(Character::getPassword, Character::getLargeData);
+
+// Combine: include fields but suppress _id
+wrapper.include(Character::getName, Character::getAge)
+       .exclude(Character::getId);  // _id is the only field allowed in mixed mode
+```
+
+> MongoDB does not allow mixing `include` and `exclude` on non-`_id` fields. If `include()` is called first, `exclude()` can only suppress `_id`.
 
 #### Field Name Resolution from Lambda Methods
 
@@ -308,7 +342,7 @@ Register a `DateValueProvider` Spring bean — it serves as the default fallback
 
 > **Resolution order:** `providerClass` on annotation → global `DateValueProvider` bean → built-in type table.
 
-### 5. Entity Inheritance
+### 6. Entity Inheritance
 
 Mongo-flex follows the **MyBatis-Plus style** of explicit type binding: a `Repository<T>` works with exactly `T` — no more, no less.
 
@@ -359,7 +393,7 @@ c instanceof LiyueCharacter;  // ❌ always false — read() returns Character, 
 
 **Why not auto-polymorphism like Spring Data MongoDB?** Spring Data stores a `_class` discriminator and automatically instantiates the subclass — but this means `repo.findById(id)` can silently return a `LiyueCharacter` when you declared `Character`. It's flexible but requires `instanceof` guards. Mongo-flex chooses explicit type binding: insert stores all fields (runtime type), but read returns only what the Repository interface declares (compile-time type). No surprises.
 
-### 6. Multi-tenancy (optional)
+### 7. Multi-tenancy (optional)
 
 ```yaml
 mongo-flex:
@@ -377,4 +411,4 @@ repo.insert(c);
 MDC.clear();
 ```
 
-If multi-tenancy is not enabled, a default `MongoClient` is created using the standard `spring.data.mongodb.uri` property.
+If multi-tenancy is not enabled, a default `MongoClient` is created using the `mongo-flex.uri` property.
