@@ -64,10 +64,13 @@ public class MqlCountDeleteTest {
     @Test
     @Order(4)
     void testDeleteByIdAfterMqlCount() {
-        log.info("=== test deleteById after @Count ===");
+        log.info("=== test logical delete after @Count ===");
         Assertions.assertNotNull(id);
-        long deleted = repo.deleteOneById(id);
-        log.info("deleteById result: {}", deleted);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        long deleted = repo.updateOneById(del);
+        log.info("logical delete result: {}", deleted);
         Assertions.assertEquals(1, deleted);
 
         Character afterDelete = repo.findById(id);

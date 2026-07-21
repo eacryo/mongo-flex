@@ -36,6 +36,21 @@ public class JsonTemplateParser {
      * @return parsed MongoDB Document filter / 解析后的 MongoDB Document 过滤器
      */
     public Document parse(String template, Method method, Object[] args) {
+        String json = replacePlaceholders(template, method, args);
+        return Document.parse(json);
+    }
+
+    /**
+     * Replace #{param} placeholders in a JSON template with JSON-encoded parameter values,
+     * returning the raw JSON string without parsing / 替换 JSON 模板中的 #{param} 占位符，
+     * 返回原始 JSON 字符串而不解析
+     *
+     * @param template JSON string with #{param} placeholders / 带 #{param} 占位符的 JSON 字符串
+     * @param method   the annotated method / 被注解的方法
+     * @param args     method parameter values / 方法参数值
+     * @return JSON string with placeholders replaced / 替换占位符后的 JSON 字符串
+     */
+    public String replacePlaceholders(String template, Method method, Object[] args) {
         String json = template;
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
@@ -46,7 +61,7 @@ public class JsonTemplateParser {
                 json = json.replace(placeholder, toJsonValue(args[i]));
             }
         }
-        return Document.parse(json);
+        return json;
     }
 
     /**

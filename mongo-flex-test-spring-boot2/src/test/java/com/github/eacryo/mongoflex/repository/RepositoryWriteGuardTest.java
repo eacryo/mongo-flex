@@ -107,7 +107,10 @@ public class RepositoryWriteGuardTest {
             log.info("delete result: {}", deleted);
             assertEquals(1, deleted);
         } finally {
-            repo.deleteOneById(id);
+            Character del = new Character();
+            del.setId(id);
+            del.setDeleted(true);
+            repo.updateOneById(del);
         }
     }
 

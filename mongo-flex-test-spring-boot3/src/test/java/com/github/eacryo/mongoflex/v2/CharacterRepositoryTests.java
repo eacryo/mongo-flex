@@ -79,7 +79,10 @@ public class CharacterRepositoryTests {
         System.out.println("inserted: " + inserted);
 
         // cleanup
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test
@@ -122,7 +125,10 @@ public class CharacterRepositoryTests {
 
         // Cleanup / 清理
         for (Character c : inserted) {
-            characterRepositoryV2.deleteOneById(c.getId());
+            Character del = new Character();
+            del.setId(c.getId());
+            del.setDeleted(true);
+            characterRepositoryV2.updateOneById(del);
         }
     }
 
@@ -137,7 +143,10 @@ public class CharacterRepositoryTests {
         Character fetched = characterRepositoryV2.findById(id);
         System.out.println("fetched by id: " + fetched);
 
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test
@@ -153,7 +162,10 @@ public class CharacterRepositoryTests {
         Character one = characterRepositoryV2.findOneByEntity(query);
         System.out.println("findOneByEntity: " + one);
 
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test
@@ -180,8 +192,12 @@ public class CharacterRepositoryTests {
         System.out.println("findListByEntity: " + list);
 
         // cleanup
-        characterRepositoryV2.deleteOneById(c1.getId());
-        characterRepositoryV2.deleteOneById(c2.getId());
+        for (String cid : Arrays.asList(c1.getId(), c2.getId())) {
+            Character del = new Character();
+            del.setId(cid);
+            del.setDeleted(true);
+            characterRepositoryV2.updateOneById(del);
+        }
     }
 
     @Test
@@ -272,7 +288,10 @@ public class CharacterRepositoryTests {
         Character one = characterRepositoryV2.findOne(Character::getName, c.getName());
         System.out.println("findOne(field): " + one);
 
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test
@@ -307,7 +326,10 @@ public class CharacterRepositoryTests {
         Character fetched = characterRepositoryV2.findById(id);
         System.out.println("post-update fetched: " + fetched);
 
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test
@@ -322,7 +344,10 @@ public class CharacterRepositoryTests {
         long updated = characterRepositoryV2.updateMany(Character::getName, c.getName(), c);
         System.out.println("update(field) result: " + updated);
 
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test
@@ -353,7 +378,10 @@ public class CharacterRepositoryTests {
         System.out.println("after second upsertById: " + afterUpdate);
 
         // cleanup
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test

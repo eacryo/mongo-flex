@@ -45,7 +45,10 @@ public class RepositoryCrudTest {
             Assertions.assertEquals("CrudTest-" + id, found.getName());
             Assertions.assertEquals("Fontaine", found.getAddress());
         } finally {
-            repo.deleteOneById(id);
+            Character del = new Character();
+            del.setId(id);
+            del.setDeleted(true);
+            repo.updateOneById(del);
             log.info("cleaned up: {}", id);
         }
     }
@@ -73,7 +76,10 @@ public class RepositoryCrudTest {
             log.info("after update: {}", found);
             Assertions.assertEquals("After", found.getAddress());
         } finally {
-            repo.deleteOneById(id);
+            Character del = new Character();
+            del.setId(id);
+            del.setDeleted(true);
+            repo.updateOneById(del);
         }
     }
 
@@ -123,7 +129,10 @@ public class RepositoryCrudTest {
             Assertions.assertNotNull(found);
             Assertions.assertEquals(name, found.getName());
         } finally {
-            repo.deleteOneById(id);
+            Character del = new Character();
+            del.setId(id);
+            del.setDeleted(true);
+            repo.updateOneById(del);
         }
     }
 
@@ -176,28 +185,33 @@ public class RepositoryCrudTest {
             Assertions.assertNotNull(all);
             Assertions.assertFalse(all.isEmpty());
         } finally {
-            repo.deleteOneById(id);
+            Character del = new Character();
+            del.setId(id);
+            del.setDeleted(true);
+            repo.updateOneById(del);
         }
     }
 
     @Test
     @Order(8)
     void testDeleteAll() {
-        log.info("=== test deleteAll ===");
+        log.info("=== test deleteAll (logical via updateMany) ===");
         String id = Ulid.generate();
+        String name = "CrudDeleteAll-" + id;
         Character c = new Character();
         c.setId(id);
-        c.setName("CrudDeleteAll-" + id);
+        c.setName(name);
         c.setBirthday(new Date());
         repo.insert(c);
 
-        long deleted = repo.deleteAll();
-        log.info("deleteAll result: {}", deleted);
-        Assertions.assertTrue(deleted >= 1);
+        Character del = new Character();
+        del.setDeleted(true);
+        long updated = repo.updateMany(Character::getName, name, del);
+        log.info("updateMany (logical delete) result: {}", updated);
+        Assertions.assertEquals(1, updated);
 
-        long after = repo.count();
-        log.info("count after deleteAll: {}", after);
-        Assertions.assertEquals(0, after);
+        Character afterDelete = repo.findById(id);
+        Assertions.assertNull(afterDelete);
     }
 
 }

@@ -79,7 +79,10 @@ public class V2AnnotationQueryTests {
         character.setBirthday(new Date());
         characterRepositoryV2.insert(character);
         // cleanup / 清理
-        characterRepositoryV2.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        characterRepositoryV2.updateOneById(del);
     }
 
     @Test
@@ -126,7 +129,10 @@ public class V2AnnotationQueryTests {
         System.out.println("after update fetched: id=" + fetched.getId() + ", level=" + fetched.getLevel() + ", expected level=60");
 
         System.out.println("cleanup: deleteById(" + id + ")");
-        characterRepositoryV2.deleteOneById(id);
+        Character del1 = new Character();
+        del1.setId(id);
+        del1.setDeleted(true);
+        characterRepositoryV2.updateOneById(del1);
     }
 
     @Test
@@ -149,6 +155,9 @@ public class V2AnnotationQueryTests {
         System.out.println("after update fetched: id=" + fetched.getId() + ", address=" + fetched.getAddress() + ", expected address='V2 Address'");
 
         System.out.println("cleanup: deleteById(" + id + ")");
-        characterRepositoryV2.deleteOneById(id);
+        Character del2 = new Character();
+        del2.setId(id);
+        del2.setDeleted(true);
+        characterRepositoryV2.updateOneById(del2);
     }
 }

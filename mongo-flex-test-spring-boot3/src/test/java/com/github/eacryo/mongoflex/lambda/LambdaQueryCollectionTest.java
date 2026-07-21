@@ -58,9 +58,14 @@ public class LambdaQueryCollectionTest {
 
     @AfterEach
     void tearDown() {
-        repo.deleteOneById(id1);
-        repo.deleteOneById(id2);
-        repo.deleteOneById(id3);
+        Character mark = new Character();
+        mark.setDeleted(true);
+        mark.setId(id1);
+        repo.updateOneById(mark);
+        mark.setId(id2);
+        repo.updateOneById(mark);
+        mark.setId(id3);
+        repo.updateOneById(mark);
         log.info("cleaned up");
     }
 

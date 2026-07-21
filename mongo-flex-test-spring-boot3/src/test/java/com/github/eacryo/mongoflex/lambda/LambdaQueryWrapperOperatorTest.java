@@ -79,8 +79,12 @@ public class LambdaQueryWrapperOperatorTest {
 
     @AfterEach
     void tearDown() {
-        repo.deleteOneById(id1);
-        repo.deleteOneById(id2);
+        Character mark = new Character();
+        mark.setDeleted(true);
+        mark.setId(id1);
+        repo.updateOneById(mark);
+        mark.setId(id2);
+        repo.updateOneById(mark);
         log.info("cleaned up");
     }
 
@@ -372,7 +376,10 @@ public class LambdaQueryWrapperOperatorTest {
             // since CharacterRepository uses Character class which doesn't have Liyue fields
             // (this is expected behavior — use a dedicated LiyueCharacterRepository for that)
         } finally {
-            repo.deleteOneById(id3);
+            Character mark = new Character();
+            mark.setDeleted(true);
+            mark.setId(id3);
+            repo.updateOneById(mark);
         }
     }
 

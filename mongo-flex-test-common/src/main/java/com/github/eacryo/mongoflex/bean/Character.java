@@ -63,6 +63,8 @@ public class Character {
     @CollectionField("home_region")
     private Region region;
 
+    private Boolean deleted;
+
     @CreateDate
     private Date createAt;
     @UpdateDate

@@ -1,6 +1,7 @@
 package com.github.eacryo.mongoflex.config;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import com.github.eacryo.mongoflex.query.MongoOps;
 import com.github.eacryo.mongoflex.repository.DynamicMongoClient;
 import com.github.eacryo.mongoflex.repository.RepositoryRegistrar;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -26,5 +27,10 @@ public class MongoFlexAutoConfiguration {
     @Bean
     DynamicMongoClient dynamicMongoClient() {
         return new DynamicMongoClient();
+    }
+
+    @Bean
+    MongoOps mongoOps(DynamicMongoClient dynamicMongoClient, MongoMappingConvertor convertor) {
+        return new MongoOps(dynamicMongoClient, convertor);
     }
 }

@@ -14,4 +14,6 @@ public class IdGeneratorTestBean {
     @CollectionId(IdType.INPUT)
     private String id;
     private String text;
+
+    private Boolean deleted;
 }

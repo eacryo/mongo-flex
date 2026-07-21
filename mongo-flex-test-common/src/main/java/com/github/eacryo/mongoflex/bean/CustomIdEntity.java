@@ -20,4 +20,6 @@ public class CustomIdEntity {
 
     private String name;
     private Integer age;
+
+    private Boolean deleted;
 }

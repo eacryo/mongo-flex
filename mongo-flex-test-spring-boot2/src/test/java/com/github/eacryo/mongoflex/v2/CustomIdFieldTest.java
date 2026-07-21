@@ -96,7 +96,10 @@ public class CustomIdFieldTest {
     void testDeleteById() {
         assertThat(savedId).isNotNull();
 
-        long deleted = repository.deleteOneById(savedId);
+        CustomIdEntity del = new CustomIdEntity();
+        del.setUserId(savedId);
+        del.setDeleted(true);
+        long deleted = repository.updateOneById(del);
         assertThat(deleted).isEqualTo(1);
 
         CustomIdEntity found = repository.findById(savedId);

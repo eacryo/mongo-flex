@@ -1,11 +1,13 @@
 package com.github.eacryo.mongoflex.v2;
 
+import com.github.eacryo.mongoflex.annotation.Aggregate;
 import com.github.eacryo.mongoflex.annotation.Count;
 import com.github.eacryo.mongoflex.annotation.Find;
 import com.github.eacryo.mongoflex.annotation.MRepository;
 import com.github.eacryo.mongoflex.annotation.Param;
 import com.github.eacryo.mongoflex.annotation.Update;
 import com.github.eacryo.mongoflex.bean.Character;
+import com.github.eacryo.mongoflex.bean.CharacterWithWeapon;
 import com.github.eacryo.mongoflex.repository.MongoRepository;
 
 import java.util.List;
@@ -69,4 +71,15 @@ public interface CharacterRepository extends MongoRepository<Character, String> 
 
     @Update(value = "{name: #{name}}", update = "{$set: {address: #{address}}}")
     void updateAddressByName(@Param("name") String name, @Param("address") String address);
+
+    // ── Aggregation / 聚合 ──
+
+    @Aggregate("[{$lookup: {from: 'weapon', localField: '_id', foreignField: 'character_id', as: 'weapon'}}, {$unwind: {path: '$weapon', preserveNullAndEmptyArrays: false}}]")
+    List<CharacterWithWeapon> lookupWeapons();
+
+    @Aggregate("[{$match: {vision: #{vision}}}, {$lookup: {from: 'weapon', localField: '_id', foreignField: 'character_id', as: 'weapon'}}, {$unwind: {path: '$weapon', preserveNullAndEmptyArrays: false}}]")
+    List<CharacterWithWeapon> lookupWeaponsByVision(@Param("vision") String vision);
+
+    @Aggregate("[{$group: {_id: '$vision', count: {$sum: 1}, avgLevel: {$avg: '$level'}}}, {$sort: {count: -1}}]")
+    List<Object> groupByVisionCount();
 }

@@ -96,7 +96,10 @@ public class CustomGeneratorTest {
         assertThat(found.getName()).isEqualTo("test-custom-id");
 
         // Cleanup / 清理
-        repository.deleteOneById("my-custom-id-12345");
+        CustomGeneratorEntity del = new CustomGeneratorEntity();
+        del.setId("my-custom-id-12345");
+        del.setDeleted(true);
+        repository.updateOneById(del);
     }
 
     // ---- batch insert many / 批量插入 ----
@@ -175,7 +178,10 @@ public class CustomGeneratorTest {
         assertThat(batchIds).isNotNull().hasSize(3);
 
         for (String id : batchIds) {
-            long deleted = repository.deleteOneById(id);
+            CustomGeneratorEntity del = new CustomGeneratorEntity();
+            del.setId(id);
+            del.setDeleted(true);
+            long deleted = repository.updateOneById(del);
             assertThat(deleted).isEqualTo(1);
         }
 
@@ -192,7 +198,10 @@ public class CustomGeneratorTest {
     void testCleanupSingleInsert() {
         assertThat(singleId).isNotNull();
 
-        long deleted = repository.deleteOneById(singleId);
+        CustomGeneratorEntity del = new CustomGeneratorEntity();
+        del.setId(singleId);
+        del.setDeleted(true);
+        long deleted = repository.updateOneById(del);
         assertThat(deleted).isEqualTo(1);
         assertThat(repository.findById(singleId)).isNull();
     }

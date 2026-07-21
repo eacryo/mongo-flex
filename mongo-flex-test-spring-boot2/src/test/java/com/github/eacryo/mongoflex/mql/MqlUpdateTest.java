@@ -47,7 +47,10 @@ public class MqlUpdateTest {
         Assertions.assertEquals(99, fetched.getLevel());
 
         log.info("cleanup: deleteById({})", id);
-        repo.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        repo.updateOneById(del);
     }
 
     @Test
@@ -77,7 +80,10 @@ public class MqlUpdateTest {
         Assertions.assertEquals(80, fetched.getLevel());
 
         log.info("cleanup: deleteById({})", fetched.getId());
-        repo.deleteOneById(fetched.getId());
+        Character del1 = new Character();
+        del1.setId(fetched.getId());
+        del1.setDeleted(true);
+        repo.updateOneById(del1);
     }
 
     @Test
@@ -105,7 +111,10 @@ public class MqlUpdateTest {
         Assertions.assertEquals(99, fetched.getLevel());
 
         log.info("cleanup: deleteById({})", id);
-        repo.deleteOneById(id);
+        Character del2 = new Character();
+        del2.setId(id);
+        del2.setDeleted(true);
+        repo.updateOneById(del2);
     }
 
     @Test
@@ -157,9 +166,12 @@ public class MqlUpdateTest {
         Assertions.assertEquals("BANNED", f3.getStatus());
 
         log.info("cleanup: deleteById({}, {}, {})", id1, id2, id3);
-        repo.deleteOneById(id1);
-        repo.deleteOneById(id2);
-        repo.deleteOneById(id3);
+        for (String cid : new String[] {id1, id2, id3}) {
+            Character del = new Character();
+            del.setId(cid);
+            del.setDeleted(true);
+            repo.updateOneById(del);
+        }
     }
 
     @Test
@@ -197,6 +209,9 @@ public class MqlUpdateTest {
         Assertions.assertEquals("New Void Address", fetched.getAddress());
 
         log.info("cleanup: deleteById({})", id);
-        repo.deleteOneById(id);
+        Character del = new Character();
+        del.setId(id);
+        del.setDeleted(true);
+        repo.updateOneById(del);
     }
 }

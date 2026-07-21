@@ -75,9 +75,14 @@ public class NestedFieldQueryTest {
 
     @AfterEach
     void tearDown() {
-        repo.deleteOneById(idLiyue);
-        repo.deleteOneById(idMondstadt);
-        repo.deleteOneById(idNoRegion);
+        Character mark = new Character();
+        mark.setDeleted(true);
+        mark.setId(idLiyue);
+        repo.updateOneById(mark);
+        mark.setId(idMondstadt);
+        repo.updateOneById(mark);
+        mark.setId(idNoRegion);
+        repo.updateOneById(mark);
         log.info("cleaned up run {}", runId);
     }
 

@@ -39,7 +39,10 @@ public class LambdaQueryStringTest {
 
     @AfterEach
     void tearDown() {
-        repo.deleteOneById(id1);
+        Character mark = new Character();
+        mark.setDeleted(true);
+        mark.setId(id1);
+        repo.updateOneById(mark);
         log.info("cleaned up");
     }
 

@@ -1,42 +1,25 @@
 package com.github.eacryo.mongoflex.repository;
 
 import com.github.eacryo.mongoflex.convertor.MongoMappingConvertor;
+import com.github.eacryo.mongoflex.annotation.Aggregate;
 import com.github.eacryo.mongoflex.annotation.Count;
 import com.github.eacryo.mongoflex.annotation.Delete;
 import com.github.eacryo.mongoflex.annotation.Find;
 import com.github.eacryo.mongoflex.annotation.Update;
 import com.mongodb.client.MongoDatabase;
-import com.github.eacryo.mongoflex.annotation.Count;
-import com.github.eacryo.mongoflex.annotation.Delete;
-import com.github.eacryo.mongoflex.annotation.Find;
 import lombok.extern.slf4j.Slf4j;
-import com.github.eacryo.mongoflex.annotation.Count;
-import com.github.eacryo.mongoflex.annotation.Delete;
-import com.github.eacryo.mongoflex.annotation.Find;
 import org.bson.Document;
-import com.github.eacryo.mongoflex.annotation.Count;
-import com.github.eacryo.mongoflex.annotation.Delete;
-import com.github.eacryo.mongoflex.annotation.Find;
 
 import java.lang.reflect.*;
-import com.github.eacryo.mongoflex.annotation.Count;
-import com.github.eacryo.mongoflex.annotation.Delete;
-import com.github.eacryo.mongoflex.annotation.Find;
 import java.util.*;
-import com.github.eacryo.mongoflex.annotation.Count;
-import com.github.eacryo.mongoflex.annotation.Delete;
-import com.github.eacryo.mongoflex.annotation.Find;
 import java.util.function.Supplier;
-import com.github.eacryo.mongoflex.annotation.Count;
-import com.github.eacryo.mongoflex.annotation.Delete;
-import com.github.eacryo.mongoflex.annotation.Find;
 
 /**
  * JDK proxy handler for {@link com.github.eacryo.mongoflex.annotation.MRepository} interfaces / {@link com.github.eacryo.mongoflex.annotation.MRepository} 接口的 JDK 动态代理处理器
  * <p>
  * Dispatch logic:
  * <ol>
- *   <li>{@code @Find} / {@code @Count} / {@code @Delete} / {@code @Update} — JSON template → filter Document → baseRepository</li>
+ *   <li>{@code @Find} / {@code @Count} / {@code @Delete} / {@code @Update} / {@code @Aggregate} — JSON template → filter Document / pipeline → baseRepository</li>
  *   <li>Method inherited from {@link MongoRepository} — delegate to baseRepository</li>
  * </ol>
  */
@@ -83,6 +66,9 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         if (method.isAnnotationPresent(Update.class)) {
             return handleUpdate(method, args);
         }
+        if (method.isAnnotationPresent(Aggregate.class)) {
+            return handleAggregate(method, args);
+        }
 
         // ── Inherited from MongoRepository / 继承自 MongoRepository ──
         if (isMethodFromTargetInterface(method, targetInterface)) {
@@ -99,7 +85,7 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         }
 
         throw new UnsupportedOperationException("Method " + method.getName() +
-                " is neither annotated with @Find/@Count/@Delete/@Update nor inherited from MongoRepository.");
+                " is neither annotated with @Find/@Count/@Delete/@Update/@Aggregate nor inherited from MongoRepository.");
     }
 
     // ──── @Find handler / @Find 处理器 ────
@@ -188,6 +174,46 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
         return modified;
     }
 
+    // ──── @Aggregate handler / @Aggregate 处理器 ────
+
+    private Object handleAggregate(Method method, Object[] args) {
+        Aggregate aggregate = method.getAnnotation(Aggregate.class);
+        String pipelineJson = jsonTemplateParser.replacePlaceholders(aggregate.value(), method, args);
+        List<Document> pipeline = parsePipelineArray(pipelineJson);
+
+        List<Document> docs = databaseSupplier.get()
+                .getCollection(baseRepository.collectionName)
+                .aggregate(new ArrayList<>(pipeline))
+                .into(new ArrayList<>());
+
+        Type genericReturnType = method.getGenericReturnType();
+        Class<?> rawReturnType = method.getReturnType();
+
+        if (List.class.isAssignableFrom(rawReturnType)) {
+            Class<?> elementClass = extractListElementClass(genericReturnType);
+            if (elementClass == Object.class || elementClass == null) {
+                List<Map<String, Object>> results = new ArrayList<>(docs.size());
+                for (Document doc : docs) {
+                    results.add(mongoMappingConvertor.documentToMap(doc));
+                }
+                return results;
+            }
+            List<Object> results = new ArrayList<>(docs.size());
+            for (Document doc : docs) {
+                results.add(mongoMappingConvertor.read(doc, elementClass));
+            }
+            return results;
+        }
+
+        if (docs.isEmpty()) {
+            return null;
+        }
+        if (rawReturnType == Object.class) {
+            return mongoMappingConvertor.documentToMap(docs.get(0));
+        }
+        return mongoMappingConvertor.read(docs.get(0), rawReturnType);
+    }
+
     // ──── Helpers / 辅助方法 ────
 
     /**
@@ -202,6 +228,19 @@ public class MyRepositoryProxyHandler<T, ID> implements InvocationHandler {
             }
         }
         return Object.class;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Document> parsePipelineArray(String pipelineJson) {
+        String trimmed = pipelineJson.trim();
+        if (!trimmed.startsWith("[")) {
+            throw new IllegalArgumentException(
+                    "@Aggregate value must be a JSON array, e.g. '[{\"$match\":{...}}, {\"$lookup\":{...}}]'"
+                    + " / @Aggregate value 必须是 JSON 数组，例如 '[{\"$match\":{...}}, {\"$lookup\":{...}}]'");
+        }
+        Document wrapper = Document.parse("{_pipeline: " + trimmed + "}");
+        List<Document> pipeline = (List<Document>) wrapper.get("_pipeline");
+        return pipeline != null ? pipeline : Collections.emptyList();
     }
 
     private boolean isMethodFromTargetInterface(Method method, Class<?> targetInterface) {
