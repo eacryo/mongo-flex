@@ -234,15 +234,45 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         long currentPage = pageDTO.getCurrentPage();
         long pageSize = pageDTO.getPageSize();
 
-        // 1. count total / 查总数
-        long total = databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
-        pageDTO.setTotal(total);
+        // Parameter validation up front (Spring Data AbstractPageRequest validates in the
+        // constructor — fail fast instead of silently returning an empty page). /
+        // 参数前置校验（对标 Spring Data AbstractPageRequest 构造时校验——fail-fast，
+        // 而不是静默返回空页）。
+        if (currentPage < 1) {
+            throw new IllegalArgumentException(
+                    "currentPage must be >= 1 / currentPage 不能小于 1: " + currentPage);
+        }
+        if (pageSize < 1) {
+            throw new IllegalArgumentException(
+                    "pageSize must be >= 1 / pageSize 不能小于 1: " + pageSize);
+        }
+        Long offset = pageDTO.getOffset();
+        if (offset != null && offset < 0) {
+            throw new IllegalArgumentException(
+                    "offset must not be negative / offset 不能为负数: " + offset);
+        }
 
-        // 2. skip + limit
-        int skip = (int) ((currentPage - 1) * pageSize);
+        // skip + limit — offset mode (PageDTO.offset) wins over page-number mode /
+        //    偏移量模式（PageDTO.offset）优先于页码模式
+        int skip = offset != null ? offset.intValue() : (int) ((currentPage - 1) * pageSize);
         int limit = (int) pageSize;
+
+        // 1. count total — skip it in lightweight mode (MyBatis-Plus searchCount=false /
+        //    Spring Data Slice) / 查总数——轻量模式（countTotal=false）跳过（对标
+        //    MyBatis-Plus searchCount=false / Spring Data Slice）
+        boolean countTotal = pageDTO.isCountTotal();
+        if (countTotal) {
+            long total = databaseSupplier.get().getCollection(collectionName).countDocuments(filter);
+            pageDTO.setTotal(total);
+        } else {
+            pageDTO.setTotal(0L);
+        }
+
+        // 2. fetch — lightweight mode fetches one extra document to derive hasNext /
+        //    查询——轻量模式多取一条用于推导 hasNext（Slice 语义）
+        int fetchLimit = countTotal ? limit : limit + 1;
         FindIterable<Document> iterable = databaseSupplier.get().getCollection(collectionName)
-                .find(filter).skip(skip).limit(limit);
+                .find(filter).skip(skip).limit(fetchLimit);
 
         // 3. 投影
         applyProjection(wrapper, iterable);
@@ -254,8 +284,18 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
         }
 
         // 5. 读数据
+        List<Document> docs = iterable.into(new ArrayList<>());
+        boolean hasNext = false;
+        if (!countTotal && docs.size() > limit) {
+            hasNext = true;
+            docs = docs.subList(0, limit);
+        }
+        // Reset in full mode so a previous lightweight run cannot leak its hasNext. /
+        // 完整模式重置，避免上一次轻量运行的 hasNext 泄漏。
+        pageDTO.setHasNext(countTotal ? null : hasNext);
+
         List<T> records = new ArrayList<>();
-        for (Document doc : iterable) {
+        for (Document doc : docs) {
             records.add(mongoMappingConvertor.read(doc, entityClass));
         }
         pageDTO.setRecords(records);
