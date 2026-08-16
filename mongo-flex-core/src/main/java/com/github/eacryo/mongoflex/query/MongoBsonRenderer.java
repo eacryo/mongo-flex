@@ -136,6 +136,8 @@ public class MongoBsonRenderer {
                         Class<?> subClass = convertor.getFieldGenericElementType(entityClass, c.field());
                         if (subClass != null) {
                             ((LambdaQueryWrapper) subWrapper).setEntityClass(subClass);
+                        } else {
+                            propagateEntityClass(entityClass, subWrapper);
                         }
                     }
                     Bson subFilter = render(subWrapper, convertor);
@@ -179,12 +181,35 @@ public class MongoBsonRenderer {
 
                 case NOT: {
                     LambdaQueryWrapper<?> subWrapper = (LambdaQueryWrapper<?>) c.value();
-                    if (entityClass != null && subWrapper.getEntityClass() == null) {
-                        ((LambdaQueryWrapper) subWrapper).setEntityClass(entityClass);
+                    propagateEntityClass(entityClass, subWrapper);
+                    if (LambdaQueryWrapper.hasEffectiveConditions(subWrapper)) {
+                        // Use $nor instead of $not — $not is not a valid top-level operator
+                        filters.add(Filters.nor(render(subWrapper, convertor)));
                     }
-                    Bson subFilter = render(subWrapper, convertor);
-                    // Use $nor instead of $not — $not is not a valid top-level operator
-                    filters.add(Filters.nor(subFilter));
+                    break;
+                }
+
+                case AND: {
+                    // Nested AND group: render the sub-wrapper and AND it in with the siblings.
+                    // Empty nested groups contribute nothing. / 嵌套 AND 分组：渲染子 wrapper 并与同级条件 AND；
+                    // 空的嵌套分组不贡献任何条件。
+                    LambdaQueryWrapper<?> subWrapper = (LambdaQueryWrapper<?>) c.value();
+                    propagateEntityClass(entityClass, subWrapper);
+                    if (LambdaQueryWrapper.hasEffectiveConditions(subWrapper)) {
+                        filters.add(render(subWrapper, convertor));
+                    }
+                    break;
+                }
+
+                case OR: {
+                    // Nested OR group: render the sub-wrapper and OR it against the siblings.
+                    // Empty nested groups contribute nothing. / 嵌套 OR 分组：渲染子 wrapper 并与同级条件 OR；
+                    // 空的嵌套分组不贡献任何条件。
+                    LambdaQueryWrapper<?> subWrapper = (LambdaQueryWrapper<?>) c.value();
+                    propagateEntityClass(entityClass, subWrapper);
+                    if (LambdaQueryWrapper.hasEffectiveConditions(subWrapper)) {
+                        filters.add(Filters.or(render(subWrapper, convertor)));
+                    }
                     break;
                 }
 
@@ -206,6 +231,19 @@ public class MongoBsonRenderer {
             return Filters.empty();
         }
         return Filters.and(filters);
+    }
+
+    /**
+     * Propagate the parent entity class to a sub-wrapper when it has none, so that string-based
+     * or nested conditions inside the group can still resolve {@code @CollectionField} mappings. /
+     * 当子 wrapper 未设置 entityClass 时，将父级的 entityClass 传递给它，使组内的字符串条件
+     * 或嵌套条件仍能正确解析 {@code @CollectionField} 映射。
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void propagateEntityClass(Class<?> entityClass, LambdaQueryWrapper<?> subWrapper) {
+        if (entityClass != null && subWrapper.getEntityClass() == null) {
+            ((LambdaQueryWrapper) subWrapper).setEntityClass(entityClass);
+        }
     }
 
 }

@@ -558,7 +558,10 @@ public class SimpleMongoRepository<T, ID> implements MongoRepository<T, ID> {
     // ---- internal helpers ----
 
     private void requireNonEmptyWrapper(LambdaQueryWrapper<T> wrapper, String operation) {
-        if (wrapper.getConditions().isEmpty()) {
+        // Recursively checks nested AND/OR/NOT groups, so a wrapper whose only conditions live
+        // inside empty nested groups is also rejected. / 递归检查嵌套的 AND/OR/NOT 分组，
+        // 因此"仅包含空嵌套分组"的 wrapper 同样会被拒绝。
+        if (!LambdaQueryWrapper.hasEffectiveConditions(wrapper)) {
             String hint = operation.startsWith("delete") ? "deleteAll" : "";
             throw new IllegalArgumentException(
                     operation + " requires at least one condition." + (hint.isEmpty() ? "" : " Use " + hint + "() to operate on all documents."));

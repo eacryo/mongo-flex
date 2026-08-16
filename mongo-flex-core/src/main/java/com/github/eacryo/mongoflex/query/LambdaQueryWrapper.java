@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * A Lambda-based query wrapper similar to MyBatis-Plus's LambdaQueryWrapper /
@@ -213,6 +214,71 @@ public class LambdaQueryWrapper<T> {
         return this;
     }
 
+    // ──── Nested boolean groups / 嵌套布尔分组 ────
+    // These methods attach a sub-wrapper as a single logical unit, enabling arbitrary
+    // boolean composition such as A AND (B OR C) — impossible with the flat or()
+    // separator, which only splits the top-level condition list into OR groups.
+    // 这些方法把子 wrapper 作为一个整体逻辑单元挂载，支持任意布尔组合（如 A AND (B OR C)），
+    // 这是扁平的 or() 分隔符无法表达的——or() 只能把顶层条件列表切成若干 OR 组。
+
+    /**
+     * AND-nested group: attaches a sub-wrapper that is ANDed with the sibling conditions. /
+     * AND 嵌套分组：挂载一个与同级条件按 AND 组合的子 wrapper。
+     * <p>
+     * Example / 示例：{@code w.eq(User::getStatus, "active").and(x -> x.eq(User::getAge, 18).or().eq(User::getAge, 21))}
+     * → {@code {status: "active", $and: [{$or: [{age: 18}, {age: 21}]}]}} — i.e. status = active AND (age = 18 OR age = 21).
+     */
+    public LambdaQueryWrapper<T> and(Consumer<LambdaQueryWrapper<T>> consumer) {
+        Objects.requireNonNull(consumer, "consumer must not be null");
+        LambdaQueryWrapper<T> subWrapper = new LambdaQueryWrapper<>();
+        consumer.accept(subWrapper);
+        conditions.add(new Condition(null, Operator.AND, subWrapper, null));
+        return this;
+    }
+
+    /**
+     * AND-nested group from an existing wrapper — the wrapper is attached as-is and ANDed
+     * with the sibling conditions. / 以现有 wrapper 构造 AND 嵌套分组——原样挂载并与同级条件按 AND 组合。
+     */
+    public LambdaQueryWrapper<T> and(LambdaQueryWrapper<T> wrapper) {
+        Objects.requireNonNull(wrapper, "wrapper must not be null");
+        conditions.add(new Condition(null, Operator.AND, wrapper, null));
+        return this;
+    }
+
+    /**
+     * OR-nested group: attaches a sub-wrapper that is ORed with the sibling conditions. /
+     * OR 嵌套分组：挂载一个与同级条件按 OR 组合的子 wrapper。
+     * <p>
+     * Example / 示例：{@code w.or(x -> x.eq(User::getAge, 18).eq(User::getGender, "M"))}
+     * → {@code {$or: [{age: 18, gender: "M"}]}} — i.e. (age = 18 AND gender = "M").
+     * <p>
+     * Note the difference from {@link #or()} / 与 {@link #or()} 的区别：{@code or()} 是顶层分隔符，
+     * 把整个条件列表切成 OR 组；{@code or(consumer)} 只把子分组与同级条件 OR 起来，可任意嵌套。
+     */
+    public LambdaQueryWrapper<T> or(Consumer<LambdaQueryWrapper<T>> consumer) {
+        Objects.requireNonNull(consumer, "consumer must not be null");
+        LambdaQueryWrapper<T> subWrapper = new LambdaQueryWrapper<>();
+        consumer.accept(subWrapper);
+        conditions.add(new Condition(null, Operator.OR, subWrapper, null));
+        return this;
+    }
+
+    /**
+     * NOT-nested group: attaches a sub-wrapper that is negated ({@code $nor}) against the
+     * sibling conditions. / NOT 嵌套分组：挂载一个被取反（{@code $nor}）的子 wrapper。
+     * <p>
+     * Example / 示例：{@code w.eq(User::getStatus, "active").not(x -> x.eq(User::getAge, 18).or().eq(User::getAge, 21))}
+     * → {@code {status: "active", $nor: [{$or: [{age: 18}, {age: 21}]}]}} — status = active AND NOT (age = 18 OR age = 21).
+     */
+    public LambdaQueryWrapper<T> not(Consumer<LambdaQueryWrapper<T>> consumer) {
+        Objects.requireNonNull(consumer, "consumer must not be null");
+        LambdaQueryWrapper<T> subWrapper = new LambdaQueryWrapper<>();
+        consumer.accept(subWrapper);
+        conditions.add(new Condition(null, Operator.NOT, subWrapper, null));
+        return this;
+    }
+
     /**
      * Modulo: { field: { $mod: [divisor, remainder] } }
      */
@@ -236,6 +302,35 @@ public class LambdaQueryWrapper<T> {
 
     public List<Condition> getConditions() {
         return conditions;
+    }
+
+    /**
+     * Whether the wrapper contains at least one effective (non-empty) condition, recursing
+     * into nested AND/OR/NOT groups. OR separators and empty nested groups are ignored. /
+     * 判断 wrapper 是否包含至少一个有效（非空）条件，会递归进入嵌套的 AND/OR/NOT 分组。
+     * OR 分隔符和空的嵌套分组会被忽略。
+     * <p>
+     * Used by the repository layer to guard destructive operations (delete/update) against
+     * full-collection execution. / 供 Repository 层用于拦截破坏性操作（delete/update）
+     * 误触全集合执行。
+     */
+    public static boolean hasEffectiveConditions(LambdaQueryWrapper<?> wrapper) {
+        for (Condition c : wrapper.getConditions()) {
+            if (c.isOrSeparator()) {
+                continue;
+            }
+            Operator op = c.operator();
+            if (op == Operator.AND || op == Operator.OR || op == Operator.NOT) {
+                Object value = c.value();
+                if (value instanceof LambdaQueryWrapper
+                        && hasEffectiveConditions((LambdaQueryWrapper<?>) value)) {
+                    return true;
+                }
+                continue;
+            }
+            return true;
+        }
+        return false;
     }
 
     // ---- FieldPath overloads — nested dot-notation queries / FieldPath 重载——嵌套点号查询 ----
